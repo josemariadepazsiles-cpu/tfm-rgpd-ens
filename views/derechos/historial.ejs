@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body class="min-h-screen bg-slate-100">
+  <%- include('../partials/nav') %>
+
+  <main class="max-w-5xl mx-auto px-4 py-8">
+    <a href="/derechos/<%= solicitud.id %>" class="text-sm text-indigo-600 hover:underline">&larr; Volver a la solicitud</a>
+
+    <h1 class="mt-2 text-2xl font-bold text-slate-800">Historial de la solicitud</h1>
+    <p class="text-sm text-slate-500">
+      <%= TIPOS_DERECHO[solicitud.tipo_derecho] %> · <%= solicitud.nombre_solicitante %> · <%= total %> cambio(s) · hora de España ·
+      registrada el <%= fechaHora(solicitud.created_at) %><%= solicitud.creado_por ? ' por ' + solicitud.creado_por.nombre : '' %> en estado Recibida
+    </p>
+
+    <div class="mt-6 bg-white rounded-2xl shadow overflow-x-auto">
+      <% if (cambios.length === 0) { %>
+        <p class="p-8 text-center text-slate-500">Todavía no se ha cambiado el estado de esta solicitud.</p>
+      <% } else { %>
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 text-left text-slate-600">
+            <tr>
+              <th class="px-4 py-3 font-medium">Fecha y hora</th>
+              <th class="px-4 py-3 font-medium">Usuario</th>
+              <th class="px-4 py-3 font-medium">Estado anterior</th>
+              <th class="px-1 py-3"></th>
+              <th class="px-4 py-3 font-medium">Estado nuevo</th>
+              <th class="px-4 py-3 font-medium">Detalle</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <% cambios.forEach((c) => { %>
+              <tr class="hover:bg-slate-50">
+                <td class="px-4 py-3 whitespace-nowrap font-mono text-slate-700"><%= fechaHora(c.fecha) %></td>
+                <td class="px-4 py-3 text-slate-600"><%= c.usuario ? c.usuario.nombre : '—' %></td>
+                <td class="px-4 py-3"><%- include('../partials/estado-solicitud', { estadoSolicitud: c.estado_anterior }) %></td>
+                <td class="px-1 py-3 text-slate-400" aria-hidden="true">&rarr;</td>
+                <td class="px-4 py-3"><%- include('../partials/estado-solicitud', { estadoSolicitud: c.estado_nuevo }) %></td>
+                <td class="px-4 py-3 text-slate-600"><%= c.detalle || '' %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+
+    <% if (paginas > 1) { %>
+      <nav class="mt-4 flex items-center justify-between text-sm" aria-label="Paginación">
+        <% if (pagina > 1) { %>
+          <a href="?pagina=<%= pagina - 1 %>" class="rounded-lg border border-slate-300 bg-white px-3 py-1 text-slate-700 hover:bg-slate-50">&larr; Más recientes</a>
+        <% } else { %><span></span><% } %>
+        <span class="text-slate-500">Página <%= pagina %> de <%= paginas %></span>
+        <% if (pagina < paginas) { %>
+          <a href="?pagina=<%= pagina + 1 %>" class="rounded-lg border border-slate-300 bg-white px-3 py-1 text-slate-700 hover:bg-slate-50">Más antiguos &rarr;</a>
+        <% } else { %><span></span><% } %>
+      </nav>
+    <% } %>
+  </main>
+</body>
+</html>

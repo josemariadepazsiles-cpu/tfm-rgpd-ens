@@ -1,0 +1,174 @@
+<%
+  const inputClase = 'mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500';
+  const accion = solicitud.id ? '/derechos/' + solicitud.id : '/derechos';
+  const volver = solicitud.id ? '/derechos/' + solicitud.id : '/derechos';
+  const valor = (campo) => solicitud[campo] ?? '';
+  const estadoInicial = { ampliar: !!solicitud.plazo_ampliado, estado: solicitud.estado || 'RECIBIDA' };
+%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body class="min-h-screen bg-slate-100">
+  <%- include('../partials/nav') %>
+
+  <main class="max-w-3xl mx-auto px-4 py-8">
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-bold text-slate-800"><%= title %></h1>
+      <a href="<%= volver %>" class="text-sm text-indigo-600 hover:underline">Cancelar</a>
+    </div>
+    <% if (!solicitud.id) { %>
+      <p class="mt-1 text-sm text-slate-500">
+        La fecha límite se calcula automáticamente: 1 mes desde la recepción (art. 12.3 RGPD). Fechas y horas en hora de España.
+      </p>
+    <% } %>
+
+    <% if (errores.length) { %>
+      <ul class="mt-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 list-disc list-inside" role="alert">
+        <% errores.forEach((e) => { %><li><%= e %></li><% }) %>
+      </ul>
+    <% } %>
+
+    <form action="<%= accion %>" method="POST" class="mt-6 space-y-6" x-data='<%= JSON.stringify(estadoInicial) %>'>
+
+      <fieldset class="bg-white rounded-2xl shadow p-6 space-y-4">
+        <legend class="float-left w-full mb-2 text-lg font-semibold text-slate-800">1. Solicitante</legend>
+        <div class="clear-both">
+          <label for="nombre_solicitante" class="block text-sm font-medium text-slate-700">Nombre y apellidos</label>
+          <input id="nombre_solicitante" name="nombre_solicitante" type="text" required value="<%= valor('nombre_solicitante') %>" class="<%= inputClase %>">
+        </div>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label for="email_solicitante" class="block text-sm font-medium text-slate-700">Email</label>
+            <input id="email_solicitante" name="email_solicitante" type="email" required value="<%= valor('email_solicitante') %>" class="<%= inputClase %>">
+          </div>
+          <div>
+            <label for="telefono_solicitante" class="block text-sm font-medium text-slate-700">Teléfono <span class="font-normal text-slate-400">(opcional)</span></label>
+            <input id="telefono_solicitante" name="telefono_solicitante" type="tel" value="<%= valor('telefono_solicitante') %>" class="<%= inputClase %>">
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="bg-white rounded-2xl shadow p-6 space-y-4">
+        <legend class="float-left w-full mb-2 text-lg font-semibold text-slate-800">2. Solicitud</legend>
+        <div class="clear-both grid gap-4 sm:grid-cols-2">
+          <div>
+            <label for="tipo_derecho" class="block text-sm font-medium text-slate-700">Derecho ejercido</label>
+            <select id="tipo_derecho" name="tipo_derecho" required class="<%= inputClase %>">
+              <option value="" disabled <%= solicitud.tipo_derecho ? '' : 'selected' %>>Selecciona</option>
+              <% Object.entries(TIPOS_DERECHO).forEach(([v, etiqueta]) => { %>
+                <option value="<%= v %>" <%= solicitud.tipo_derecho === v ? 'selected' : '' %>><%= etiqueta %> (<%= ARTICULOS_DERECHO[v] %>)</option>
+              <% }) %>
+            </select>
+          </div>
+          <div>
+            <label for="canal_entrada" class="block text-sm font-medium text-slate-700">Canal de entrada</label>
+            <select id="canal_entrada" name="canal_entrada" required class="<%= inputClase %>">
+              <% Object.entries(CANALES).forEach(([v, etiqueta]) => { %>
+                <option value="<%= v %>" <%= solicitud.canal_entrada === v ? 'selected' : '' %>><%= etiqueta %></option>
+              <% }) %>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label for="descripcion" class="block text-sm font-medium text-slate-700">Qué solicita exactamente</label>
+          <textarea id="descripcion" name="descripcion" rows="4" required class="<%= inputClase %>"
+                    placeholder="Ej.: Solicita copia de todos sus datos personales tratados en el programa de fidelización"><%= valor('descripcion') %></textarea>
+        </div>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label for="fecha_recepcion" class="block text-sm font-medium text-slate-700">Fecha y hora de recepción</label>
+            <input id="fecha_recepcion" name="fecha_recepcion" type="datetime-local" required
+                   value="<%= aInputFechaHora(solicitud.fecha_recepcion) %>" class="<%= inputClase %>">
+            <p class="mt-1 text-xs text-slate-500">Marca el inicio del plazo legal.</p>
+          </div>
+          <% if (solicitud.id) { %>
+            <div>
+              <span class="block text-sm font-medium text-slate-700">Fecha límite actual</span>
+              <p class="mt-2 text-slate-800"><%= fechaHora(solicitud.fecha_limite) %></p>
+              <p class="mt-1 text-xs text-slate-500">Se recalcula al guardar si cambias la recepción o la ampliación.</p>
+            </div>
+          <% } %>
+        </div>
+        <div>
+          <% if (user.rol === 'ADMIN') { %>
+            <label for="responsable_id" class="block text-sm font-medium text-slate-700">Responsable de la tramitación</label>
+            <select id="responsable_id" name="responsable_id" class="<%= inputClase %> sm:w-80">
+              <option value="">Sin asignar</option>
+              <% usuarios.forEach((u) => { %>
+                <option value="<%= u.id %>" <%= solicitud.responsable_id === u.id ? 'selected' : '' %>><%= u.nombre %><%= u.area ? ' — ' + u.area : '' %></option>
+              <% }) %>
+            </select>
+          <% } else { %>
+            <span class="block text-sm font-medium text-slate-700">Responsable de la tramitación</span>
+            <p class="mt-1 text-slate-600"><%= solicitud.responsable ? solicitud.responsable.nombre : 'Lo asignará un administrador' %></p>
+          <% } %>
+        </div>
+      </fieldset>
+
+      <% if (solicitud.id) { %>
+        <fieldset class="bg-white rounded-2xl shadow p-6 space-y-4">
+          <legend class="float-left w-full mb-2 text-lg font-semibold text-slate-800">3. Plazo</legend>
+          <div class="clear-both">
+            <% if (ampliadoGuardado || puedeAmpliar) { %>
+              <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
+                <input type="checkbox" name="plazo_ampliado" x-model="ampliar" class="w-4 h-4 rounded border-slate-300 text-indigo-600"
+                       <%= solicitud.plazo_ampliado ? 'checked' : '' %>>
+                Ampliar el plazo <%= MESES_AMPLIACION %> meses más (casos complejos o numerosas solicitudes, art. 12.3)
+              </label>
+              <% if (ampliadoGuardado) { %>
+                <p class="mt-1 text-xs text-slate-500">El plazo ya está ampliado. Desmárcalo solo para anular una ampliación registrada por error.</p>
+              <% } else { %>
+                <p class="mt-1 text-xs text-slate-500">Debe acordarse e informarse al interesado dentro del primer mes (hasta el <%= fecha(fechaLimiteInicial) %>). La solicitud pasará a «Ampliada».</p>
+              <% } %>
+              <div class="mt-3" x-show="ampliar" x-cloak>
+                <label for="motivo_ampliacion" class="block text-sm text-slate-600">Motivo de la ampliación (se comunica al interesado)</label>
+                <textarea id="motivo_ampliacion" name="motivo_ampliacion" rows="2" class="<%= inputClase %>"
+                          :required="ampliar"><%= valor('motivo_ampliacion') %></textarea>
+              </div>
+            <% } else { %>
+              <p class="text-sm text-slate-500">El plazo inicial ya venció (<%= fecha(fechaLimiteInicial) %>): ya no puede ampliarse.</p>
+            <% } %>
+          </div>
+        </fieldset>
+
+        <fieldset class="bg-white rounded-2xl shadow p-6 space-y-4">
+          <legend class="float-left w-full mb-2 text-lg font-semibold text-slate-800">4. Tramitación y respuesta</legend>
+          <div class="clear-both">
+            <label for="estado" class="block text-sm font-medium text-slate-700">Estado</label>
+            <select id="estado" name="estado" required x-model="estado" class="<%= inputClase %> sm:w-80">
+              <% Object.entries(ESTADOS_SOLICITUD).forEach(([v, etiqueta]) => { %>
+                <option value="<%= v %>" <%= solicitud.estado === v ? 'selected' : '' %>><%= etiqueta %></option>
+              <% }) %>
+            </select>
+            <p class="mt-1 text-xs text-slate-500">Cada cambio de estado queda registrado en el historial.</p>
+          </div>
+          <div x-show="estado === 'DENEGADA'" x-cloak>
+            <label for="motivo_denegacion" class="block text-sm font-medium text-slate-700">Motivo de la denegación</label>
+            <textarea id="motivo_denegacion" name="motivo_denegacion" rows="3" class="<%= inputClase %>" :required="estado === 'DENEGADA'"
+                      placeholder="Motivos de no actuar e indicación de la posibilidad de reclamar ante la AEPD (art. 12.4)"><%= valor('motivo_denegacion') %></textarea>
+          </div>
+          <div>
+            <label for="respuesta_enviada" class="block text-sm font-medium text-slate-700">Respuesta enviada al interesado <span class="font-normal text-slate-400">(opcional)</span></label>
+            <textarea id="respuesta_enviada" name="respuesta_enviada" rows="4" class="<%= inputClase %>"><%= valor('respuesta_enviada') %></textarea>
+          </div>
+          <div class="sm:w-80">
+            <label for="fecha_respuesta" class="block text-sm font-medium text-slate-700">Fecha y hora de la respuesta</label>
+            <input id="fecha_respuesta" name="fecha_respuesta" type="datetime-local"
+                   value="<%= aInputFechaHora(solicitud.fecha_respuesta) %>" class="<%= inputClase %>">
+            <p class="mt-1 text-xs text-slate-500">Si resuelves la solicitud y la dejas vacía, se usará la fecha y hora actuales.</p>
+          </div>
+        </fieldset>
+      <% } %>
+
+      <div class="flex justify-end gap-3">
+        <a href="<%= volver %>" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-700 hover:bg-slate-50">Cancelar</a>
+        <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 transition">
+          <%= solicitud.id ? 'Guardar cambios' : 'Registrar solicitud' %>
+        </button>
+      </div>
+    </form>
+  </main>
+</body>
+</html>

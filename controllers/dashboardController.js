@@ -4,6 +4,7 @@ const { resumenEvaluaciones } = require('../lib/evaluaciones');
 const {
   GRAVEDADES, ESTADOS_INCIDENTE, ESTADOS_ACTIVOS, whereAepdPendiente, plazoAepd,
 } = require('../lib/incidentes');
+const { TIPOS_DERECHO, ESTADOS_SOLICITUD, ESTADOS_ABIERTOS, urgencia } = require('../lib/derechos');
 
 // Resumen de incidentes: activos, notificaciones a la AEPD pendientes / fuera de plazo
 // y el incidente activo más grave (a igual gravedad, el detectado hace más tiempo)
@@ -27,14 +28,30 @@ const resumenIncidentes = async () => {
   };
 };
 
+// Resumen de solicitudes de derechos: abiertas, vencidas sin resolver y la próxima en vencer
+const resumenDerechos = async () => {
+  const ahora = new Date();
+  const abiertas = { estado: { in: ESTADOS_ABIERTOS } };
+  const [total, vencidas, proxima] = await Promise.all([
+    prisma.solicitudDerecho.count({ where: abiertas }),
+    prisma.solicitudDerecho.count({ where: { ...abiertas, fecha_limite: { lt: ahora } } }),
+    prisma.solicitudDerecho.findFirst({
+      where: { ...abiertas, fecha_limite: { gte: ahora } },
+      orderBy: { fecha_limite: 'asc' },
+    }),
+  ]);
+  return { abiertas: total, vencidas, proxima: proxima ? { ...proxima, urgencia: urgencia(proxima, ahora) } : null };
+};
+
 const index = async (req, res) => {
   // Resumen de cumplimiento ENS de la última evaluación de cada sistema
-  const [sistemas, incidentes] = await Promise.all([
+  const [sistemas, incidentes, derechos] = await Promise.all([
     prisma.sistema.findMany({
       orderBy: { nombre: 'asc' },
       include: { evaluaciones: { orderBy: { created_at: 'desc' }, take: 1 } },
     }),
     resumenIncidentes(),
+    resumenDerechos(),
   ]);
   const resumenes = await resumenEvaluaciones(sistemas.flatMap((s) => s.evaluaciones.map((e) => e.id)));
 
@@ -45,9 +62,12 @@ const index = async (req, res) => {
       return { ...s, ultima: s.evaluaciones[0] || null, resumen, global: resumen ? resumenGlobal(resumen) : null };
     }),
     incidentes,
+    derechos,
     categorias: CATEGORIAS,
     GRAVEDADES,
     ESTADOS_INCIDENTE,
+    TIPOS_DERECHO,
+    ESTADOS_SOLICITUD,
   });
 };
 

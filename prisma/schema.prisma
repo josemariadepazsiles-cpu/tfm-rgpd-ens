@@ -72,6 +72,33 @@ enum EstadoIncidente {
   CERRADO
 }
 
+// Derechos de los interesados (arts. 15 a 22 RGPD)
+enum TipoDerecho {
+  ACCESO
+  RECTIFICACION
+  SUPRESION
+  OPOSICION
+  LIMITACION
+  PORTABILIDAD
+}
+
+enum CanalEntrada {
+  EMAIL
+  FORMULARIO_WEB
+  CORREO_POSTAL
+  PRESENCIAL
+  OTRO
+}
+
+enum EstadoSolicitud {
+  RECIBIDA
+  VERIFICACION_IDENTIDAD
+  EN_TRAMITACION
+  ESTIMADA
+  DENEGADA
+  AMPLIADA
+}
+
 enum Rol {
   ADMIN
   USUARIO
@@ -85,14 +112,17 @@ model Usuario {
   rol           Rol     @default(USUARIO)
   area          String?
 
-  actividades           ActividadRat[]
-  controlesResponsable  EvaluacionControl[]
-  evaluacionesCreadas   Evaluacion[]
-  cambiosEstado         HistorialEstado[]
-  sistemasCreados       Sistema[]
-  incidentesResponsable Incidente[]          @relation("IncidenteResponsable")
-  incidentesCreados     Incidente[]          @relation("IncidenteCreador")
-  cambiosIncidente      HistorialIncidente[]
+  actividades            ActividadRat[]
+  controlesResponsable   EvaluacionControl[]
+  evaluacionesCreadas    Evaluacion[]
+  cambiosEstado          HistorialEstado[]
+  sistemasCreados        Sistema[]
+  incidentesResponsable  Incidente[]                 @relation("IncidenteResponsable")
+  incidentesCreados      Incidente[]                 @relation("IncidenteCreador")
+  cambiosIncidente       HistorialIncidente[]
+  solicitudesResponsable SolicitudDerecho[]          @relation("SolicitudResponsable")
+  solicitudesCreadas     SolicitudDerecho[]          @relation("SolicitudCreador")
+  cambiosSolicitud       HistorialSolicitudDerecho[]
 
   @@map("usuarios")
 }
@@ -266,4 +296,56 @@ model HistorialIncidente {
 
   @@index([incidente_id, fecha])
   @@map("historial_incidentes")
+}
+
+// Solicitudes de ejercicio de derechos de los interesados (art. 12 RGPD)
+model SolicitudDerecho {
+  id                   Int             @id @default(autoincrement())
+  nombre_solicitante   String
+  email_solicitante    String
+  telefono_solicitante String?
+  tipo_derecho         TipoDerecho
+  descripcion          String
+  canal_entrada        CanalEntrada
+  fecha_recepcion      DateTime
+  // Calculada: recepción + 1 mes (o + 3 meses si el plazo se amplía), art. 12.3
+  fecha_limite         DateTime
+  plazo_ampliado       Boolean         @default(false)
+  motivo_ampliacion    String?
+  estado               EstadoSolicitud @default(RECIBIDA)
+  motivo_denegacion    String?
+  respuesta_enviada    String?
+  fecha_respuesta      DateTime?
+  responsable_id       Int?
+  creado_por_id        Int?
+  created_at           DateTime        @default(now())
+  updated_at           DateTime        @updatedAt
+
+  responsable Usuario?                    @relation("SolicitudResponsable", fields: [responsable_id], references: [id], onDelete: SetNull)
+  creado_por  Usuario?                    @relation("SolicitudCreador", fields: [creado_por_id], references: [id], onDelete: SetNull)
+  historial   HistorialSolicitudDerecho[]
+
+  @@index([estado])
+  @@index([tipo_derecho])
+  @@index([fecha_limite])
+  @@index([responsable_id])
+  @@map("solicitudes_derechos")
+}
+
+// Registro de cada cambio de estado de una solicitud (y de la ampliación del plazo)
+model HistorialSolicitudDerecho {
+  id              Int             @id @default(autoincrement())
+  solicitud_id    Int
+  estado_anterior EstadoSolicitud
+  estado_nuevo    EstadoSolicitud
+  // Nota adicional, p. ej. la ampliación del plazo con la nueva fecha límite
+  detalle         String?
+  usuario_id      Int?
+  fecha           DateTime        @default(now())
+
+  solicitud SolicitudDerecho @relation(fields: [solicitud_id], references: [id], onDelete: Cascade)
+  usuario   Usuario?         @relation(fields: [usuario_id], references: [id], onDelete: SetNull)
+
+  @@index([solicitud_id, fecha])
+  @@map("historial_solicitudes_derechos")
 }

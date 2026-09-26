@@ -15,10 +15,12 @@ const sistemaRoutes = require('./routes/sistemas');
 const evaluacionRoutes = require('./routes/evaluaciones');
 const controlRoutes = require('./routes/controles');
 const incidenteRoutes = require('./routes/incidentes');
+const derechoRoutes = require('./routes/derechos');
 const { fecha, fechaHora, aInputFechaHora } = require('./lib/formato');
 const { NIVEL_CLASES } = require('./lib/riesgo');
 const { CATEGORIA_CLASES, ESTADO_CLASES } = require('./lib/ens');
 const { GRAVEDAD_CLASES, ESTADO_INCIDENTE_CLASES } = require('./lib/incidentes');
+const { URGENCIA_CLASES, ESTADO_SOLICITUD_CLASES } = require('./lib/derechos');
 
 if (!process.env.SESSION_SECRET) {
   throw new Error('Falta SESSION_SECRET en el .env');
@@ -40,6 +42,8 @@ app.locals.fechaHora = fechaHora;
 app.locals.aInputFechaHora = aInputFechaHora;
 app.locals.gravedadClases = GRAVEDAD_CLASES;
 app.locals.estadoIncidenteClases = ESTADO_INCIDENTE_CLASES;
+app.locals.urgenciaClases = URGENCIA_CLASES;
+app.locals.estadoSolicitudClases = ESTADO_SOLICITUD_CLASES;
 
 // Middlewares
 app.use(express.urlencoded({ extended: false }));
@@ -84,6 +88,7 @@ app.use('/sistemas', sistemaRoutes);
 app.use('/evaluaciones', evaluacionRoutes);
 app.use('/controles', controlRoutes);
 app.use('/incidentes', incidenteRoutes);
+app.use('/derechos', derechoRoutes);
 // El checklist global se sustituyó por evaluaciones por sistema
 app.get('/checklist', (req, res) => res.redirect(301, '/sistemas'));
 

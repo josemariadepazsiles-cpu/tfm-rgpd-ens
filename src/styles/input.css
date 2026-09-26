@@ -5,6 +5,7 @@
 @source "../../lib/riesgo.js";
 @source "../../lib/ens.js";
 @source "../../lib/incidentes.js";
+@source "../../lib/derechos.js";
 
 /* Alpine.js: oculta los elementos con x-cloak hasta que Alpine se inicializa */
 [x-cloak] {

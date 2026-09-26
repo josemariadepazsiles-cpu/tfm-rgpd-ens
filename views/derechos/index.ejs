@@ -1,0 +1,123 @@
+<%
+  const selectClase = 'mt-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500';
+  const vencidas = solicitudes.filter((s) => s.urgencia.nivel === 'rojo').length;
+  const filaClase = { rojo: 'bg-red-50/60', amarillo: 'bg-yellow-50/60' };
+%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body class="min-h-screen bg-slate-100">
+  <%- include('../partials/nav') %>
+
+  <main class="max-w-7xl mx-auto px-4 py-8">
+    <%- include('../partials/flash') %>
+
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-800">Derechos de los interesados</h1>
+        <p class="text-sm text-slate-500">Solicitudes de acceso, rectificación, supresión, oposición, limitación y portabilidad (arts. 12 a 22 RGPD)</p>
+      </div>
+      <a href="/derechos/nueva" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">+ Nueva solicitud</a>
+    </div>
+
+    <% if (vencidas && plazo !== 'vencidas') { %>
+      <div class="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+        <strong><%= vencidas %> solicitud(es)</strong> han superado su fecha límite sin resolverse.
+        <a href="/derechos?plazo=vencidas" class="font-medium underline">Ver solo las vencidas</a>
+      </div>
+    <% } %>
+
+    <form action="/derechos" method="GET" class="mt-6 flex flex-wrap items-end gap-3">
+      <div>
+        <label for="tipo" class="block text-sm font-medium text-slate-700">Tipo de derecho</label>
+        <select id="tipo" name="tipo" onchange="this.form.submit()" class="<%= selectClase %>">
+          <option value="">Todos</option>
+          <% Object.entries(TIPOS_DERECHO).forEach(([v, etiqueta]) => { %>
+            <option value="<%= v %>" <%= tipo === v ? 'selected' : '' %>><%= etiqueta %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div>
+        <label for="estado" class="block text-sm font-medium text-slate-700">Estado</label>
+        <select id="estado" name="estado" onchange="this.form.submit()" class="<%= selectClase %>">
+          <option value="">Todos</option>
+          <% Object.entries(ESTADOS_SOLICITUD).forEach(([v, etiqueta]) => { %>
+            <option value="<%= v %>" <%= estado === v ? 'selected' : '' %>><%= etiqueta %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div>
+        <label for="plazo" class="block text-sm font-medium text-slate-700">Plazo</label>
+        <select id="plazo" name="plazo" onchange="this.form.submit()" class="<%= selectClase %>">
+          <option value="">Todos</option>
+          <option value="proximas" <%= plazo === 'proximas' ? 'selected' : '' %>>Vencen en <%= DIAS_AVISO %> días o menos</option>
+          <option value="vencidas" <%= plazo === 'vencidas' ? 'selected' : '' %>>Vencidas sin resolver</option>
+        </select>
+      </div>
+      <noscript><button type="submit" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">Filtrar</button></noscript>
+      <% if (tipo || estado || plazo) { %>
+        <a href="/derechos" class="py-2 text-sm text-indigo-600 hover:underline">Quitar filtros</a>
+      <% } %>
+    </form>
+
+    <div class="mt-4 bg-white rounded-2xl shadow overflow-x-auto">
+      <% if (solicitudes.length === 0) { %>
+        <p class="p-8 text-center text-slate-500">
+          <%= tipo || estado || plazo ? 'No hay solicitudes con esos filtros.' : 'No se ha registrado ninguna solicitud.' %>
+        </p>
+      <% } else { %>
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 text-left text-slate-600">
+            <tr>
+              <th class="px-4 py-3 font-medium">Solicitante</th>
+              <th class="px-4 py-3 font-medium">Derecho</th>
+              <th class="px-4 py-3 font-medium">Recepción</th>
+              <th class="px-4 py-3 font-medium">Fecha límite</th>
+              <th class="px-4 py-3 font-medium">Estado</th>
+              <th class="px-4 py-3 font-medium">Responsable</th>
+              <th class="px-4 py-3 font-medium text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <% solicitudes.forEach((s) => { %>
+              <tr class="hover:bg-slate-50 <%= filaClase[s.urgencia.nivel] || '' %>">
+                <td class="px-4 py-3">
+                  <a href="/derechos/<%= s.id %>" class="font-medium text-slate-800 hover:text-indigo-600 hover:underline"><%= s.nombre_solicitante %></a>
+                  <span class="block text-xs text-slate-500"><%= s.email_solicitante %></span>
+                </td>
+                <td class="px-4 py-3 text-slate-700"><%= TIPOS_DERECHO[s.tipo_derecho] %></td>
+                <td class="px-4 py-3 text-slate-600 whitespace-nowrap"><%= fecha(s.fecha_recepcion) %></td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                  <span class="text-slate-700"><%= fecha(s.fecha_limite) %></span>
+                  <% if (s.plazo_ampliado) { %><span class="ml-1 text-xs text-amber-700" title="Plazo ampliado 2 meses (art. 12.3)">(ampliado)</span><% } %>
+                  <div class="mt-1"><%- include('../partials/urgencia-derecho', { u: s.urgencia }) %></div>
+                </td>
+                <td class="px-4 py-3"><%- include('../partials/estado-solicitud', { estadoSolicitud: s.estado }) %></td>
+                <td class="px-4 py-3 text-slate-600 whitespace-nowrap">
+                  <% if (!s.responsable) { %>
+                    <span class="text-slate-400 italic">Sin asignar</span>
+                  <% } else { %>
+                    <%= s.responsable.nombre %><% if (s.responsable.id === user.id) { %> <strong>(tú)</strong><% } %>
+                  <% } %>
+                </td>
+                <td class="px-4 py-3 text-right whitespace-nowrap">
+                  <a href="/derechos/<%= s.id %>" class="rounded-lg border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-100">Ver</a>
+                  <% if (s.gestionable) { %>
+                    <a href="/derechos/<%= s.id %>/editar" class="ml-1 rounded-lg bg-indigo-600 px-3 py-1 text-white hover:bg-indigo-700">Tramitar</a>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+    <p class="mt-3 text-xs text-slate-500">
+      Plazo de respuesta: 1 mes desde la recepción, ampliable 2 meses más en casos complejos (art. 12.3 RGPD).
+      Verde: más de <%= DIAS_AVISO %> días · Amarillo: <%= DIAS_AVISO %> días o menos · Rojo: vencida sin resolver.
+    </p>
+  </main>
+</body>
+</html>

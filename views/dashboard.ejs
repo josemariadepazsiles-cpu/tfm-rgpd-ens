@@ -22,6 +22,9 @@
         <a href="/incidentes" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">
           Incidentes / Brechas
         </a>
+        <a href="/derechos" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">
+          Derechos de los Interesados
+        </a>
         <a href="/sistemas" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">
           Sistemas ENS
         </a>
@@ -66,6 +69,43 @@
             </div>
           <% } else { %>
             <p class="mt-1 text-sm text-slate-500 italic">Ningún incidente activo</p>
+          <% } %>
+        </div>
+      </div>
+    </section>
+
+    <section class="bg-white rounded-2xl shadow p-8">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <h2 class="text-lg font-semibold text-slate-800">Derechos de los interesados</h2>
+        <div class="flex flex-wrap gap-3 text-sm">
+          <a href="/derechos/nueva" class="text-indigo-600 hover:underline">+ Nueva solicitud</a>
+          <a href="/derechos" class="text-indigo-600 hover:underline">Ver solicitudes &rarr;</a>
+        </div>
+      </div>
+
+      <div class="mt-6 grid gap-4 sm:grid-cols-3">
+        <div class="rounded-xl border border-slate-200 p-5">
+          <p class="text-sm font-medium text-slate-500">Solicitudes abiertas</p>
+          <p class="mt-1 text-3xl font-bold text-slate-800"><%= derechos.abiertas %></p>
+          <p class="mt-1 text-xs text-slate-500">Sin resolver</p>
+        </div>
+        <a href="/derechos?plazo=vencidas" class="block rounded-xl border p-5 hover:shadow <%= derechos.vencidas ? 'border-red-300 bg-red-50' : 'border-slate-200' %>">
+          <p class="text-sm font-medium <%= derechos.vencidas ? 'text-red-800' : 'text-slate-500' %>">Plazo vencido sin resolver</p>
+          <p class="mt-1 text-3xl font-bold <%= derechos.vencidas ? 'text-red-700' : 'text-slate-800' %>"><%= derechos.vencidas %></p>
+          <p class="mt-1 text-xs <%= derechos.vencidas ? 'font-semibold text-red-700' : 'text-slate-500' %>">
+            <%= derechos.vencidas ? 'Requieren atención inmediata' : 'Todas dentro de plazo' %>
+          </p>
+        </a>
+        <div class="rounded-xl border border-slate-200 p-5">
+          <p class="text-sm font-medium text-slate-500">Próxima en vencer</p>
+          <% if (derechos.proxima) { const p = derechos.proxima; %>
+            <a href="/derechos/<%= p.id %>" class="mt-1 block font-semibold text-slate-800 hover:text-indigo-600 hover:underline">
+              <%= TIPOS_DERECHO[p.tipo_derecho] %> · <%= p.nombre_solicitante %>
+            </a>
+            <p class="mt-1 text-xs text-slate-500">Fecha límite: <%= fecha(p.fecha_limite) %></p>
+            <div class="mt-2"><%- include('partials/urgencia-derecho', { u: p.urgencia }) %></div>
+          <% } else { %>
+            <p class="mt-1 text-sm text-slate-500 italic">Ninguna solicitud pendiente dentro de plazo</p>
           <% } %>
         </div>
       </div>

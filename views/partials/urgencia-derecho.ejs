@@ -1,0 +1,8 @@
+<%# Urgencia respecto al plazo. Recibe `u` (resultado de urgencia()) %>
+<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset whitespace-nowrap <%= urgenciaClases[u.nivel] %>">
+  <% if (u.nivel === 'rojo') { %>⚠ Vencida hace <%= u.diasVencida %> día<%= u.diasVencida === 1 ? '' : 's' %>
+  <% } else if (u.nivel === 'amarillo') { %><%= u.dias === 0 ? 'Vence hoy' : 'Quedan ' + u.dias + ' día' + (u.dias === 1 ? '' : 's') %>
+  <% } else if (u.nivel === 'verde') { %>Quedan <%= u.dias %> días
+  <% } else if (u.nivel === 'en_plazo') { %>Resuelta en plazo
+  <% } else { %>Resuelta fuera de plazo<% } %>
+</span>
