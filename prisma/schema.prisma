@@ -50,6 +50,28 @@ enum EstadoControl {
   NO_APLICA
 }
 
+// Dimensión de seguridad afectada por la brecha (Dictamen 9/2022 EDPB)
+enum TipoIncidente {
+  CONFIDENCIALIDAD
+  INTEGRIDAD
+  DISPONIBILIDAD
+}
+
+enum GravedadIncidente {
+  BAJA
+  MEDIA
+  ALTA
+  CRITICA
+}
+
+enum EstadoIncidente {
+  ABIERTO
+  EN_INVESTIGACION
+  CONTENIDO
+  NOTIFICADO
+  CERRADO
+}
+
 enum Rol {
   ADMIN
   USUARIO
@@ -63,11 +85,14 @@ model Usuario {
   rol           Rol     @default(USUARIO)
   area          String?
 
-  actividades          ActividadRat[]
-  controlesResponsable EvaluacionControl[]
-  evaluacionesCreadas  Evaluacion[]
-  cambiosEstado        HistorialEstado[]
-  sistemasCreados      Sistema[]
+  actividades           ActividadRat[]
+  controlesResponsable  EvaluacionControl[]
+  evaluacionesCreadas   Evaluacion[]
+  cambiosEstado         HistorialEstado[]
+  sistemasCreados       Sistema[]
+  incidentesResponsable Incidente[]          @relation("IncidenteResponsable")
+  incidentesCreados     Incidente[]          @relation("IncidenteCreador")
+  cambiosIncidente      HistorialIncidente[]
 
   @@map("usuarios")
 }
@@ -193,4 +218,52 @@ model HistorialEstado {
 
   @@index([evaluacion_control_id, fecha])
   @@map("historial_estados")
+}
+
+// Incidentes de seguridad y brechas de datos personales (arts. 33 y 34 RGPD)
+model Incidente {
+  id                              Int               @id @default(autoincrement())
+  titulo                          String
+  descripcion                     String
+  fecha_deteccion                 DateTime
+  fecha_ocurrencia                DateTime?
+  tipo                            TipoIncidente
+  categorias_datos_afectados      String
+  numero_afectados_estimado       Int?
+  gravedad                        GravedadIncidente
+  estado                          EstadoIncidente   @default(ABIERTO)
+  medidas_adoptadas               String?
+  requiere_notificacion_aepd      Boolean           @default(false)
+  fecha_notificacion_aepd         DateTime?
+  requiere_notificacion_afectados Boolean           @default(false)
+  fecha_notificacion_afectados    DateTime?
+  responsable_id                  Int?
+  creado_por_id                   Int?
+  created_at                      DateTime          @default(now())
+  updated_at                      DateTime          @updatedAt
+
+  responsable Usuario?             @relation("IncidenteResponsable", fields: [responsable_id], references: [id], onDelete: SetNull)
+  creado_por  Usuario?             @relation("IncidenteCreador", fields: [creado_por_id], references: [id], onDelete: SetNull)
+  historial   HistorialIncidente[]
+
+  @@index([estado])
+  @@index([gravedad])
+  @@index([responsable_id])
+  @@map("incidentes")
+}
+
+// Registro de cada cambio de estado de un incidente (trazabilidad)
+model HistorialIncidente {
+  id              Int             @id @default(autoincrement())
+  incidente_id    Int
+  estado_anterior EstadoIncidente
+  estado_nuevo    EstadoIncidente
+  usuario_id      Int?
+  fecha           DateTime        @default(now())
+
+  incidente Incidente @relation(fields: [incidente_id], references: [id], onDelete: Cascade)
+  usuario   Usuario?  @relation(fields: [usuario_id], references: [id], onDelete: SetNull)
+
+  @@index([incidente_id, fecha])
+  @@map("historial_incidentes")
 }

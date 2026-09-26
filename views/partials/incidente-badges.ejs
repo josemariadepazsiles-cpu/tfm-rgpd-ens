@@ -1,0 +1,3 @@
+<%# Badge de gravedad o de estado de un incidente. Recibe `gravedadBadge` o `estadoBadge` %>
+<% if (typeof gravedadBadge !== 'undefined') { %><span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset <%= gravedadClases[gravedadBadge] %>"><%= GRAVEDADES[gravedadBadge] %></span><% } %>
+<% if (typeof estadoBadge !== 'undefined') { %><span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset whitespace-nowrap <%= estadoIncidenteClases[estadoBadge] %>"><%= ESTADOS_INCIDENTE[estadoBadge] %></span><% } %>

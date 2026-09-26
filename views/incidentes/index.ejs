@@ -1,0 +1,106 @@
+<%
+  const selectClase = 'mt-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500';
+  const vencidos = incidentes.filter((i) => i.plazo.tipo === 'vencido').length;
+%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body class="min-h-screen bg-slate-100">
+  <%- include('../partials/nav') %>
+
+  <main class="max-w-7xl mx-auto px-4 py-8">
+    <%- include('../partials/flash') %>
+
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-800">Incidentes / Brechas de seguridad</h1>
+        <p class="text-sm text-slate-500">Registro de incidentes y brechas de datos personales (arts. 33 y 34 RGPD)</p>
+      </div>
+      <a href="/incidentes/nuevo" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">+ Nuevo incidente</a>
+    </div>
+
+    <% if (vencidos) { %>
+      <div class="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+        <strong><%= vencidos %> incidente(s)</strong> requieren notificación a la AEPD y han superado el plazo de 72 horas desde su detección.
+      </div>
+    <% } %>
+
+    <form action="/incidentes" method="GET" class="mt-6 flex flex-wrap items-end gap-3">
+      <div>
+        <label for="estado" class="block text-sm font-medium text-slate-700">Estado</label>
+        <select id="estado" name="estado" onchange="this.form.submit()" class="<%= selectClase %>">
+          <option value="">Todos</option>
+          <% Object.entries(ESTADOS_INCIDENTE).forEach(([valor, etiqueta]) => { %>
+            <option value="<%= valor %>" <%= estado === valor ? 'selected' : '' %>><%= etiqueta %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div>
+        <label for="gravedad" class="block text-sm font-medium text-slate-700">Gravedad</label>
+        <select id="gravedad" name="gravedad" onchange="this.form.submit()" class="<%= selectClase %>">
+          <option value="">Todas</option>
+          <% Object.entries(GRAVEDADES).forEach(([valor, etiqueta]) => { %>
+            <option value="<%= valor %>" <%= gravedad === valor ? 'selected' : '' %>><%= etiqueta %></option>
+          <% }) %>
+        </select>
+      </div>
+      <noscript><button type="submit" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">Filtrar</button></noscript>
+      <% if (estado || gravedad) { %>
+        <a href="/incidentes" class="py-2 text-sm text-indigo-600 hover:underline">Quitar filtros</a>
+      <% } %>
+    </form>
+
+    <div class="mt-4 bg-white rounded-2xl shadow overflow-x-auto">
+      <% if (incidentes.length === 0) { %>
+        <p class="p-8 text-center text-slate-500">
+          <%= estado || gravedad ? 'No hay incidentes con esos filtros.' : 'No se ha registrado ningún incidente.' %>
+        </p>
+      <% } else { %>
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 text-left text-slate-600">
+            <tr>
+              <th class="px-4 py-3 font-medium">Incidente</th>
+              <th class="px-4 py-3 font-medium">Tipo</th>
+              <th class="px-4 py-3 font-medium">Gravedad</th>
+              <th class="px-4 py-3 font-medium">Estado</th>
+              <th class="px-4 py-3 font-medium">Detección</th>
+              <th class="px-4 py-3 font-medium">Responsable</th>
+              <th class="px-4 py-3 font-medium">Notificación AEPD</th>
+              <th class="px-4 py-3 font-medium text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <% incidentes.forEach((i) => { %>
+              <tr class="hover:bg-slate-50 <%= i.plazo.tipo === 'vencido' ? 'bg-red-50/60' : '' %>">
+                <td class="px-4 py-3 max-w-xs">
+                  <a href="/incidentes/<%= i.id %>" class="font-medium text-slate-800 hover:text-indigo-600 hover:underline line-clamp-2"><%= i.titulo %></a>
+                </td>
+                <td class="px-4 py-3 text-slate-600"><%= TIPOS[i.tipo] %></td>
+                <td class="px-4 py-3"><%- include('../partials/incidente-badges', { gravedadBadge: i.gravedad }) %></td>
+                <td class="px-4 py-3"><%- include('../partials/incidente-badges', { estadoBadge: i.estado }) %></td>
+                <td class="px-4 py-3 text-slate-600 whitespace-nowrap"><%= fechaHora(i.fecha_deteccion) %></td>
+                <td class="px-4 py-3 text-slate-600 whitespace-nowrap">
+                  <% if (!i.responsable) { %>
+                    <span class="text-slate-400 italic">Sin asignar</span>
+                  <% } else { %>
+                    <%= i.responsable.nombre %><% if (i.responsable.id === user.id) { %> <strong>(tú)</strong><% } %>
+                  <% } %>
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap"><%- include('../partials/plazo-aepd', { plazo: i.plazo }) %></td>
+                <td class="px-4 py-3 text-right whitespace-nowrap">
+                  <a href="/incidentes/<%= i.id %>" class="rounded-lg border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-100">Ver</a>
+                  <% if (i.gestionable) { %>
+                    <a href="/incidentes/<%= i.id %>/editar" class="ml-1 rounded-lg bg-indigo-600 px-3 py-1 text-white hover:bg-indigo-700">Editar</a>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+  </main>
+</body>
+</html>

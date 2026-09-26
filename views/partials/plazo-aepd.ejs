@@ -1,0 +1,18 @@
+<%# Situación de la notificación a la AEPD. Recibe `plazo` (resultado de plazoAepd) %>
+<% if (plazo.tipo === 'vencido') { %>
+  <span class="inline-flex items-center gap-1 rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-bold text-white"
+        title="Han pasado más de 72 h desde la detección sin notificar a la AEPD (vencía el <%= fechaHora(plazo.limite) %>)">
+    ⚠ ¡Plazo AEPD!
+  </span>
+<% } else if (plazo.tipo === 'pendiente') { %>
+  <span class="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800 ring-1 ring-inset ring-amber-600/30"
+        title="Vence el <%= fechaHora(plazo.limite) %>">
+    Pendiente · quedan <%= plazo.horasRestantes %> h
+  </span>
+<% } else if (plazo.tipo === 'notificado') { %>
+  <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-800 ring-1 ring-inset ring-green-600/30">
+    Notificada <%= fecha(plazo.fecha) %>
+  </span>
+<% } else { %>
+  <span class="text-xs text-slate-400">No requiere</span>
+<% } %>

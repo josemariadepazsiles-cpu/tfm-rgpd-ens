@@ -19,6 +19,9 @@
         <a href="/riesgos" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">
           Riesgos
         </a>
+        <a href="/incidentes" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">
+          Incidentes / Brechas
+        </a>
         <a href="/sistemas" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">
           Sistemas ENS
         </a>
@@ -29,6 +32,44 @@
         <% } %>
       </div>
     </div>
+
+    <section class="bg-white rounded-2xl shadow p-8">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <h2 class="text-lg font-semibold text-slate-800">Incidentes y brechas de seguridad</h2>
+        <div class="flex flex-wrap gap-3 text-sm">
+          <a href="/incidentes/nuevo" class="text-indigo-600 hover:underline">+ Reportar incidente</a>
+          <a href="/incidentes" class="text-indigo-600 hover:underline">Ver incidentes &rarr;</a>
+        </div>
+      </div>
+
+      <div class="mt-6 grid gap-4 sm:grid-cols-3">
+        <div class="rounded-xl border border-slate-200 p-5">
+          <p class="text-sm font-medium text-slate-500">Incidentes activos</p>
+          <p class="mt-1 text-3xl font-bold text-slate-800"><%= incidentes.abiertos %></p>
+          <p class="mt-1 text-xs text-slate-500">No cerrados</p>
+        </div>
+        <div class="rounded-xl border p-5 <%= incidentes.aepdVencidos ? 'border-red-300 bg-red-50' : incidentes.aepdPendientes ? 'border-amber-300 bg-amber-50' : 'border-slate-200' %>">
+          <p class="text-sm font-medium <%= incidentes.aepdVencidos ? 'text-red-800' : 'text-slate-500' %>">Notificación AEPD pendiente</p>
+          <p class="mt-1 text-3xl font-bold <%= incidentes.aepdVencidos ? 'text-red-700' : 'text-slate-800' %>"><%= incidentes.aepdPendientes %></p>
+          <p class="mt-1 text-xs <%= incidentes.aepdVencidos ? 'font-semibold text-red-700' : 'text-slate-500' %>">
+            <%= incidentes.aepdVencidos %> fuera de plazo (más de 72 h)
+          </p>
+        </div>
+        <div class="rounded-xl border border-slate-200 p-5">
+          <p class="text-sm font-medium text-slate-500">Incidente activo más grave</p>
+          <% if (incidentes.masGrave) { const g = incidentes.masGrave; %>
+            <a href="/incidentes/<%= g.id %>" class="mt-1 block font-semibold text-slate-800 hover:text-indigo-600 hover:underline line-clamp-2"><%= g.titulo %></a>
+            <div class="mt-2 flex flex-wrap items-center gap-2">
+              <%- include('partials/incidente-badges', { gravedadBadge: g.gravedad }) %>
+              <%- include('partials/incidente-badges', { estadoBadge: g.estado }) %>
+              <% if (g.plazo.tipo === 'vencido') { %><%- include('partials/plazo-aepd', { plazo: g.plazo }) %><% } %>
+            </div>
+          <% } else { %>
+            <p class="mt-1 text-sm text-slate-500 italic">Ningún incidente activo</p>
+          <% } %>
+        </div>
+      </div>
+    </section>
 
     <section class="bg-white rounded-2xl shadow p-8">
       <div class="flex flex-wrap items-center justify-between gap-3">

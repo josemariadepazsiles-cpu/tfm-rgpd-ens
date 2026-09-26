@@ -1,0 +1,179 @@
+<%
+  const inputClase = 'mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500';
+  const accion = incidente.id ? '/incidentes/' + incidente.id : '/incidentes';
+  const volver = incidente.id ? '/incidentes/' + incidente.id : '/incidentes';
+  const valor = (campo) => incidente[campo] ?? '';
+  const estadoInicial = {
+    aepd: !!incidente.requiere_notificacion_aepd,
+    afectados: !!incidente.requiere_notificacion_afectados,
+  };
+%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body class="min-h-screen bg-slate-100">
+  <%- include('../partials/nav') %>
+
+  <main class="max-w-3xl mx-auto px-4 py-8">
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-bold text-slate-800"><%= title %></h1>
+      <a href="<%= volver %>" class="text-sm text-indigo-600 hover:underline">Cancelar</a>
+    </div>
+    <% if (!incidente.id) { %>
+      <p class="mt-1 text-sm text-slate-500">Cualquier persona de la organización puede reportar un incidente. Las fechas y horas se indican en hora de España.</p>
+    <% } %>
+
+    <% if (errores.length) { %>
+      <ul class="mt-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 list-disc list-inside" role="alert">
+        <% errores.forEach((e) => { %><li><%= e %></li><% }) %>
+      </ul>
+    <% } %>
+
+    <form action="<%= accion %>" method="POST" class="mt-6 space-y-6" x-data='<%= JSON.stringify(estadoInicial) %>'>
+
+      <fieldset class="bg-white rounded-2xl shadow p-6 space-y-4">
+        <legend class="float-left w-full mb-2 text-lg font-semibold text-slate-800">1. Qué ha pasado</legend>
+        <div class="clear-both">
+          <label for="titulo" class="block text-sm font-medium text-slate-700">Título</label>
+          <input id="titulo" name="titulo" type="text" required maxlength="200" value="<%= valor('titulo') %>" class="<%= inputClase %>"
+                 placeholder="Ej.: Envío de nóminas a un destinatario equivocado">
+        </div>
+        <div>
+          <label for="descripcion" class="block text-sm font-medium text-slate-700">Descripción</label>
+          <textarea id="descripcion" name="descripcion" rows="4" required class="<%= inputClase %>"
+                    placeholder="Qué ha ocurrido, cómo se ha detectado, sistemas implicados…"><%= valor('descripcion') %></textarea>
+        </div>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label for="fecha_deteccion" class="block text-sm font-medium text-slate-700">Fecha y hora de detección</label>
+            <input id="fecha_deteccion" name="fecha_deteccion" type="datetime-local" required
+                   value="<%= aInputFechaHora(incidente.fecha_deteccion) %>" class="<%= inputClase %>">
+            <p class="mt-1 text-xs text-slate-500">Desde aquí cuentan las <%= plazoHoras %> h para notificar a la AEPD.</p>
+          </div>
+          <div>
+            <label for="fecha_ocurrencia" class="block text-sm font-medium text-slate-700">Fecha y hora de ocurrencia <span class="font-normal text-slate-400">(opcional)</span></label>
+            <input id="fecha_ocurrencia" name="fecha_ocurrencia" type="datetime-local"
+                   value="<%= aInputFechaHora(incidente.fecha_ocurrencia) %>" class="<%= inputClase %>">
+            <p class="mt-1 text-xs text-slate-500">Cuándo se cree que ocurrió realmente.</p>
+          </div>
+        </div>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label for="tipo" class="block text-sm font-medium text-slate-700">Tipo de brecha</label>
+            <select id="tipo" name="tipo" required class="<%= inputClase %>">
+              <option value="" disabled <%= incidente.tipo ? '' : 'selected' %>>Selecciona</option>
+              <% Object.entries(TIPOS).forEach(([v, etiqueta]) => { %>
+                <option value="<%= v %>" <%= incidente.tipo === v ? 'selected' : '' %>><%= etiqueta %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div>
+            <label for="gravedad" class="block text-sm font-medium text-slate-700">Gravedad</label>
+            <select id="gravedad" name="gravedad" required class="<%= inputClase %>">
+              <option value="" disabled <%= incidente.gravedad ? '' : 'selected' %>>Selecciona</option>
+              <% Object.entries(GRAVEDADES).forEach(([v, etiqueta]) => { %>
+                <option value="<%= v %>" <%= incidente.gravedad === v ? 'selected' : '' %>><%= etiqueta %></option>
+              <% }) %>
+            </select>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="bg-white rounded-2xl shadow p-6 space-y-4">
+        <legend class="float-left w-full mb-2 text-lg font-semibold text-slate-800">2. Datos afectados</legend>
+        <div class="clear-both">
+          <label for="categorias_datos_afectados" class="block text-sm font-medium text-slate-700">Categorías de datos afectados</label>
+          <textarea id="categorias_datos_afectados" name="categorias_datos_afectados" rows="2" required class="<%= inputClase %>"
+                    placeholder="Ej.: datos identificativos, económicos, de salud…"><%= valor('categorias_datos_afectados') %></textarea>
+        </div>
+        <div>
+          <label for="numero_afectados_estimado" class="block text-sm font-medium text-slate-700">Número estimado de afectados <span class="font-normal text-slate-400">(opcional)</span></label>
+          <input id="numero_afectados_estimado" name="numero_afectados_estimado" type="number" min="0" step="1"
+                 value="<%= valor('numero_afectados_estimado') %>" class="<%= inputClase %> sm:w-48">
+        </div>
+      </fieldset>
+
+      <fieldset class="bg-white rounded-2xl shadow p-6 space-y-4">
+        <legend class="float-left w-full mb-2 text-lg font-semibold text-slate-800">3. Gestión</legend>
+        <div class="clear-both grid gap-4 sm:grid-cols-2">
+          <% if (incidente.id) { %>
+            <div>
+              <label for="estado" class="block text-sm font-medium text-slate-700">Estado</label>
+              <select id="estado" name="estado" required class="<%= inputClase %>">
+                <% Object.entries(ESTADOS_INCIDENTE).forEach(([v, etiqueta]) => { %>
+                  <option value="<%= v %>" <%= incidente.estado === v ? 'selected' : '' %>><%= etiqueta %></option>
+                <% }) %>
+              </select>
+              <p class="mt-1 text-xs text-slate-500">Cada cambio de estado queda registrado en el historial.</p>
+            </div>
+          <% } else { %>
+            <div>
+              <span class="block text-sm font-medium text-slate-700">Estado</span>
+              <p class="mt-1 text-slate-600">Abierto</p>
+            </div>
+          <% } %>
+          <div>
+            <% if (user.rol === 'ADMIN') { %>
+              <label for="responsable_id" class="block text-sm font-medium text-slate-700">Responsable del caso</label>
+              <select id="responsable_id" name="responsable_id" class="<%= inputClase %>">
+                <option value="">Sin asignar</option>
+                <% usuarios.forEach((u) => { %>
+                  <option value="<%= u.id %>" <%= incidente.responsable_id === u.id ? 'selected' : '' %>><%= u.nombre %><%= u.area ? ' — ' + u.area : '' %></option>
+                <% }) %>
+              </select>
+            <% } else { %>
+              <span class="block text-sm font-medium text-slate-700">Responsable del caso</span>
+              <p class="mt-1 text-slate-600"><%= incidente.responsable ? incidente.responsable.nombre : 'Lo asignará un administrador' %></p>
+            <% } %>
+          </div>
+        </div>
+        <div>
+          <label for="medidas_adoptadas" class="block text-sm font-medium text-slate-700">Medidas adoptadas <span class="font-normal text-slate-400">(opcional al reportar)</span></label>
+          <textarea id="medidas_adoptadas" name="medidas_adoptadas" rows="4" class="<%= inputClase %>"
+                    placeholder="Medidas para contener la brecha y mitigar sus efectos…"><%= valor('medidas_adoptadas') %></textarea>
+        </div>
+      </fieldset>
+
+      <fieldset class="bg-white rounded-2xl shadow p-6 space-y-5">
+        <legend class="float-left w-full mb-2 text-lg font-semibold text-slate-800">4. Notificaciones</legend>
+        <div class="clear-both">
+          <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
+            <input type="checkbox" name="requiere_notificacion_aepd" x-model="aepd" class="w-4 h-4 rounded border-slate-300 text-indigo-600"
+                   <%= incidente.requiere_notificacion_aepd ? 'checked' : '' %>>
+            Requiere notificación a la AEPD (art. 33)
+          </label>
+          <p class="mt-1 text-xs text-slate-500">Salvo que sea improbable que constituya un riesgo para los derechos y libertades de las personas. Plazo: <%= plazoHoras %> h desde la detección.</p>
+          <div class="mt-3 sm:w-72" x-show="aepd" x-cloak>
+            <label for="fecha_notificacion_aepd" class="block text-sm text-slate-600">Fecha y hora de notificación a la AEPD</label>
+            <input id="fecha_notificacion_aepd" name="fecha_notificacion_aepd" type="datetime-local"
+                   value="<%= aInputFechaHora(incidente.fecha_notificacion_aepd) %>" class="<%= inputClase %>">
+            <p class="mt-1 text-xs text-slate-500">Déjalo vacío mientras no se haya notificado.</p>
+          </div>
+        </div>
+        <div>
+          <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
+            <input type="checkbox" name="requiere_notificacion_afectados" x-model="afectados" class="w-4 h-4 rounded border-slate-300 text-indigo-600"
+                   <%= incidente.requiere_notificacion_afectados ? 'checked' : '' %>>
+            Requiere comunicación a los afectados (art. 34)
+          </label>
+          <p class="mt-1 text-xs text-slate-500">Cuando sea probable que la brecha entrañe un alto riesgo para sus derechos y libertades.</p>
+          <div class="mt-3 sm:w-72" x-show="afectados" x-cloak>
+            <label for="fecha_notificacion_afectados" class="block text-sm text-slate-600">Fecha y hora de comunicación a los afectados</label>
+            <input id="fecha_notificacion_afectados" name="fecha_notificacion_afectados" type="datetime-local"
+                   value="<%= aInputFechaHora(incidente.fecha_notificacion_afectados) %>" class="<%= inputClase %>">
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="flex justify-end gap-3">
+        <a href="<%= volver %>" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-700 hover:bg-slate-50">Cancelar</a>
+        <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 transition">
+          <%= incidente.id ? 'Guardar cambios' : 'Registrar incidente' %>
+        </button>
+      </div>
+    </form>
+  </main>
+</body>
+</html>
