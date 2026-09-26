@@ -1,5 +1,5 @@
 const index = (req, res) => {
-  res.render('index', { title: 'Hola mundo' });
+  res.redirect(req.isAuthenticated() ? '/dashboard' : '/login');
 };
 
 module.exports = { index };
