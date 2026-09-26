@@ -1,0 +1,7 @@
+<%# Aviso de filtro rápido activo (desde el panel de control). Recibe `filtroAlerta` = { texto, quitar } o null %>
+<% if (typeof filtroAlerta !== 'undefined' && filtroAlerta) { %>
+  <div class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm text-indigo-800" role="status">
+    <span>Filtrando por: <strong><%= filtroAlerta.texto %></strong></span>
+    <a href="<%= filtroAlerta.quitar %>" class="font-medium underline">Quitar filtro</a>
+  </div>
+<% } %>

@@ -2,8 +2,8 @@ const prisma = require('../lib/prisma');
 const { esAdmin, idValido } = require('../lib/permisos');
 const { desdeInputFechaHora } = require('../lib/formato');
 const {
-  TIPOS, GRAVEDADES, ESTADOS_INCIDENTE, PLAZO_AEPD_HORAS,
-  plazoAepd, puedeGestionar, guardarIncidente,
+  TIPOS, GRAVEDADES, ESTADOS_INCIDENTE, PLAZO_AEPD_HORAS, ESTADOS_ACTIVOS,
+  plazoAepd, puedeGestionar, guardarIncidente, whereAepdPendiente,
 } = require('../lib/incidentes');
 
 // Cualquier usuario autenticado puede ver y reportar incidentes. Editarlos y cambiar su
@@ -119,22 +119,32 @@ const renderFormulario = async (req, res, { incidente, errores = [], status = 20
   });
 };
 
+// Filtros rápidos (enlazados desde el panel de control)
+const ALERTAS = {
+  activos: { texto: 'Incidentes activos (no cerrados)', where: () => ({ estado: { in: ESTADOS_ACTIVOS } }) },
+  aepd_pendiente: { texto: 'Notificación a la AEPD pendiente', where: (ahora) => whereAepdPendiente(ahora, false) },
+  aepd_vencido: { texto: 'Notificación a la AEPD fuera de plazo (más de 72 h)', where: (ahora) => whereAepdPendiente(ahora, true) },
+};
+
 const list = async (req, res) => {
   const estado = esOpcion(ESTADOS_INCIDENTE, req.query.estado) ? req.query.estado : '';
   const gravedad = esOpcion(GRAVEDADES, req.query.gravedad) ? req.query.gravedad : '';
+  const alerta = esOpcion(ALERTAS, req.query.alerta) ? req.query.alerta : '';
+  const ahora = new Date();
 
   const incidentes = await prisma.incidente.findMany({
-    where: { ...(estado && { estado }), ...(gravedad && { gravedad }) },
+    where: { ...(estado && { estado }), ...(gravedad && { gravedad }), ...(alerta && ALERTAS[alerta].where(ahora)) },
     include: { responsable: usuarioSelect },
     orderBy: [{ fecha_deteccion: 'desc' }, { id: 'desc' }],
   });
-  const ahora = new Date();
 
   res.render('incidentes/index', {
     title: 'Incidentes / Brechas',
     incidentes: incidentes.map((i) => ({ ...i, plazo: plazoAepd(i, ahora), gestionable: puedeGestionar(req.user, i) })),
     estado,
     gravedad,
+    alerta,
+    filtroAlerta: alerta ? { texto: ALERTAS[alerta].texto, quitar: '/incidentes' } : null,
     ...opciones,
   });
 };

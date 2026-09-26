@@ -32,7 +32,10 @@
       </div>
     <% } %>
 
+    <%- include("../partials/filtro-alerta") %>
+
     <form action="/politicas" method="GET" class="mt-6 flex flex-wrap items-end gap-3">
+      <% if (filtro) { %><input type="hidden" name="filtro" value="<%= filtro %>"><% } %>
       <div>
         <label for="tipo" class="block text-sm font-medium text-slate-700">Tipo de documento</label>
         <select id="tipo" name="tipo" onchange="this.form.submit()" class="<%= selectClase %>">
@@ -54,12 +57,12 @@
         </div>
       <% } %>
       <noscript><button type="submit" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">Filtrar</button></noscript>
-      <% if (tipo || estado) { %><a href="/politicas" class="py-2 text-sm text-indigo-600 hover:underline">Quitar filtros</a><% } %>
+      <% if (tipo || estado || filtro) { %><a href="/politicas" class="py-2 text-sm text-indigo-600 hover:underline">Quitar filtros</a><% } %>
     </form>
 
     <div class="mt-4 bg-white rounded-2xl shadow overflow-x-auto">
       <% if (politicas.length === 0) { %>
-        <p class="p-8 text-center text-slate-500"><%= tipo || estado ? 'No hay documentos con esos filtros.' : 'No hay documentos publicados.' %></p>
+        <p class="p-8 text-center text-slate-500"><%= tipo || estado || filtro ? 'No hay documentos con esos filtros.' : 'No hay documentos publicados.' %></p>
       <% } else { %>
         <table class="w-full text-sm">
           <thead class="bg-slate-50 text-left text-slate-600">

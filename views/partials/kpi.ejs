@@ -1,0 +1,21 @@
+<%#
+  Tarjeta de indicador clicable. Recibe `k` = { titulo, valor, detalle, href, nivel }
+  nivel: 'ok' (verde, al día) · 'atencion' (amarillo) · 'critico' (rojo) · 'neutro' (informativo)
+%>
+<%
+  const estilos = {
+    ok: { caja: 'border-green-200 bg-green-50 hover:border-green-400', valor: 'text-green-700', titulo: 'text-green-800', icono: '✓' },
+    atencion: { caja: 'border-yellow-300 bg-yellow-50 hover:border-yellow-500', valor: 'text-yellow-700', titulo: 'text-yellow-800', icono: '!' },
+    critico: { caja: 'border-red-300 bg-red-50 hover:border-red-500', valor: 'text-red-700', titulo: 'text-red-800', icono: '⚠' },
+    neutro: { caja: 'border-slate-200 bg-white hover:border-indigo-300', valor: 'text-slate-800', titulo: 'text-slate-600', icono: '' },
+  };
+  const e = estilos[k.nivel] || estilos.neutro;
+%>
+<a href="<%= k.href %>" class="group block rounded-xl border p-4 transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 <%= e.caja %>">
+  <div class="flex items-start justify-between gap-2">
+    <p class="text-sm font-medium <%= e.titulo %>"><%= k.titulo %></p>
+    <% if (e.icono) { %><span class="text-xs font-bold <%= e.valor %>" aria-hidden="true"><%= e.icono %></span><% } %>
+  </div>
+  <p class="mt-1 text-3xl font-bold <%= e.valor %>"><%= k.valor %></p>
+  <p class="mt-1 text-xs text-slate-500 group-hover:text-slate-700"><%= k.detalle %> <span aria-hidden="true">&rarr;</span></p>
+</a>

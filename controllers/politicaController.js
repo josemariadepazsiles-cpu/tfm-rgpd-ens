@@ -70,6 +70,9 @@ const list = async (req, res) => {
   const admin = esAdmin(req.user);
   const tipo = esOpcion(TIPOS_POLITICA, req.query.tipo) ? req.query.tipo : '';
   const estado = admin && esOpcion(ESTADOS_POLITICA, req.query.estado) ? req.query.estado : '';
+  // Filtros rápidos (enlazados desde el panel de control)
+  const FILTROS = { revision: 'Revisión vencida o en los próximos 30 días', pendientes: 'Pendientes de tu aceptación' };
+  const filtro = esOpcion(FILTROS, req.query.filtro) ? req.query.filtro : '';
 
   const politicas = await prisma.politica.findMany({
     where: {
@@ -83,13 +86,17 @@ const list = async (req, res) => {
 
   res.render('politicas/index', {
     title: 'Políticas y Documentación',
-    politicas: politicas.map((p) => ({
-      ...p,
-      alerta: alertaRevision(p, ahora),
-      pendienteAceptar: p.estado === 'APROBADA' && p.requiere_aceptacion && !p.aceptaciones.some((a) => a.version_aceptada === p.version),
-    })),
+    politicas: politicas
+      .map((p) => ({
+        ...p,
+        alerta: alertaRevision(p, ahora),
+        pendienteAceptar: p.estado === 'APROBADA' && p.requiere_aceptacion && !p.aceptaciones.some((a) => a.version_aceptada === p.version),
+      }))
+      .filter((p) => (filtro === 'revision' ? p.alerta : filtro === 'pendientes' ? p.pendienteAceptar : true)),
     tipo,
     estado,
+    filtro,
+    filtroAlerta: filtro ? { texto: FILTROS[filtro], quitar: '/politicas' } : null,
     ...opciones,
   });
 };

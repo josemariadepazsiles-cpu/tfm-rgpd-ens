@@ -2,7 +2,8 @@ const prisma = require('../lib/prisma');
 const { esAdmin, esAdminOResponsable, idValido } = require('../lib/permisos');
 const { desdeInputFecha, desdeInputFechaHora } = require('../lib/formato');
 const {
-  CRITICIDADES, ESTADOS_REVISION_BIA, TIPOS_PRUEBA, RESULTADOS_PRUEBA, alertas, formatoHoras,
+  CRITICIDADES, ESTADOS_REVISION_BIA, TIPOS_PRUEBA, RESULTADOS_PRUEBA, CRITICIDADES_ALTAS,
+  alertas, formatoHoras, inicioVentanaPruebas,
 } = require('../lib/bia');
 
 // Cualquier usuario autenticado puede consultar el BIA. Crear procesos es solo para el
@@ -116,12 +117,31 @@ const ultimasPruebas = async (ids) => {
   return new Map(filas.map((f) => [f.proceso_id, f._max.fecha_prueba]));
 };
 
+// Filtros rápidos (enlazados desde el panel de control): procesos de criticidad alta o crítica
+const FILTROS = {
+  sin_plan: {
+    texto: 'Criticidad alta o crítica sin plan de contingencia definido',
+    where: () => ({ criticidad: { in: CRITICIDADES_ALTAS }, estado_revision: { not: 'PLAN_DEFINIDO' } }),
+  },
+  sin_prueba: {
+    texto: 'Criticidad alta o crítica sin prueba de continuidad en los últimos 12 meses',
+    where: () => ({ criticidad: { in: CRITICIDADES_ALTAS }, pruebas: { none: { fecha_prueba: { gte: inicioVentanaPruebas() } } } }),
+  },
+};
+
 const list = async (req, res) => {
   const criticidad = esOpcion(CRITICIDADES, req.query.criticidad) ? req.query.criticidad : '';
   const estado = esOpcion(ESTADOS_REVISION_BIA, req.query.estado) ? req.query.estado : '';
+  const filtro = esOpcion(FILTROS, req.query.filtro) ? req.query.filtro : '';
 
   const procesos = await prisma.procesoNegocio.findMany({
-    where: { ...(criticidad && { criticidad }), ...(estado && { estado_revision: estado }) },
+    where: {
+      AND: [
+        criticidad ? { criticidad } : {},
+        estado ? { estado_revision: estado } : {},
+        filtro ? FILTROS[filtro].where() : {},
+      ],
+    },
     include: { responsable: usuarioSelect, sistema: { select: { id: true, nombre: true } } },
     orderBy: [{ criticidad: 'desc' }, { nombre: 'asc' }],
   });
@@ -138,6 +158,8 @@ const list = async (req, res) => {
     })),
     criticidad,
     estado,
+    filtro,
+    filtroAlerta: filtro ? { texto: FILTROS[filtro].texto, quitar: '/bia' } : null,
     ...opciones,
   });
 };

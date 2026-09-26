@@ -29,7 +29,10 @@
       </div>
     <% } %>
 
+    <%- include("../partials/filtro-alerta") %>
+
     <form action="/proveedores" method="GET" class="mt-6 flex flex-wrap items-end gap-3">
+      <% if (alerta) { %><input type="hidden" name="alerta" value="<%= alerta %>"><% } %>
       <div>
         <label for="estado" class="block text-sm font-medium text-slate-700">Estado</label>
         <select id="estado" name="estado" onchange="this.form.submit()" class="<%= selectClase %>">
@@ -48,7 +51,7 @@
         </select>
       </div>
       <noscript><button type="submit" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">Filtrar</button></noscript>
-      <% if (estado || contrato) { %>
+      <% if (estado || contrato || alerta) { %>
         <a href="/proveedores" class="py-2 text-sm text-indigo-600 hover:underline">Quitar filtros</a>
       <% } %>
     </form>
@@ -56,7 +59,7 @@
     <div class="mt-4 bg-white rounded-2xl shadow overflow-x-auto">
       <% if (proveedores.length === 0) { %>
         <p class="p-8 text-center text-slate-500">
-          <%= estado || contrato ? 'No hay proveedores con esos filtros.' : 'No se ha registrado ningún proveedor.' %>
+          <%= estado || contrato || alerta ? 'No hay proveedores con esos filtros.' : 'No se ha registrado ningún proveedor.' %>
         </p>
       <% } else { %>
         <table class="w-full text-sm">

@@ -21,13 +21,16 @@
       <a href="/incidentes/nuevo" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">+ Nuevo incidente</a>
     </div>
 
-    <% if (vencidos) { %>
+    <%- include('../partials/filtro-alerta') %>
+
+    <% if (vencidos && alerta !== 'aepd_vencido') { %>
       <div class="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
         <strong><%= vencidos %> incidente(s)</strong> requieren notificación a la AEPD y han superado el plazo de 72 horas desde su detección.
       </div>
     <% } %>
 
     <form action="/incidentes" method="GET" class="mt-6 flex flex-wrap items-end gap-3">
+      <% if (alerta) { %><input type="hidden" name="alerta" value="<%= alerta %>"><% } %>
       <div>
         <label for="estado" class="block text-sm font-medium text-slate-700">Estado</label>
         <select id="estado" name="estado" onchange="this.form.submit()" class="<%= selectClase %>">
@@ -47,7 +50,7 @@
         </select>
       </div>
       <noscript><button type="submit" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">Filtrar</button></noscript>
-      <% if (estado || gravedad) { %>
+      <% if (estado || gravedad || alerta) { %>
         <a href="/incidentes" class="py-2 text-sm text-indigo-600 hover:underline">Quitar filtros</a>
       <% } %>
     </form>
@@ -55,7 +58,7 @@
     <div class="mt-4 bg-white rounded-2xl shadow overflow-x-auto">
       <% if (incidentes.length === 0) { %>
         <p class="p-8 text-center text-slate-500">
-          <%= estado || gravedad ? 'No hay incidentes con esos filtros.' : 'No se ha registrado ningún incidente.' %>
+          <%= estado || gravedad || alerta ? 'No hay incidentes con esos filtros.' : 'No se ha registrado ningún incidente.' %>
         </p>
       <% } else { %>
         <table class="w-full text-sm">

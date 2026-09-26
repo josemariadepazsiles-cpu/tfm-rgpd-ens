@@ -29,7 +29,10 @@
       </div>
     <% } %>
 
+    <%- include("../partials/filtro-alerta") %>
+
     <form action="/bia" method="GET" class="mt-6 flex flex-wrap items-end gap-3">
+      <% if (filtro) { %><input type="hidden" name="filtro" value="<%= filtro %>"><% } %>
       <div>
         <label for="criticidad" class="block text-sm font-medium text-slate-700">Criticidad</label>
         <select id="criticidad" name="criticidad" onchange="this.form.submit()" class="<%= selectClase %>">
@@ -49,12 +52,12 @@
         </select>
       </div>
       <noscript><button type="submit" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">Filtrar</button></noscript>
-      <% if (criticidad || estado) { %><a href="/bia" class="py-2 text-sm text-indigo-600 hover:underline">Quitar filtros</a><% } %>
+      <% if (criticidad || estado || filtro) { %><a href="/bia" class="py-2 text-sm text-indigo-600 hover:underline">Quitar filtros</a><% } %>
     </form>
 
     <div class="mt-4 bg-white rounded-2xl shadow overflow-x-auto">
       <% if (procesos.length === 0) { %>
-        <p class="p-8 text-center text-slate-500"><%= criticidad || estado ? 'No hay procesos con esos filtros.' : 'No se ha registrado ningún proceso de negocio.' %></p>
+        <p class="p-8 text-center text-slate-500"><%= criticidad || estado || filtro ? 'No hay procesos con esos filtros.' : 'No se ha registrado ningún proceso de negocio.' %></p>
       <% } else { %>
         <table class="w-full text-sm">
           <thead class="bg-slate-50 text-left text-slate-600">

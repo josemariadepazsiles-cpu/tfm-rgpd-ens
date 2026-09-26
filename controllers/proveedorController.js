@@ -101,14 +101,30 @@ const renderFormulario = async (res, { proveedor, errores = [], status = 200 }) 
   });
 };
 
+// Filtros rápidos (enlazados desde el panel de control); no cuentan los dados de baja
+const ALERTAS = {
+  sin_contrato: {
+    texto: 'Sin contrato de encargado firmado (sin contar las bajas)',
+    where: { estado: { not: 'BAJA' }, tiene_contrato_encargado: false },
+  },
+  sin_garantias: {
+    texto: 'Transferencia internacional sin mecanismo señalado (sin contar las bajas)',
+    where: { estado: { not: 'BAJA' }, fuera_ue: true, mecanismo_transferencia: 'NO_APLICA' },
+  },
+};
+
 const list = async (req, res) => {
   const estado = esOpcion(ESTADOS_PROVEEDOR, req.query.estado) ? req.query.estado : '';
   const contrato = ['si', 'no'].includes(req.query.contrato) ? req.query.contrato : '';
+  const alerta = esOpcion(ALERTAS, req.query.alerta) ? req.query.alerta : '';
 
   const proveedores = await prisma.proveedor.findMany({
     where: {
-      ...(estado && { estado }),
-      ...(contrato && { tiene_contrato_encargado: contrato === 'si' }),
+      AND: [
+        estado ? { estado } : {},
+        contrato ? { tiene_contrato_encargado: contrato === 'si' } : {},
+        alerta ? ALERTAS[alerta].where : {},
+      ],
     },
     include: { responsable: usuarioSelect, _count: { select: { documentos: true } } },
     orderBy: [{ estado: 'asc' }, { nombre_empresa: 'asc' }],
@@ -120,6 +136,8 @@ const list = async (req, res) => {
     proveedores: proveedores.map((p) => ({ ...p, alertas: alertas(p, ahora) })),
     estado,
     contrato,
+    alerta,
+    filtroAlerta: alerta ? { texto: ALERTAS[alerta].texto, quitar: '/proveedores' } : null,
     ...opciones,
   });
 };

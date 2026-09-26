@@ -137,7 +137,7 @@ const renderFormulario = async (req, res, { solicitud, errores = [], status = 20
 const list = async (req, res) => {
   const tipo = esOpcion(TIPOS_DERECHO, req.query.tipo) ? req.query.tipo : '';
   const estado = esOpcion(ESTADOS_SOLICITUD, req.query.estado) ? req.query.estado : '';
-  const plazo = ['vencidas', 'proximas'].includes(req.query.plazo) ? req.query.plazo : '';
+  const plazo = ['abiertas', 'vencidas', 'proximas'].includes(req.query.plazo) ? req.query.plazo : '';
 
   const solicitudes = await prisma.solicitudDerecho.findMany({
     where: { ...(tipo && { tipo_derecho: tipo }), ...(estado && { estado }) },
@@ -146,7 +146,12 @@ const list = async (req, res) => {
   const ahora = new Date();
   const conUrgencia = solicitudes
     .map((s) => ({ ...s, urgencia: urgencia(s, ahora), gestionable: esAdminOResponsable(req.user, s) }))
-    .filter((s) => !plazo || (plazo === 'vencidas' ? s.urgencia.nivel === 'rojo' : s.urgencia.nivel === 'amarillo'));
+    .filter((s) => {
+      if (plazo === 'abiertas') return !estaResuelta(s.estado);
+      if (plazo === 'vencidas') return s.urgencia.nivel === 'rojo';
+      if (plazo === 'proximas') return s.urgencia.nivel === 'amarillo';
+      return true;
+    });
 
   // Abiertas primero, por fecha límite más próxima; después las resueltas, las más recientes primero
   conUrgencia.sort((a, b) => {

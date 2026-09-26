@@ -52,6 +52,7 @@
         <label for="plazo" class="block text-sm font-medium text-slate-700">Plazo</label>
         <select id="plazo" name="plazo" onchange="this.form.submit()" class="<%= selectClase %>">
           <option value="">Todos</option>
+          <option value="abiertas" <%= plazo === 'abiertas' ? 'selected' : '' %>>Sin resolver</option>
           <option value="proximas" <%= plazo === 'proximas' ? 'selected' : '' %>>Vencen en <%= DIAS_AVISO %> días o menos</option>
           <option value="vencidas" <%= plazo === 'vencidas' ? 'selected' : '' %>>Vencidas sin resolver</option>
         </select>

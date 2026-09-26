@@ -1,3 +1,59 @@
+<%
+  // Nivel de una tarjeta que cuenta problemas: verde si no hay ninguno
+  const nivel = (valor, siHay = 'critico') => (valor > 0 ? siHay : 'ok');
+  // Color de un porcentaje de cumplimiento
+  const colorPct = (pct) => (pct >= 80 ? 'bg-green-500' : pct >= 50 ? 'bg-yellow-400' : 'bg-red-500');
+  const textoPct = (pct) => (pct >= 80 ? 'text-green-700' : pct >= 50 ? 'text-yellow-700' : 'text-red-700');
+
+  const { actividades: act, incidentes: inc, derechos: der, proveedores: prov, ens, declaraciones: decl, politicas: pol, bia } = m;
+  const declPendientes = decl.sinDeclaracion.length + decl.caducadas.length;
+  const ensSinEvaluar = ens.sistemas.filter((s) => !s.global).length;
+  const ensBajos = ens.sistemas.filter((s) => s.global && s.global.porcentaje < 50).length;
+
+  const secciones = {
+    rat: [
+      { titulo: 'Actividades de tratamiento', valor: act.actividades, detalle: user.rol === 'ADMIN' ? 'Registradas en el RAT' : 'De las que eres responsable', href: '/rat', nivel: 'neutro' },
+      { titulo: 'Riesgos de nivel alto', valor: act.riesgosAltos, detalle: `De ${act.riesgos} riesgos evaluados`, href: '/riesgos?nivel=ALTO', nivel: nivel(act.riesgosAltos, 'atencion') },
+    ],
+    incidentes: [
+      { titulo: 'Incidentes activos', valor: inc.activos, detalle: 'Sin cerrar', href: '/incidentes?alerta=activos', nivel: nivel(inc.activos, 'atencion') },
+      { titulo: 'Notificación AEPD pendiente', valor: inc.aepdPendientes, detalle: 'Requieren notificar (art. 33)', href: '/incidentes?alerta=aepd_pendiente', nivel: nivel(inc.aepdPendientes, 'atencion') },
+      { titulo: 'AEPD fuera de plazo (72 h)', valor: inc.aepdVencidos, detalle: 'Plazo legal superado', href: '/incidentes?alerta=aepd_vencido', nivel: nivel(inc.aepdVencidos) },
+    ],
+    derechos: [
+      { titulo: 'Solicitudes abiertas', valor: der.abiertas, detalle: 'Sin resolver', href: '/derechos?plazo=abiertas', nivel: 'neutro' },
+      { titulo: 'Plazo vencido', valor: der.vencidas, detalle: 'Sin resolver fuera de plazo', href: '/derechos?plazo=vencidas', nivel: nivel(der.vencidas) },
+    ],
+    proveedores: [
+      { titulo: 'Proveedores activos', valor: prov.activos, detalle: 'Relación vigente', href: '/proveedores?estado=ACTIVO', nivel: 'neutro' },
+      { titulo: 'Sin contrato de encargado', valor: prov.sinContrato, detalle: 'Art. 28.3 · sin contar bajas', href: '/proveedores?alerta=sin_contrato', nivel: nivel(prov.sinContrato) },
+      { titulo: 'Transferencia sin garantías', valor: prov.sinGarantias, detalle: 'Fuera del EEE sin mecanismo', href: '/proveedores?alerta=sin_garantias', nivel: nivel(prov.sinGarantias) },
+    ],
+    ens: [
+      { titulo: 'Cumplimiento global', valor: ens.global.evaluados ? ens.global.porcentaje + ' %' : '—', detalle: `${ens.global.implementados}/${ens.global.aplicables} controles aplicables`, href: '/sistemas', nivel: !ens.global.evaluados ? 'neutro' : ens.global.porcentaje >= 80 ? 'ok' : ens.global.porcentaje >= 50 ? 'atencion' : 'critico' },
+      { titulo: 'Sistemas por debajo del 50 %', valor: ensBajos, detalle: `${ensSinEvaluar} sin evaluar`, href: '/sistemas', nivel: nivel(ensBajos, 'atencion') },
+    ],
+    declaraciones: [
+      { titulo: 'Sin declaración vigente', valor: decl.sinDeclaracion.length, detalle: 'Sistemas sin declaración emitida', href: '/declaraciones', nivel: nivel(decl.sinDeclaracion.length, 'atencion') },
+      { titulo: 'Emitida hace más de 12 meses', valor: decl.caducadas.length, detalle: 'Conviene renovarla', href: '/declaraciones', nivel: nivel(decl.caducadas.length, 'atencion') },
+    ],
+    politicas: [
+      { titulo: 'Revisión vencida', valor: pol.revisionVencidas, detalle: 'Documentos a revisar ya', href: '/politicas?filtro=revision', nivel: nivel(pol.revisionVencidas) },
+      { titulo: 'Revisión en 30 días', valor: pol.revisionProximas, detalle: 'Próximas revisiones', href: '/politicas?filtro=revision', nivel: nivel(pol.revisionProximas, 'atencion') },
+      { titulo: 'Pendientes de tu aceptación', valor: pol.misPendientes.length, detalle: pol.misPendientes.length ? 'Léelas y acéptalas' : 'Estás al día', href: '/politicas?filtro=pendientes', nivel: nivel(pol.misPendientes.length, 'atencion') },
+    ],
+    bia: [
+      { titulo: 'Sin plan de contingencia', valor: bia.sinPlan, detalle: `De ${bia.altos} procesos críticos/altos`, href: '/bia?filtro=sin_plan', nivel: nivel(bia.sinPlan) },
+      { titulo: 'Sin prueba en 12 meses', valor: bia.sinPrueba, detalle: 'Procesos críticos/altos', href: '/bia?filtro=sin_prueba', nivel: nivel(bia.sinPrueba, 'atencion') },
+    ],
+  };
+  const todas = Object.values(secciones).flat();
+  const criticos = todas.filter((k) => k.nivel === 'critico').length;
+  const atencion = todas.filter((k) => k.nivel === 'atencion').length;
+
+  const total12m = inc.abiertos12m + inc.cerrados12m;
+  const pctCerrados = total12m ? Math.round((inc.cerrados12m / total12m) * 100) : 0;
+%>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -6,233 +62,220 @@
 <body class="min-h-screen bg-slate-100">
   <%- include('partials/nav') %>
 
-  <main class="max-w-6xl mx-auto px-4 py-8 space-y-6">
-    <div class="bg-white rounded-2xl shadow p-8">
-      <h1 class="text-2xl font-bold text-slate-800">
-        Bienvenido, <%= user.nombre %> (<%= roles[user.rol] %>)
-      </h1>
-
-      <div class="mt-6 flex flex-wrap gap-3">
-        <a href="/rat" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">
-          Actividades RAT
-        </a>
-        <a href="/riesgos" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">
-          Riesgos
-        </a>
-        <a href="/incidentes" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">
-          Incidentes / Brechas
-        </a>
-        <a href="/derechos" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">
-          Derechos de los Interesados
-        </a>
-        <a href="/proveedores" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">
-          Proveedores
-        </a>
-        <a href="/sistemas" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">
-          Sistemas ENS
-        </a>
-        <% if (user.rol === 'ADMIN') { %>
-          <a href="/registro" class="rounded-lg border border-slate-300 px-4 py-2 text-slate-700 hover:bg-slate-50 transition">
-            Registrar usuario
-          </a>
-        <% } %>
+  <main class="max-w-7xl mx-auto px-4 py-8 space-y-8">
+    <%# Cabecera y semáforo general %>
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-800">Panel de control</h1>
+        <p class="text-sm text-slate-500">Hola, <%= user.nombre %> (<%= roles[user.rol] %>) · <%= fechaHora(new Date()) %></p>
+      </div>
+      <div class="flex flex-wrap gap-2 text-sm" aria-label="Resumen de alertas">
+        <span class="inline-flex items-center gap-2 rounded-full bg-red-100 px-3 py-1 font-medium text-red-800">
+          <span class="h-2.5 w-2.5 rounded-full bg-red-500" aria-hidden="true"></span><%= criticos %> críticos
+        </span>
+        <span class="inline-flex items-center gap-2 rounded-full bg-yellow-100 px-3 py-1 font-medium text-yellow-800">
+          <span class="h-2.5 w-2.5 rounded-full bg-yellow-400" aria-hidden="true"></span><%= atencion %> requieren atención
+        </span>
+        <span class="inline-flex items-center gap-2 rounded-full bg-green-100 px-3 py-1 font-medium text-green-800">
+          <span class="h-2.5 w-2.5 rounded-full bg-green-500" aria-hidden="true"></span><%= todas.filter((k) => k.nivel === 'ok').length %> al día
+        </span>
       </div>
     </div>
 
-    <% if (politicas.misPendientes.length) { %>
-      <section class="rounded-2xl border-2 border-indigo-300 bg-indigo-50 p-6" role="status">
-        <h2 class="text-lg font-semibold text-indigo-900">
-          Tienes <%= politicas.misPendientes.length %> documento(s) pendientes de leer y aceptar
-        </h2>
-        <ul class="mt-3 space-y-2">
-          <% politicas.misPendientes.forEach((p) => { %>
-            <li class="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-white px-4 py-2">
-              <span class="text-slate-800">
-                <%= p.titulo %> <span class="text-xs text-slate-500"><%= TIPOS_POLITICA[p.tipo_documento] %> · versión <%= p.version %></span>
-              </span>
-              <a href="/politicas/<%= p.id %>" class="rounded-lg bg-indigo-600 px-3 py-1 text-sm text-white hover:bg-indigo-700">Leer y aceptar</a>
-            </li>
+    <%# Aviso personal: políticas pendientes de aceptar %>
+    <% if (pol.misPendientes.length) { %>
+      <section class="rounded-2xl border-2 border-indigo-300 bg-indigo-50 p-5" role="status">
+        <h2 class="font-semibold text-indigo-900">Tienes <%= pol.misPendientes.length %> documento(s) pendientes de leer y aceptar</h2>
+        <ul class="mt-3 flex flex-wrap gap-2">
+          <% pol.misPendientes.forEach((p) => { %>
+            <li><a href="/politicas/<%= p.id %>" class="inline-flex rounded-lg bg-white px-3 py-1.5 text-sm text-indigo-700 shadow-sm hover:bg-indigo-100"><%= p.titulo %> · v<%= p.version %> &rarr;</a></li>
           <% }) %>
         </ul>
       </section>
     <% } %>
 
-    <section class="bg-white rounded-2xl shadow p-8">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <h2 class="text-lg font-semibold text-slate-800">Incidentes y brechas de seguridad</h2>
-        <div class="flex flex-wrap gap-3 text-sm">
-          <a href="/incidentes/nuevo" class="text-indigo-600 hover:underline">+ Reportar incidente</a>
-          <a href="/incidentes" class="text-indigo-600 hover:underline">Ver incidentes &rarr;</a>
+    <%# Resumen ejecutivo: cumplimiento ENS global y ratio de incidentes %>
+    <section class="grid gap-6 lg:grid-cols-2">
+      <a href="/sistemas" class="block rounded-2xl bg-white p-6 shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <div class="flex items-baseline justify-between gap-3">
+          <h2 class="font-semibold text-slate-800">Cumplimiento ENS de la organización</h2>
+          <span class="text-3xl font-bold <%= ens.global.evaluados ? textoPct(ens.global.porcentaje) : 'text-slate-400' %>"><%= ens.global.evaluados ? ens.global.porcentaje + ' %' : '—' %></span>
         </div>
-      </div>
-
-      <div class="mt-6 grid gap-4 sm:grid-cols-3">
-        <div class="rounded-xl border border-slate-200 p-5">
-          <p class="text-sm font-medium text-slate-500">Incidentes activos</p>
-          <p class="mt-1 text-3xl font-bold text-slate-800"><%= incidentes.abiertos %></p>
-          <p class="mt-1 text-xs text-slate-500">No cerrados</p>
+        <div class="mt-4 h-4 rounded-full bg-slate-200 overflow-hidden" role="progressbar" aria-valuenow="<%= ens.global.porcentaje %>" aria-valuemin="0" aria-valuemax="100" aria-label="Cumplimiento ENS global">
+          <div class="h-full <%= colorPct(ens.global.porcentaje) %>" style="width: <%= ens.global.porcentaje %>%"></div>
         </div>
-        <div class="rounded-xl border p-5 <%= incidentes.aepdVencidos ? 'border-red-300 bg-red-50' : incidentes.aepdPendientes ? 'border-amber-300 bg-amber-50' : 'border-slate-200' %>">
-          <p class="text-sm font-medium <%= incidentes.aepdVencidos ? 'text-red-800' : 'text-slate-500' %>">Notificación AEPD pendiente</p>
-          <p class="mt-1 text-3xl font-bold <%= incidentes.aepdVencidos ? 'text-red-700' : 'text-slate-800' %>"><%= incidentes.aepdPendientes %></p>
-          <p class="mt-1 text-xs <%= incidentes.aepdVencidos ? 'font-semibold text-red-700' : 'text-slate-500' %>">
-            <%= incidentes.aepdVencidos %> fuera de plazo (más de 72 h)
-          </p>
-        </div>
-        <div class="rounded-xl border border-slate-200 p-5">
-          <p class="text-sm font-medium text-slate-500">Incidente activo más grave</p>
-          <% if (incidentes.masGrave) { const g = incidentes.masGrave; %>
-            <a href="/incidentes/<%= g.id %>" class="mt-1 block font-semibold text-slate-800 hover:text-indigo-600 hover:underline line-clamp-2"><%= g.titulo %></a>
-            <div class="mt-2 flex flex-wrap items-center gap-2">
-              <%- include('partials/incidente-badges', { gravedadBadge: g.gravedad }) %>
-              <%- include('partials/incidente-badges', { estadoBadge: g.estado }) %>
-              <% if (g.plazo.tipo === 'vencido') { %><%- include('partials/plazo-aepd', { plazo: g.plazo }) %><% } %>
-            </div>
-          <% } else { %>
-            <p class="mt-1 text-sm text-slate-500 italic">Ningún incidente activo</p>
-          <% } %>
-        </div>
-      </div>
-    </section>
-
-    <section class="bg-white rounded-2xl shadow p-8">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <h2 class="text-lg font-semibold text-slate-800">Derechos de los interesados</h2>
-        <div class="flex flex-wrap gap-3 text-sm">
-          <a href="/derechos/nueva" class="text-indigo-600 hover:underline">+ Nueva solicitud</a>
-          <a href="/derechos" class="text-indigo-600 hover:underline">Ver solicitudes &rarr;</a>
-        </div>
-      </div>
-
-      <div class="mt-6 grid gap-4 sm:grid-cols-3">
-        <div class="rounded-xl border border-slate-200 p-5">
-          <p class="text-sm font-medium text-slate-500">Solicitudes abiertas</p>
-          <p class="mt-1 text-3xl font-bold text-slate-800"><%= derechos.abiertas %></p>
-          <p class="mt-1 text-xs text-slate-500">Sin resolver</p>
-        </div>
-        <a href="/derechos?plazo=vencidas" class="block rounded-xl border p-5 hover:shadow <%= derechos.vencidas ? 'border-red-300 bg-red-50' : 'border-slate-200' %>">
-          <p class="text-sm font-medium <%= derechos.vencidas ? 'text-red-800' : 'text-slate-500' %>">Plazo vencido sin resolver</p>
-          <p class="mt-1 text-3xl font-bold <%= derechos.vencidas ? 'text-red-700' : 'text-slate-800' %>"><%= derechos.vencidas %></p>
-          <p class="mt-1 text-xs <%= derechos.vencidas ? 'font-semibold text-red-700' : 'text-slate-500' %>">
-            <%= derechos.vencidas ? 'Requieren atención inmediata' : 'Todas dentro de plazo' %>
-          </p>
-        </a>
-        <div class="rounded-xl border border-slate-200 p-5">
-          <p class="text-sm font-medium text-slate-500">Próxima en vencer</p>
-          <% if (derechos.proxima) { const p = derechos.proxima; %>
-            <a href="/derechos/<%= p.id %>" class="mt-1 block font-semibold text-slate-800 hover:text-indigo-600 hover:underline">
-              <%= TIPOS_DERECHO[p.tipo_derecho] %> · <%= p.nombre_solicitante %>
-            </a>
-            <p class="mt-1 text-xs text-slate-500">Fecha límite: <%= fecha(p.fecha_limite) %></p>
-            <div class="mt-2"><%- include('partials/urgencia-derecho', { u: p.urgencia }) %></div>
-          <% } else { %>
-            <p class="mt-1 text-sm text-slate-500 italic">Ninguna solicitud pendiente dentro de plazo</p>
-          <% } %>
-        </div>
-      </div>
-    </section>
-
-    <section class="bg-white rounded-2xl shadow p-8">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <h2 class="text-lg font-semibold text-slate-800">Encargados del tratamiento / Proveedores</h2>
-        <a href="/proveedores" class="text-sm text-indigo-600 hover:underline">Ver proveedores &rarr;</a>
-      </div>
-
-      <div class="mt-6 grid gap-4 sm:grid-cols-3">
-        <a href="/proveedores?estado=ACTIVO" class="block rounded-xl border border-slate-200 p-5 hover:shadow">
-          <p class="text-sm font-medium text-slate-500">Proveedores activos</p>
-          <p class="mt-1 text-3xl font-bold text-slate-800"><%= proveedores.activos %></p>
-          <p class="mt-1 text-xs text-slate-500">Con relación vigente</p>
-        </a>
-        <a href="/proveedores?contrato=no" class="block rounded-xl border p-5 hover:shadow <%= proveedores.sinContrato ? 'border-red-300 bg-red-50' : 'border-slate-200' %>">
-          <p class="text-sm font-medium <%= proveedores.sinContrato ? 'text-red-800' : 'text-slate-500' %>">Sin contrato de encargado</p>
-          <p class="mt-1 text-3xl font-bold <%= proveedores.sinContrato ? 'text-red-700' : 'text-slate-800' %>"><%= proveedores.sinContrato %></p>
-          <p class="mt-1 text-xs <%= proveedores.sinContrato ? 'font-semibold text-red-700' : 'text-slate-500' %>">Art. 28.3 · sin contar las bajas</p>
-        </a>
-        <div class="rounded-xl border p-5 <%= proveedores.sinMecanismo ? 'border-orange-300 bg-orange-50' : 'border-slate-200' %>">
-          <p class="text-sm font-medium <%= proveedores.sinMecanismo ? 'text-orange-800' : 'text-slate-500' %>">Transferencia internacional sin garantías</p>
-          <p class="mt-1 text-3xl font-bold <%= proveedores.sinMecanismo ? 'text-orange-700' : 'text-slate-800' %>"><%= proveedores.sinMecanismo %></p>
-          <p class="mt-1 text-xs <%= proveedores.sinMecanismo ? 'font-semibold text-orange-700' : 'text-slate-500' %>">Fuera del EEE sin mecanismo señalado</p>
-        </div>
-      </div>
-    </section>
-
-    <section class="bg-white rounded-2xl shadow p-8">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <h2 class="text-lg font-semibold text-slate-800">Políticas y documentación</h2>
-        <a href="/politicas" class="text-sm text-indigo-600 hover:underline">Ver documentos &rarr;</a>
-      </div>
-      <div class="mt-6 grid gap-4 sm:grid-cols-3">
-        <div class="rounded-xl border p-5 <%= politicas.revisionVencidas ? 'border-red-300 bg-red-50' : 'border-slate-200' %>">
-          <p class="text-sm font-medium <%= politicas.revisionVencidas ? 'text-red-800' : 'text-slate-500' %>">Revisión vencida</p>
-          <p class="mt-1 text-3xl font-bold <%= politicas.revisionVencidas ? 'text-red-700' : 'text-slate-800' %>"><%= politicas.revisionVencidas %></p>
-          <p class="mt-1 text-xs text-slate-500">Documentos no obsoletos</p>
-        </div>
-        <div class="rounded-xl border p-5 <%= politicas.revisionProximas ? 'border-yellow-300 bg-yellow-50' : 'border-slate-200' %>">
-          <p class="text-sm font-medium <%= politicas.revisionProximas ? 'text-yellow-800' : 'text-slate-500' %>">Revisión en 30 días o menos</p>
-          <p class="mt-1 text-3xl font-bold text-slate-800"><%= politicas.revisionProximas %></p>
-          <p class="mt-1 text-xs text-slate-500">Pendientes de revisión periódica</p>
-        </div>
-        <div class="rounded-xl border p-5 <%= politicas.misPendientes.length ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200' %>">
-          <p class="text-sm font-medium <%= politicas.misPendientes.length ? 'text-indigo-800' : 'text-slate-500' %>">Pendientes de tu aceptación</p>
-          <p class="mt-1 text-3xl font-bold <%= politicas.misPendientes.length ? 'text-indigo-700' : 'text-slate-800' %>"><%= politicas.misPendientes.length %></p>
-          <p class="mt-1 text-xs text-slate-500"><%= politicas.misPendientes.length ? 'Consúltalas arriba' : 'Estás al día' %></p>
-        </div>
-      </div>
-    </section>
-
-    <section class="bg-white rounded-2xl shadow p-8">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <h2 class="text-lg font-semibold text-slate-800">BIA y continuidad</h2>
-        <a href="/bia" class="text-sm text-indigo-600 hover:underline">Ver procesos &rarr;</a>
-      </div>
-      <p class="mt-1 text-sm text-slate-500">Procesos de negocio de criticidad alta o crítica</p>
-      <div class="mt-6 grid gap-4 sm:grid-cols-2">
-        <div class="rounded-xl border p-5 <%= bia.sinPlan ? 'border-red-300 bg-red-50' : 'border-slate-200' %>">
-          <p class="text-sm font-medium <%= bia.sinPlan ? 'text-red-800' : 'text-slate-500' %>">Sin plan de contingencia definido</p>
-          <p class="mt-1 text-3xl font-bold <%= bia.sinPlan ? 'text-red-700' : 'text-slate-800' %>"><%= bia.sinPlan %></p>
-        </div>
-        <div class="rounded-xl border p-5 <%= bia.sinPrueba ? 'border-yellow-300 bg-yellow-50' : 'border-slate-200' %>">
-          <p class="text-sm font-medium <%= bia.sinPrueba ? 'text-yellow-800' : 'text-slate-500' %>">Sin prueba de continuidad en 12 meses</p>
-          <p class="mt-1 text-3xl font-bold text-slate-800"><%= bia.sinPrueba %></p>
-        </div>
-      </div>
-    </section>
-
-    <section class="bg-white rounded-2xl shadow p-8">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <h2 class="text-lg font-semibold text-slate-800">Cumplimiento ENS por sistema</h2>
-        <a href="/sistemas" class="text-sm text-indigo-600 hover:underline">Ver sistemas &rarr;</a>
-      </div>
-
-      <% if (sistemas.length === 0) { %>
-        <p class="mt-6 text-sm text-slate-500">
-          Todavía no hay sistemas.<% if (user.rol === 'ADMIN') { %> <a href="/sistemas/nuevo" class="text-indigo-600 hover:underline">Crea el primero</a>.<% } %>
+        <p class="mt-2 text-xs text-slate-500">
+          <%= ens.global.implementados %> de <%= ens.global.aplicables %> controles aplicables implementados en la última evaluación de <%= ens.global.evaluados %> sistema(s)<%= ensSinEvaluar ? ' · ' + ensSinEvaluar + ' sin evaluar' : '' %>.
+          Verde ≥ 80 % · amarillo ≥ 50 % · rojo &lt; 50 %.
         </p>
-      <% } %>
+      </a>
 
-      <div class="mt-6 space-y-6">
-        <% sistemas.forEach((s) => { %>
-          <div>
-            <div class="flex flex-wrap items-baseline justify-between gap-2">
-              <div class="flex flex-wrap items-center gap-3">
-                <a href="/sistemas/<%= s.id %>" class="font-semibold text-slate-800 hover:text-indigo-600 hover:underline"><%= s.nombre %></a>
-                <% if (s.categoria_general) { %><%- include('partials/categoria-badge', { categoria: s.categoria_general }) %><% } %>
-                <% if (s.global) { %><%- include('partials/barra-global', { global: s.global }) %><% } %>
-              </div>
-              <% if (s.ultima) { %>
-                <a href="/evaluaciones/<%= s.ultima.id %>" class="text-xs text-slate-500 hover:underline">Última evaluación: <%= s.ultima.nombre %></a>
-              <% } %>
-            </div>
-            <div class="mt-2">
-              <% if (s.resumen) { %>
-                <%- include('partials/resumen-ens', { resumen: s.resumen, compacto: true }) %>
-              <% } else { %>
-                <p class="text-sm text-slate-500 italic">Sin evaluaciones todavía.</p>
-              <% } %>
-            </div>
+      <a href="/incidentes" class="block rounded-2xl bg-white p-6 shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <div class="flex items-baseline justify-between gap-3">
+          <h2 class="font-semibold text-slate-800">Incidentes de los últimos 12 meses</h2>
+          <span class="text-3xl font-bold text-slate-800"><%= total12m %></span>
+        </div>
+        <% if (total12m) { %>
+          <div class="mt-4 flex h-4 rounded-full overflow-hidden bg-slate-200" role="img" aria-label="<%= inc.cerrados12m %> cerrados y <%= inc.abiertos12m %> abiertos">
+            <div class="h-full bg-green-500" style="width: <%= pctCerrados %>%"></div>
+            <div class="h-full <%= inc.abiertos12m ? 'bg-yellow-400' : '' %>" style="width: <%= 100 - pctCerrados %>%"></div>
           </div>
-        <% }) %>
+          <div class="mt-2 flex flex-wrap gap-4 text-xs text-slate-600">
+            <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-sm bg-green-500" aria-hidden="true"></span>Cerrados: <strong><%= inc.cerrados12m %></strong> (<%= pctCerrados %> %)</span>
+            <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-sm bg-yellow-400" aria-hidden="true"></span>Abiertos: <strong><%= inc.abiertos12m %></strong> (<%= 100 - pctCerrados %> %)</span>
+          </div>
+        <% } else { %>
+          <p class="mt-4 text-sm text-slate-500">No se ha detectado ningún incidente en los últimos 12 meses.</p>
+        <% } %>
+      </a>
+    </section>
+
+    <%# ===================== RGPD ===================== %>
+    <section>
+      <h2 class="text-lg font-bold uppercase tracking-wide text-indigo-700">RGPD</h2>
+      <div class="mt-4 grid gap-6 lg:grid-cols-2">
+
+        <div class="rounded-2xl bg-white p-5 shadow">
+          <div class="flex items-center justify-between"><h3 class="font-semibold text-slate-800">Actividades y riesgos</h3><a href="/rat" class="text-sm text-indigo-600 hover:underline">Ir al RAT</a></div>
+          <div class="mt-4 grid gap-3 sm:grid-cols-2"><% secciones.rat.forEach((k) => { %><%- include('partials/kpi', { k }) %><% }) %></div>
+        </div>
+
+        <div class="rounded-2xl bg-white p-5 shadow">
+          <div class="flex items-center justify-between"><h3 class="font-semibold text-slate-800">Incidentes / Brechas</h3><a href="/incidentes" class="text-sm text-indigo-600 hover:underline">Ir al módulo</a></div>
+          <div class="mt-4 grid gap-3 sm:grid-cols-3"><% secciones.incidentes.forEach((k) => { %><%- include('partials/kpi', { k }) %><% }) %></div>
+          <% if (inc.urgentes.length) { %>
+            <h4 class="mt-4 text-xs font-semibold uppercase text-red-700">Urgente: notificar a la AEPD</h4>
+            <ul class="mt-1 divide-y divide-slate-100 text-sm">
+              <% inc.urgentes.forEach((i) => { %>
+                <li class="flex justify-between gap-3 py-1.5">
+                  <a href="/incidentes/<%= i.id %>" class="text-slate-800 hover:text-indigo-600 hover:underline line-clamp-1"><%= i.titulo %></a>
+                  <span class="whitespace-nowrap text-xs text-red-700">Detectado <%= fecha(i.fecha_deteccion) %></span>
+                </li>
+              <% }) %>
+            </ul>
+          <% } %>
+        </div>
+
+        <div class="rounded-2xl bg-white p-5 shadow">
+          <div class="flex items-center justify-between"><h3 class="font-semibold text-slate-800">Derechos de los interesados</h3><a href="/derechos" class="text-sm text-indigo-600 hover:underline">Ir al módulo</a></div>
+          <div class="mt-4 grid gap-3 sm:grid-cols-3">
+            <% secciones.derechos.forEach((k) => { %><%- include('partials/kpi', { k }) %><% }) %>
+            <% const p = der.proxima; %>
+            <a href="<%= p ? '/derechos/' + p.id : '/derechos?plazo=proximas' %>" class="group block rounded-xl border p-4 transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 <%= p && p.urgencia.nivel === 'amarillo' ? 'border-yellow-300 bg-yellow-50' : 'border-slate-200 bg-white' %>">
+              <p class="text-sm font-medium text-slate-600">Próxima en vencer</p>
+              <% if (p) { %>
+                <p class="mt-1 font-semibold text-slate-800 line-clamp-1"><%= TIPOS_DERECHO[p.tipo_derecho] %> · <%= p.nombre_solicitante %></p>
+                <p class="mt-1 text-xs <%= p.urgencia.nivel === 'amarillo' ? 'font-semibold text-yellow-700' : 'text-slate-500' %>">
+                  <%= fecha(p.fecha_limite) %> · <%= p.urgencia.dias === 0 ? 'vence hoy' : 'quedan ' + p.urgencia.dias + ' días' %> &rarr;
+                </p>
+              <% } else { %>
+                <p class="mt-1 text-sm text-slate-500">Ninguna pendiente en plazo</p>
+              <% } %>
+            </a>
+          </div>
+          <% if (der.urgentes.length) { %>
+            <h4 class="mt-4 text-xs font-semibold uppercase text-red-700">Urgente: fuera de plazo</h4>
+            <ul class="mt-1 divide-y divide-slate-100 text-sm">
+              <% der.urgentes.forEach((s) => { %>
+                <li class="flex justify-between gap-3 py-1.5">
+                  <a href="/derechos/<%= s.id %>" class="text-slate-800 hover:text-indigo-600 hover:underline"><%= TIPOS_DERECHO[s.tipo_derecho] %> · <%= s.nombre_solicitante %></a>
+                  <span class="whitespace-nowrap text-xs text-red-700">Vencida hace <%= s.urgencia.diasVencida %> día(s)</span>
+                </li>
+              <% }) %>
+            </ul>
+          <% } %>
+        </div>
+
+        <div class="rounded-2xl bg-white p-5 shadow">
+          <div class="flex items-center justify-between"><h3 class="font-semibold text-slate-800">Proveedores (encargados del tratamiento)</h3><a href="/proveedores" class="text-sm text-indigo-600 hover:underline">Ir al módulo</a></div>
+          <div class="mt-4 grid gap-3 sm:grid-cols-3"><% secciones.proveedores.forEach((k) => { %><%- include('partials/kpi', { k }) %><% }) %></div>
+        </div>
+      </div>
+    </section>
+
+    <%# ===================== ENS ===================== %>
+    <section>
+      <h2 class="text-lg font-bold uppercase tracking-wide text-indigo-700">ENS</h2>
+      <div class="mt-4 grid gap-6 lg:grid-cols-2">
+
+        <div class="rounded-2xl bg-white p-5 shadow lg:col-span-2">
+          <div class="flex items-center justify-between"><h3 class="font-semibold text-slate-800">Cumplimiento por sistema</h3><a href="/sistemas" class="text-sm text-indigo-600 hover:underline">Ir a sistemas</a></div>
+          <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><% secciones.ens.forEach((k) => { %><%- include('partials/kpi', { k }) %><% }) %></div>
+          <% if (ens.sistemas.length === 0) { %>
+            <p class="mt-4 text-sm text-slate-500">Todavía no hay sistemas registrados.</p>
+          <% } else { %>
+            <ul class="mt-4 divide-y divide-slate-100">
+              <% ens.sistemas.forEach((s) => { const pct = s.global ? s.global.porcentaje : 0; %>
+                <li>
+                  <a href="<%= s.ultima ? '/evaluaciones/' + s.ultima.id : '/sistemas/' + s.id %>" class="grid grid-cols-12 items-center gap-3 rounded-lg px-2 py-2 hover:bg-slate-50">
+                    <span class="col-span-12 sm:col-span-4 font-medium text-slate-800"><%= s.nombre %></span>
+                    <span class="col-span-4 sm:col-span-2">
+                      <% if (s.categoria_general) { %>
+                        <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset <%= categoriaClases[s.categoria_general].badge %>"><%= CATEGORIAS_SISTEMA[s.categoria_general] %></span>
+                      <% } else { %><span class="text-xs text-slate-400 italic">Sin categoría</span><% } %>
+                    </span>
+                    <% if (s.global) { %>
+                      <span class="col-span-6 sm:col-span-5 h-3 rounded-full bg-slate-200 overflow-hidden" role="progressbar" aria-valuenow="<%= pct %>" aria-valuemin="0" aria-valuemax="100" aria-label="Cumplimiento <%= s.nombre %>">
+                        <span class="block h-full <%= colorPct(pct) %>" style="width: <%= pct %>%"></span>
+                      </span>
+                      <span class="col-span-2 sm:col-span-1 text-right text-sm font-semibold <%= textoPct(pct) %>"><%= pct %> %</span>
+                    <% } else { %>
+                      <span class="col-span-8 sm:col-span-6 text-sm text-slate-400 italic">Sin evaluaciones</span>
+                    <% } %>
+                  </a>
+                </li>
+              <% }) %>
+            </ul>
+          <% } %>
+        </div>
+
+        <div class="rounded-2xl bg-white p-5 shadow">
+          <div class="flex items-center justify-between"><h3 class="font-semibold text-slate-800">Declaraciones de Conformidad</h3><a href="/declaraciones" class="text-sm text-indigo-600 hover:underline">Ir al módulo</a></div>
+          <div class="mt-4 grid gap-3 sm:grid-cols-2"><% secciones.declaraciones.forEach((k) => { %><%- include('partials/kpi', { k }) %><% }) %></div>
+          <% if (declPendientes) { %>
+            <ul class="mt-4 divide-y divide-slate-100 text-sm">
+              <% decl.sinDeclaracion.forEach((s) => { %>
+                <li class="flex justify-between gap-3 py-1.5">
+                  <a href="/declaraciones?sistema=<%= s.id %>" class="text-slate-800 hover:text-indigo-600 hover:underline"><%= s.nombre %></a>
+                  <span class="text-xs text-yellow-700">Sin declaración emitida</span>
+                </li>
+              <% }) %>
+              <% decl.caducadas.forEach((s) => { %>
+                <li class="flex justify-between gap-3 py-1.5">
+                  <a href="/declaraciones?sistema=<%= s.id %>" class="text-slate-800 hover:text-indigo-600 hover:underline"><%= s.nombre %></a>
+                  <span class="text-xs text-yellow-700">Emitida el <%= fecha(s.emitida) %></span>
+                </li>
+              <% }) %>
+            </ul>
+          <% } else if (decl.totalSistemas) { %>
+            <p class="mt-3 text-sm text-green-700">Todos los sistemas tienen una declaración emitida en los últimos 12 meses.</p>
+          <% } %>
+        </div>
+
+        <div class="rounded-2xl bg-white p-5 shadow">
+          <div class="flex items-center justify-between"><h3 class="font-semibold text-slate-800">Políticas y documentación</h3><a href="/politicas" class="text-sm text-indigo-600 hover:underline">Ir al módulo</a></div>
+          <div class="mt-4 grid gap-3 sm:grid-cols-3"><% secciones.politicas.forEach((k) => { %><%- include('partials/kpi', { k }) %><% }) %></div>
+        </div>
+
+        <div class="rounded-2xl bg-white p-5 shadow lg:col-span-2">
+          <div class="flex items-center justify-between"><h3 class="font-semibold text-slate-800">BIA y continuidad</h3><a href="/bia" class="text-sm text-indigo-600 hover:underline">Ir al módulo</a></div>
+          <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <% secciones.bia.forEach((k) => { %><%- include('partials/kpi', { k }) %><% }) %>
+            <% if (bia.urgentes.length) { %>
+              <div class="sm:col-span-2 rounded-xl border border-red-200 p-4">
+                <h4 class="text-xs font-semibold uppercase text-red-700">Críticos/altos pendientes de análisis</h4>
+                <ul class="mt-1 divide-y divide-slate-100 text-sm">
+                  <% bia.urgentes.forEach((b) => { %>
+                    <li class="flex justify-between gap-3 py-1.5">
+                      <a href="/bia/<%= b.id %>" class="text-slate-800 hover:text-indigo-600 hover:underline"><%= b.nombre %></a>
+                      <span class="text-xs text-slate-500"><%= CRITICIDADES[b.criticidad] %></span>
+                    </li>
+                  <% }) %>
+                </ul>
+              </div>
+            <% } %>
+          </div>
+        </div>
       </div>
     </section>
   </main>
