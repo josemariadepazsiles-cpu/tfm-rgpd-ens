@@ -1,0 +1,124 @@
+<%
+  const inputClase = 'mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500';
+  const accion = actividad.id ? '/rat/' + actividad.id : '/rat';
+  const volver = actividad.id ? '/rat/' + actividad.id : '/rat';
+%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body class="min-h-screen bg-slate-100">
+  <%- include('../partials/nav') %>
+
+  <main class="max-w-3xl mx-auto px-4 py-8">
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-bold text-slate-800"><%= title %></h1>
+      <a href="<%= volver %>" class="text-sm text-indigo-600 hover:underline">Cancelar</a>
+    </div>
+
+    <% if (errores.length) { %>
+      <ul class="mt-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 list-disc list-inside" role="alert">
+        <% errores.forEach((e) => { %><li><%= e %></li><% }) %>
+      </ul>
+    <% } %>
+
+    <form action="<%= accion %>" method="POST" class="mt-6 space-y-6"
+          x-data="{ transferencia: <%= actividad.transferencia_intl ? 'true' : 'false' %> }">
+
+      <!-- 1. Datos básicos -->
+      <fieldset class="bg-white rounded-2xl shadow p-6 space-y-4">
+        <legend class="float-left w-full mb-2 text-lg font-semibold text-slate-800">1. Datos básicos</legend>
+        <div class="clear-both">
+          <label for="nombre" class="block text-sm font-medium text-slate-700">Nombre de la actividad</label>
+          <input id="nombre" name="nombre" type="text" required value="<%= actividad.nombre || '' %>" class="<%= inputClase %>"
+                 placeholder="Ej.: Gestión de nóminas">
+        </div>
+        <div>
+          <label for="finalidad" class="block text-sm font-medium text-slate-700">Finalidad del tratamiento</label>
+          <textarea id="finalidad" name="finalidad" rows="3" required class="<%= inputClase %>"><%= actividad.finalidad || '' %></textarea>
+        </div>
+        <div>
+          <label for="base_legal" class="block text-sm font-medium text-slate-700">Base legal</label>
+          <select id="base_legal" name="base_legal" required class="<%= inputClase %> bg-white">
+            <option value="" disabled <%= actividad.base_legal ? '' : 'selected' %>>Selecciona una base legal</option>
+            <% Object.entries(basesLegales).forEach(([valor, etiqueta]) => { %>
+              <option value="<%= valor %>" <%= actividad.base_legal === valor ? 'selected' : '' %>><%= etiqueta %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div>
+          <label for="usuario_id" class="block text-sm font-medium text-slate-700">Responsable</label>
+          <% if (user.rol === 'ADMIN') { %>
+            <select id="usuario_id" name="usuario_id" required class="<%= inputClase %> bg-white">
+              <% responsables.forEach((r) => { %>
+                <option value="<%= r.id %>" <%= actividad.usuario_id === r.id ? 'selected' : '' %>>
+                  <%= r.nombre %><%= r.area ? ' — ' + r.area : '' %>
+                </option>
+              <% }) %>
+            </select>
+          <% } else { %>
+            <p class="mt-1 rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 text-slate-600">
+              <%= actividad.responsable ? actividad.responsable.nombre : user.nombre %>
+            </p>
+          <% } %>
+        </div>
+      </fieldset>
+
+      <!-- 2. Datos e interesados -->
+      <fieldset class="bg-white rounded-2xl shadow p-6 space-y-4">
+        <legend class="float-left w-full mb-2 text-lg font-semibold text-slate-800">2. Datos e interesados</legend>
+        <div class="clear-both">
+          <label for="categorias_datos" class="block text-sm font-medium text-slate-700">Categorías de datos personales</label>
+          <textarea id="categorias_datos" name="categorias_datos" rows="3" required class="<%= inputClase %>"
+                    placeholder="Ej.: identificativos, datos bancarios, datos de salud…"><%= actividad.categorias_datos || '' %></textarea>
+        </div>
+        <div>
+          <label for="categorias_interesados" class="block text-sm font-medium text-slate-700">Categorías de interesados</label>
+          <textarea id="categorias_interesados" name="categorias_interesados" rows="2" required class="<%= inputClase %>"
+                    placeholder="Ej.: empleados, clientes, proveedores…"><%= actividad.categorias_interesados || '' %></textarea>
+        </div>
+        <div>
+          <label for="destinatarios" class="block text-sm font-medium text-slate-700">Destinatarios</label>
+          <textarea id="destinatarios" name="destinatarios" rows="2" required class="<%= inputClase %>"
+                    placeholder="Ej.: Agencia Tributaria, Seguridad Social, entidades bancarias…"><%= actividad.destinatarios || '' %></textarea>
+        </div>
+      </fieldset>
+
+      <!-- 3. Conservación y transferencias -->
+      <fieldset class="bg-white rounded-2xl shadow p-6 space-y-4">
+        <legend class="float-left w-full mb-2 text-lg font-semibold text-slate-800">3. Conservación y transferencias</legend>
+        <div class="clear-both">
+          <label for="plazo_conservacion" class="block text-sm font-medium text-slate-700">Plazo de conservación</label>
+          <input id="plazo_conservacion" name="plazo_conservacion" type="text" required value="<%= actividad.plazo_conservacion || '' %>"
+                 class="<%= inputClase %>" placeholder="Ej.: 4 años desde la baja del empleado">
+        </div>
+        <div>
+          <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
+            <input type="checkbox" name="transferencia_intl" x-model="transferencia"
+                   class="w-4 h-4 rounded border-slate-300 text-indigo-600" <%= actividad.transferencia_intl ? 'checked' : '' %>>
+            Existen transferencias internacionales de datos
+          </label>
+        </div>
+        <div x-show="transferencia" x-cloak>
+          <label for="pais_transferencia" class="block text-sm font-medium text-slate-700">País de destino</label>
+          <input id="pais_transferencia" name="pais_transferencia" type="text" value="<%= actividad.pais_transferencia || '' %>"
+                 class="<%= inputClase %>" :required="transferencia" placeholder="Ej.: Estados Unidos">
+        </div>
+        <div>
+          <label for="medidas_seguridad" class="block text-sm font-medium text-slate-700">Medidas de seguridad</label>
+          <textarea id="medidas_seguridad" name="medidas_seguridad" rows="3" required class="<%= inputClase %>"
+                    placeholder="Ej.: control de acceso por roles, cifrado, copias de seguridad…"><%= actividad.medidas_seguridad || '' %></textarea>
+        </div>
+      </fieldset>
+
+      <div class="flex justify-end gap-3">
+        <a href="<%= volver %>" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-700 hover:bg-slate-50">Cancelar</a>
+        <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 transition">
+          <%= actividad.id ? 'Guardar cambios' : 'Crear actividad' %>
+        </button>
+      </div>
+    </form>
+  </main>
+</body>
+</html>

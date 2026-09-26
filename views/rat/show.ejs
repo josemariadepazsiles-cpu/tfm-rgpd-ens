@@ -1,0 +1,69 @@
+<%
+  const fecha = (d) => new Date(d).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' });
+  const campo = (etiqueta, valor) => ({ etiqueta, valor });
+  const bloques = [
+    { titulo: '1. Datos básicos', campos: [
+      campo('Finalidad', actividad.finalidad),
+      campo('Base legal', basesLegales[actividad.base_legal]),
+      campo('Responsable', actividad.responsable.nombre + ' (' + actividad.responsable.email + ')' + (actividad.responsable.area ? ' — ' + actividad.responsable.area : '')),
+    ] },
+    { titulo: '2. Datos e interesados', campos: [
+      campo('Categorías de datos personales', actividad.categorias_datos),
+      campo('Categorías de interesados', actividad.categorias_interesados),
+      campo('Destinatarios', actividad.destinatarios),
+    ] },
+    { titulo: '3. Conservación y transferencias', campos: [
+      campo('Plazo de conservación', actividad.plazo_conservacion),
+      campo('Transferencias internacionales', actividad.transferencia_intl ? 'Sí — ' + actividad.pais_transferencia : 'No'),
+      campo('Medidas de seguridad', actividad.medidas_seguridad),
+    ] },
+  ];
+%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body class="min-h-screen bg-slate-100">
+  <%- include('../partials/nav') %>
+
+  <main class="max-w-3xl mx-auto px-4 py-8">
+    <%- include('../partials/flash') %>
+
+    <a href="/rat" class="text-sm text-indigo-600 hover:underline">&larr; Volver al listado</a>
+
+    <div class="mt-2 flex flex-wrap items-start justify-between gap-4">
+      <h1 class="text-2xl font-bold text-slate-800"><%= actividad.nombre %></h1>
+      <div class="flex gap-2">
+        <a href="/rat/<%= actividad.id %>/editar" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">Editar</a>
+        <% if (user.rol === 'ADMIN') { %>
+          <form action="/rat/<%= actividad.id %>/eliminar" method="POST"
+                onsubmit="return confirm('¿Eliminar esta actividad de tratamiento? Esta acción no se puede deshacer.')">
+            <button type="submit" class="rounded-lg border border-red-300 bg-white px-4 py-2 text-red-600 hover:bg-red-50 transition">Eliminar</button>
+          </form>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="mt-6 space-y-6">
+      <% bloques.forEach((b) => { %>
+        <section class="bg-white rounded-2xl shadow p-6">
+          <h2 class="text-lg font-semibold text-slate-800"><%= b.titulo %></h2>
+          <dl class="mt-4 space-y-4">
+            <% b.campos.forEach((c) => { %>
+              <div>
+                <dt class="text-sm font-medium text-slate-500"><%= c.etiqueta %></dt>
+                <dd class="mt-1 text-slate-800 whitespace-pre-line"><%= c.valor %></dd>
+              </div>
+            <% }) %>
+          </dl>
+        </section>
+      <% }) %>
+    </div>
+
+    <p class="mt-6 text-xs text-slate-400">
+      Creada el <%= fecha(actividad.created_at) %> · Última modificación el <%= fecha(actividad.updated_at) %>
+    </p>
+  </main>
+</body>
+</html>

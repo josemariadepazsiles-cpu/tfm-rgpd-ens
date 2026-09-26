@@ -2,3 +2,8 @@
 
 /* Tailwind v4 detecta clases automáticamente; indicamos explícitamente las vistas EJS */
 @source "../../views";
+
+/* Alpine.js: oculta los elementos con x-cloak hasta que Alpine se inicializa */
+[x-cloak] {
+  display: none !important;
+}

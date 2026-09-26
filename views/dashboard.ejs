@@ -3,25 +3,25 @@
 <head>
   <%- include('partials/head') %>
 </head>
-<body class="min-h-screen bg-slate-100 p-8">
-  <main class="max-w-xl mx-auto bg-white rounded-2xl shadow p-8">
-    <h1 class="text-2xl font-bold text-slate-800">
-      Bienvenido, <%= user.nombre %> (<%= roles[user.rol] %>)
-    </h1>
+<body class="min-h-screen bg-slate-100">
+  <%- include('partials/nav') %>
 
-    <div class="mt-6 flex gap-3">
-      <% if (user.rol === 'ADMIN') { %>
-        <a href="/registro"
-           class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">
-          Registrar usuario
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    <div class="bg-white rounded-2xl shadow p-8">
+      <h1 class="text-2xl font-bold text-slate-800">
+        Bienvenido, <%= user.nombre %> (<%= roles[user.rol] %>)
+      </h1>
+
+      <div class="mt-6 flex flex-wrap gap-3">
+        <a href="/rat" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">
+          Actividades RAT
         </a>
-      <% } %>
-      <form action="/logout" method="POST">
-        <button type="submit"
-                class="rounded-lg border border-slate-300 px-4 py-2 text-slate-700 hover:bg-slate-50 transition">
-          Cerrar sesión
-        </button>
-      </form>
+        <% if (user.rol === 'ADMIN') { %>
+          <a href="/registro" class="rounded-lg border border-slate-300 px-4 py-2 text-slate-700 hover:bg-slate-50 transition">
+            Registrar usuario
+          </a>
+        <% } %>
+      </div>
     </div>
   </main>
 </body>

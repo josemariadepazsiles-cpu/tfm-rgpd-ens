@@ -7,7 +7,7 @@
     "build:css": "tailwindcss -i ./src/styles/input.css -o ./public/css/output.css --minify",
     "watch:css": "tailwindcss -i ./src/styles/input.css -o ./public/css/output.css --watch",
     "start": "node app.js",
-    "dev": "node --watch app.js",
+    "dev": "node --watch-path=app.js --watch-path=config --watch-path=controllers --watch-path=lib --watch-path=middlewares --watch-path=routes app.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "postinstall": "prisma generate",

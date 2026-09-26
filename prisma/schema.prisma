@@ -8,6 +8,16 @@ datasource db {
   provider = "postgresql"
 }
 
+// Bases de licitud del art. 6.1 RGPD
+enum BaseLegal {
+  CONSENTIMIENTO
+  CONTRATO
+  OBLIGACION_LEGAL
+  INTERES_VITAL
+  INTERES_PUBLICO
+  INTERES_LEGITIMO
+}
+
 enum Rol {
   ADMIN
   USUARIO
@@ -21,5 +31,29 @@ model Usuario {
   rol           Rol     @default(USUARIO)
   area          String?
 
+  actividades ActividadRat[]
+
   @@map("usuarios")
+}
+
+model ActividadRat {
+  id                     Int       @id @default(autoincrement())
+  nombre                 String
+  finalidad              String
+  base_legal             BaseLegal
+  categorias_datos       String
+  categorias_interesados String
+  destinatarios          String
+  transferencia_intl     Boolean   @default(false)
+  pais_transferencia     String?
+  plazo_conservacion     String
+  medidas_seguridad      String
+  usuario_id             Int
+  created_at             DateTime  @default(now())
+  updated_at             DateTime  @updatedAt
+
+  responsable Usuario @relation(fields: [usuario_id], references: [id], onDelete: Restrict)
+
+  @@index([usuario_id])
+  @@map("actividades_rat")
 }

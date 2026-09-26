@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body class="min-h-screen bg-slate-100">
+  <%- include('../partials/nav') %>
+
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    <%- include('../partials/flash') %>
+
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-800">Actividades de tratamiento</h1>
+        <p class="text-sm text-slate-500">Registro de Actividades de Tratamiento (art. 30 RGPD)</p>
+      </div>
+      <a href="/rat/nueva" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">
+        + Nueva actividad
+      </a>
+    </div>
+
+    <% if (user.rol === 'ADMIN') { %>
+      <form action="/rat" method="GET" class="mt-6 flex flex-wrap items-end gap-3">
+        <div>
+          <label for="area" class="block text-sm font-medium text-slate-700">Filtrar por área</label>
+          <select id="area" name="area" onchange="this.form.submit()"
+                  class="mt-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="">Todas las áreas</option>
+            <% areas.forEach((a) => { %>
+              <option value="<%= a %>" <%= a === area ? 'selected' : '' %>><%= a %></option>
+            <% }) %>
+          </select>
+        </div>
+        <noscript><button type="submit" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">Filtrar</button></noscript>
+        <% if (area) { %>
+          <a href="/rat" class="py-2 text-sm text-indigo-600 hover:underline">Quitar filtro</a>
+        <% } %>
+      </form>
+    <% } %>
+
+    <div class="mt-6 bg-white rounded-2xl shadow overflow-x-auto">
+      <% if (actividades.length === 0) { %>
+        <p class="p-8 text-center text-slate-500">
+          No hay actividades de tratamiento<%= area ? ' en el área ' + area : '' %>.
+        </p>
+      <% } else { %>
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 text-left text-slate-600">
+            <tr>
+              <th class="px-4 py-3 font-medium">Nombre</th>
+              <th class="px-4 py-3 font-medium">Finalidad</th>
+              <th class="px-4 py-3 font-medium">Base legal</th>
+              <th class="px-4 py-3 font-medium">Responsable</th>
+              <th class="px-4 py-3 font-medium text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <% actividades.forEach((a) => { %>
+              <tr class="hover:bg-slate-50">
+                <td class="px-4 py-3 font-medium text-slate-800"><%= a.nombre %></td>
+                <td class="px-4 py-3 text-slate-600 max-w-xs"><p class="line-clamp-2"><%= a.finalidad %></p></td>
+                <td class="px-4 py-3 text-slate-600"><%= basesLegales[a.base_legal] %></td>
+                <td class="px-4 py-3 text-slate-600">
+                  <%= a.responsable.nombre %>
+                  <% if (a.responsable.area) { %><span class="block text-xs text-slate-400"><%= a.responsable.area %></span><% } %>
+                </td>
+                <td class="px-4 py-3 text-right whitespace-nowrap">
+                  <a href="/rat/<%= a.id %>" class="rounded-lg border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-100">Ver</a>
+                  <a href="/rat/<%= a.id %>/editar" class="ml-1 rounded-lg bg-indigo-600 px-3 py-1 text-white hover:bg-indigo-700">Editar</a>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+  </main>
+</body>
+</html>

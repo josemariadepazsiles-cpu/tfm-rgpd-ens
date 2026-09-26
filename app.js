@@ -9,6 +9,7 @@ const { ROLES } = require('./config/roles');
 const indexRoutes = require('./routes/index');
 const authRoutes = require('./routes/auth');
 const dashboardRoutes = require('./routes/dashboard');
+const ratRoutes = require('./routes/rat');
 
 if (!process.env.SESSION_SECRET) {
   throw new Error('Falta SESSION_SECRET en el .env');
@@ -47,9 +48,12 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Usuario autenticado disponible en todas las vistas
+// Datos comunes a todas las vistas: usuario, ruta actual y mensaje flash (se muestra una vez)
 app.use((req, res, next) => {
   res.locals.user = req.user || null;
+  res.locals.currentPath = req.path;
+  res.locals.flash = req.session.flash || null;
+  delete req.session.flash;
   next();
 });
 
@@ -57,6 +61,7 @@ app.use((req, res, next) => {
 app.use('/', indexRoutes);
 app.use('/', authRoutes);
 app.use('/', dashboardRoutes);
+app.use('/rat', ratRoutes);
 
 // 404
 app.use((req, res) => {
