@@ -1,41 +1,139 @@
 <%
-  const enlaces = [
-    { href: '/dashboard', texto: 'Inicio' },
-    { href: '/rat', texto: 'Actividades RAT' },
-    { href: '/riesgos', texto: 'Riesgos' },
-    { href: '/sistemas', texto: 'Sistemas ENS' },
-  ];
-  if (user.rol === 'ADMIN') enlaces.push({ href: '/registro', texto: 'Registrar usuario' });
+  const esAdmin = user.rol === 'ADMIN';
   const activo = (href) => currentPath === href || currentPath.startsWith(href + '/');
+
+  // Menús desplegables. `rutas` marca el desplegable como activo aunque la página no sea
+  // uno de sus enlaces (p. ej. /evaluaciones/3 pertenece a ENS)
+  const menus = [
+    {
+      id: 'rgpd',
+      texto: 'RGPD',
+      rutas: ['/rat', '/riesgos'],
+      enlaces: [
+        { href: '/rat', texto: 'Actividades RAT' },
+        { href: '/riesgos', texto: 'Riesgos' },
+      ],
+    },
+    {
+      id: 'ens',
+      texto: 'ENS',
+      rutas: ['/sistemas', '/evaluaciones', '/controles'],
+      enlaces: [
+        { href: '/sistemas', texto: 'Sistemas ENS' },
+        ...(esAdmin ? [{ href: '/controles', texto: 'Catálogo de controles' }] : []),
+      ],
+    },
+  ];
+  const menuActivo = (m) => m.rutas.some(activo);
+  const usuarioActivo = activo('/registro');
+
+  const claseBoton = (marcado) =>
+    'inline-flex items-center gap-1 px-3 py-2 rounded-lg text-sm ' +
+    (marcado ? 'bg-indigo-50 text-indigo-700 font-medium' : 'text-slate-600 hover:bg-slate-100');
+  const claseItem = (marcado) =>
+    'block px-4 py-2 text-sm ' +
+    (marcado ? 'bg-indigo-50 text-indigo-700 font-medium' : 'text-slate-700 hover:bg-slate-100 focus:bg-slate-100 focus:outline-none');
+  const claseMovil = (marcado) =>
+    'block px-3 py-2 rounded-lg text-sm ' + (marcado ? 'bg-indigo-50 text-indigo-700 font-medium' : 'text-slate-600 hover:bg-slate-100');
 %>
-<nav class="bg-white border-b border-slate-200" x-data="{ abierto: false }">
+<nav class="bg-white border-b border-slate-200" aria-label="Navegación principal"
+     x-data="{
+       abierto: false,
+       menu: null,
+       alternar(id) { this.menu = this.menu === id ? null : id },
+       cerrar(devolverFoco) {
+         if (!this.menu) return;
+         const boton = this.$refs['btn-' + this.menu];
+         this.menu = null;
+         if (devolverFoco && boton) boton.focus();
+       },
+     }"
+     @keydown.escape.window="cerrar(true)">
   <div class="max-w-6xl mx-auto px-4 flex items-center justify-between h-14">
-    <a href="/dashboard" class="font-bold text-indigo-600">RGPD · ENS</a>
+    <div class="flex items-center gap-6">
+      <a href="/dashboard" class="font-bold text-indigo-600">RGPD · ENS</a>
 
-    <button type="button" class="sm:hidden p-2 text-slate-600" @click="abierto = !abierto" aria-label="Menú">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-    </button>
+      <%# Escritorio: Inicio + desplegables %>
+      <div class="hidden md:flex items-center gap-1">
+        <a href="/dashboard" class="<%= claseBoton(activo('/dashboard')) %>" <%- activo('/dashboard') ? 'aria-current="page"' : '' %>>Inicio</a>
 
-    <div class="hidden sm:flex items-center gap-1">
-      <% enlaces.forEach((e) => { %>
-        <a href="<%= e.href %>"
-           class="px-3 py-2 rounded-lg text-sm <%= activo(e.href) ? 'bg-indigo-50 text-indigo-700 font-medium' : 'text-slate-600 hover:bg-slate-100' %>">
-          <%= e.texto %>
-        </a>
-      <% }) %>
-      <span class="ml-4 text-sm text-slate-500"><%= user.nombre %> (<%= roles[user.rol] %>)</span>
-      <form action="/logout" method="POST" class="ml-2">
-        <button type="submit" class="px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-100">Cerrar sesión</button>
-      </form>
+        <% menus.forEach((m) => { %>
+          <div class="relative" @click.outside="menu === '<%= m.id %>' && cerrar(false)">
+            <button type="button" x-ref="btn-<%= m.id %>" @click="alternar('<%= m.id %>')"
+                    class="<%= claseBoton(menuActivo(m)) %>"
+                    aria-haspopup="true" :aria-expanded="menu === '<%= m.id %>'" aria-controls="menu-<%= m.id %>">
+              <%= m.texto %>
+              <svg class="w-4 h-4 transition-transform" :class="menu === '<%= m.id %>' && 'rotate-180'" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <div id="menu-<%= m.id %>" x-show="menu === '<%= m.id %>'" x-cloak x-transition.origin.top.left
+                 class="absolute left-0 z-20 mt-2 w-56 rounded-xl bg-white py-1 shadow-lg ring-1 ring-slate-200">
+              <% m.enlaces.forEach((e) => { %>
+                <a href="<%= e.href %>" class="<%= claseItem(activo(e.href)) %>" <%- activo(e.href) ? 'aria-current="page"' : '' %>><%= e.texto %></a>
+              <% }) %>
+            </div>
+          </div>
+        <% }) %>
+      </div>
     </div>
+
+    <%# Escritorio: desplegable de usuario %>
+    <div class="relative hidden md:block" @click.outside="menu === 'usuario' && cerrar(false)">
+      <button type="button" x-ref="btn-usuario" @click="alternar('usuario')"
+              class="<%= claseBoton(usuarioActivo) %> max-w-64"
+              aria-haspopup="true" :aria-expanded="menu === 'usuario'" aria-controls="menu-usuario">
+        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+        <span class="truncate"><%= user.nombre %></span>
+        <svg class="w-4 h-4 shrink-0 transition-transform" :class="menu === 'usuario' && 'rotate-180'" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div id="menu-usuario" x-show="menu === 'usuario'" x-cloak x-transition.origin.top.right
+           class="absolute right-0 z-20 mt-2 w-64 rounded-xl bg-white py-1 shadow-lg ring-1 ring-slate-200">
+        <div class="px-4 py-3 border-b border-slate-100">
+          <p class="text-sm font-medium text-slate-800 truncate"><%= user.nombre %></p>
+          <p class="text-xs text-slate-500"><%= roles[user.rol] %> · <%= user.email %></p>
+        </div>
+        <% if (esAdmin) { %>
+          <a href="/registro" class="<%= claseItem(activo('/registro')) %>" <%- activo('/registro') ? 'aria-current="page"' : '' %>>Registrar usuario</a>
+        <% } %>
+        <form action="/logout" method="POST">
+          <button type="submit" class="w-full text-left <%= claseItem(false) %>">Cerrar sesión</button>
+        </form>
+      </div>
+    </div>
+
+    <%# Móvil: botón hamburguesa %>
+    <button type="button" class="md:hidden p-2 text-slate-600" @click="abierto = !abierto"
+            :aria-expanded="abierto" aria-controls="menu-movil" aria-label="Menú">
+      <svg x-show="!abierto" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      <svg x-show="abierto" x-cloak class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
   </div>
 
-  <div class="sm:hidden border-t border-slate-200 px-4 py-2 space-y-1" x-show="abierto" x-cloak>
-    <% enlaces.forEach((e) => { %>
-      <a href="<%= e.href %>" class="block px-3 py-2 rounded-lg text-sm <%= activo(e.href) ? 'bg-indigo-50 text-indigo-700 font-medium' : 'text-slate-600' %>"><%= e.texto %></a>
+  <%# Móvil: los desplegables se muestran como secciones %>
+  <div id="menu-movil" class="md:hidden border-t border-slate-200 px-4 py-3 space-y-3" x-show="abierto" x-cloak>
+    <a href="/dashboard" class="<%= claseMovil(activo('/dashboard')) %>" <%- activo('/dashboard') ? 'aria-current="page"' : '' %>>Inicio</a>
+
+    <% menus.forEach((m) => { %>
+      <div>
+        <p class="px-3 text-xs font-semibold uppercase tracking-wide <%= menuActivo(m) ? 'text-indigo-600' : 'text-slate-400' %>"><%= m.texto %></p>
+        <div class="mt-1 space-y-1">
+          <% m.enlaces.forEach((e) => { %>
+            <a href="<%= e.href %>" class="<%= claseMovil(activo(e.href)) %>" <%- activo(e.href) ? 'aria-current="page"' : '' %>><%= e.texto %></a>
+          <% }) %>
+        </div>
+      </div>
     <% }) %>
-    <form action="/logout" method="POST">
-      <button type="submit" class="w-full text-left px-3 py-2 rounded-lg text-sm text-slate-600">Cerrar sesión</button>
-    </form>
+
+    <div class="border-t border-slate-200 pt-3">
+      <p class="px-3 text-sm font-medium text-slate-800"><%= user.nombre %></p>
+      <p class="px-3 text-xs text-slate-500"><%= roles[user.rol] %> · <%= user.email %></p>
+      <div class="mt-2 space-y-1">
+        <% if (esAdmin) { %>
+          <a href="/registro" class="<%= claseMovil(activo('/registro')) %>" <%- activo('/registro') ? 'aria-current="page"' : '' %>>Registrar usuario</a>
+        <% } %>
+        <form action="/logout" method="POST">
+          <button type="submit" class="w-full text-left <%= claseMovil(false) %>">Cerrar sesión</button>
+        </form>
+      </div>
+    </div>
   </div>
 </nav>
