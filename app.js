@@ -18,6 +18,8 @@ const incidenteRoutes = require('./routes/incidentes');
 const derechoRoutes = require('./routes/derechos');
 const proveedorRoutes = require('./routes/proveedores');
 const declaracionRoutes = require('./routes/declaraciones');
+const politicaRoutes = require('./routes/politicas');
+const { ESTADO_POLITICA_CLASES, REVISION_CLASES } = require('./lib/politicas');
 const { ESTADO_DECLARACION_CLASES } = require('./lib/declaraciones');
 const { fecha, fechaHora, aInputFechaHora, aInputFecha } = require('./lib/formato');
 const { ESTADO_PROVEEDOR_CLASES, NIVEL_ENS_CLASES, ALERTA_CLASES } = require('./lib/proveedores');
@@ -53,6 +55,8 @@ app.locals.estadoProveedorClases = ESTADO_PROVEEDOR_CLASES;
 app.locals.nivelEnsClases = NIVEL_ENS_CLASES;
 app.locals.alertaClases = ALERTA_CLASES;
 app.locals.estadoDeclaracionClases = ESTADO_DECLARACION_CLASES;
+app.locals.estadoPoliticaClases = ESTADO_POLITICA_CLASES;
+app.locals.revisionClases = REVISION_CLASES;
 
 // Middlewares
 app.use(express.urlencoded({ extended: false }));
@@ -100,6 +104,7 @@ app.use('/incidentes', incidenteRoutes);
 app.use('/derechos', derechoRoutes);
 app.use('/proveedores', proveedorRoutes);
 app.use('/declaraciones', declaracionRoutes);
+app.use('/politicas', politicaRoutes);
 // El checklist global se sustituyó por evaluaciones por sistema
 app.get('/checklist', (req, res) => res.redirect(301, '/sistemas'));
 

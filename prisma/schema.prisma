@@ -136,6 +136,22 @@ enum EstadoDeclaracion {
   SUPERADA
 }
 
+// Políticas y documentación normativa de seguridad (ENS, marco organizativo)
+enum TipoPolitica {
+  POLITICA
+  PROCEDIMIENTO
+  INSTRUCCION_TECNICA
+  NORMATIVA_INTERNA
+  OTRO
+}
+
+enum EstadoPolitica {
+  BORRADOR
+  PENDIENTE_APROBACION
+  APROBADA
+  OBSOLETA
+}
+
 enum Rol {
   ADMIN
   USUARIO
@@ -165,6 +181,10 @@ model Usuario {
   documentosSubidos      DocumentoProveedor[]
   declaracionesGeneradas DeclaracionConformidad[]    @relation("DeclaracionGenerador")
   declaracionesEmitidas  DeclaracionConformidad[]    @relation("DeclaracionEmisor")
+  politicasAprobadas     Politica[]                  @relation("PoliticaAprobador")
+  politicasCreadas       Politica[]                  @relation("PoliticaCreador")
+  archivosPoliticas      ArchivoPolitica[]
+  aceptacionesPoliticas  AceptacionPolitica[]
 
   @@map("usuarios")
 }
@@ -501,4 +521,65 @@ model DetalleDeclaracionControl {
 
   @@index([declaracion_id])
   @@map("detalles_declaracion_control")
+}
+
+// Documento normativo (PSI, procedimientos, instrucciones técnicas, normativas internas)
+model Politica {
+  id                     Int            @id @default(autoincrement())
+  titulo                 String
+  tipo_documento         TipoPolitica
+  descripcion            String?
+  // Versión vigente (la fija quien sube el documento)
+  version                String
+  estado                 EstadoPolitica @default(BORRADOR)
+  fecha_aprobacion       DateTime?
+  aprobado_por_id        Int?
+  fecha_proxima_revision DateTime?
+  requiere_aceptacion    Boolean        @default(false)
+  creado_por_id          Int?
+  created_at             DateTime       @default(now())
+  updated_at             DateTime       @updatedAt
+
+  aprobado_por Usuario?             @relation("PoliticaAprobador", fields: [aprobado_por_id], references: [id], onDelete: SetNull)
+  creado_por   Usuario?             @relation("PoliticaCreador", fields: [creado_por_id], references: [id], onDelete: SetNull)
+  archivos     ArchivoPolitica[]
+  aceptaciones AceptacionPolitica[]
+
+  @@index([estado])
+  @@map("politicas")
+}
+
+// PDF de cada versión de una política; las anteriores quedan como históricas
+model ArchivoPolitica {
+  id                      Int      @id @default(autoincrement())
+  politica_id             Int
+  version                 String
+  historico               Boolean  @default(false)
+  ruta_archivo            String   @unique
+  nombre_archivo_original String
+  tamano_bytes            Int
+  subido_por_id           Int?
+  fecha_subida            DateTime @default(now())
+
+  politica   Politica @relation(fields: [politica_id], references: [id], onDelete: Cascade)
+  subido_por Usuario? @relation(fields: [subido_por_id], references: [id], onDelete: SetNull)
+
+  @@unique([politica_id, version])
+  @@map("archivos_politicas")
+}
+
+// Registro de lectura y aceptación de una versión concreta por un usuario
+model AceptacionPolitica {
+  id               Int      @id @default(autoincrement())
+  politica_id      Int
+  version_aceptada String
+  usuario_id       Int
+  fecha_aceptacion DateTime @default(now())
+
+  politica Politica @relation(fields: [politica_id], references: [id], onDelete: Cascade)
+  usuario  Usuario  @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+
+  @@unique([politica_id, version_aceptada, usuario_id])
+  @@index([usuario_id])
+  @@map("aceptaciones_politicas")
 }

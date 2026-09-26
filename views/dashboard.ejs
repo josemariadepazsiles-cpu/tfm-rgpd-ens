@@ -39,6 +39,24 @@
       </div>
     </div>
 
+    <% if (politicas.misPendientes.length) { %>
+      <section class="rounded-2xl border-2 border-indigo-300 bg-indigo-50 p-6" role="status">
+        <h2 class="text-lg font-semibold text-indigo-900">
+          Tienes <%= politicas.misPendientes.length %> documento(s) pendientes de leer y aceptar
+        </h2>
+        <ul class="mt-3 space-y-2">
+          <% politicas.misPendientes.forEach((p) => { %>
+            <li class="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-white px-4 py-2">
+              <span class="text-slate-800">
+                <%= p.titulo %> <span class="text-xs text-slate-500"><%= TIPOS_POLITICA[p.tipo_documento] %> · versión <%= p.version %></span>
+              </span>
+              <a href="/politicas/<%= p.id %>" class="rounded-lg bg-indigo-600 px-3 py-1 text-sm text-white hover:bg-indigo-700">Leer y aceptar</a>
+            </li>
+          <% }) %>
+        </ul>
+      </section>
+    <% } %>
+
     <section class="bg-white rounded-2xl shadow p-8">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <h2 class="text-lg font-semibold text-slate-800">Incidentes y brechas de seguridad</h2>
@@ -135,6 +153,30 @@
           <p class="text-sm font-medium <%= proveedores.sinMecanismo ? 'text-orange-800' : 'text-slate-500' %>">Transferencia internacional sin garantías</p>
           <p class="mt-1 text-3xl font-bold <%= proveedores.sinMecanismo ? 'text-orange-700' : 'text-slate-800' %>"><%= proveedores.sinMecanismo %></p>
           <p class="mt-1 text-xs <%= proveedores.sinMecanismo ? 'font-semibold text-orange-700' : 'text-slate-500' %>">Fuera del EEE sin mecanismo señalado</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="bg-white rounded-2xl shadow p-8">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <h2 class="text-lg font-semibold text-slate-800">Políticas y documentación</h2>
+        <a href="/politicas" class="text-sm text-indigo-600 hover:underline">Ver documentos &rarr;</a>
+      </div>
+      <div class="mt-6 grid gap-4 sm:grid-cols-3">
+        <div class="rounded-xl border p-5 <%= politicas.revisionVencidas ? 'border-red-300 bg-red-50' : 'border-slate-200' %>">
+          <p class="text-sm font-medium <%= politicas.revisionVencidas ? 'text-red-800' : 'text-slate-500' %>">Revisión vencida</p>
+          <p class="mt-1 text-3xl font-bold <%= politicas.revisionVencidas ? 'text-red-700' : 'text-slate-800' %>"><%= politicas.revisionVencidas %></p>
+          <p class="mt-1 text-xs text-slate-500">Documentos no obsoletos</p>
+        </div>
+        <div class="rounded-xl border p-5 <%= politicas.revisionProximas ? 'border-yellow-300 bg-yellow-50' : 'border-slate-200' %>">
+          <p class="text-sm font-medium <%= politicas.revisionProximas ? 'text-yellow-800' : 'text-slate-500' %>">Revisión en 30 días o menos</p>
+          <p class="mt-1 text-3xl font-bold text-slate-800"><%= politicas.revisionProximas %></p>
+          <p class="mt-1 text-xs text-slate-500">Pendientes de revisión periódica</p>
+        </div>
+        <div class="rounded-xl border p-5 <%= politicas.misPendientes.length ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200' %>">
+          <p class="text-sm font-medium <%= politicas.misPendientes.length ? 'text-indigo-800' : 'text-slate-500' %>">Pendientes de tu aceptación</p>
+          <p class="mt-1 text-3xl font-bold <%= politicas.misPendientes.length ? 'text-indigo-700' : 'text-slate-800' %>"><%= politicas.misPendientes.length %></p>
+          <p class="mt-1 text-xs text-slate-500"><%= politicas.misPendientes.length ? 'Consúltalas arriba' : 'Estás al día' %></p>
         </div>
       </div>
     </section>

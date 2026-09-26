@@ -1,0 +1,216 @@
+<%
+  const p = politica;
+  const esAdmin = user.rol === 'ADMIN';
+  const inputClase = 'mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500';
+  const urlArchivo = (a) => '/politicas/' + p.id + '/archivos/' + a.id;
+%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body class="min-h-screen bg-slate-100">
+  <%- include('../partials/nav') %>
+
+  <main class="max-w-5xl mx-auto px-4 py-8">
+    <%- include('../partials/flash') %>
+
+    <a href="/politicas" class="text-sm text-indigo-600 hover:underline">&larr; Volver a políticas y documentación</a>
+
+    <div class="mt-2 flex flex-wrap items-start justify-between gap-4">
+      <div>
+        <p class="text-sm font-medium uppercase tracking-wide text-indigo-600"><%= TIPOS_POLITICA[p.tipo_documento] %></p>
+        <h1 class="text-2xl font-bold text-slate-800"><%= p.titulo %></h1>
+        <div class="mt-2 flex flex-wrap items-center gap-2">
+          <span class="font-mono text-sm text-slate-700">Versión <%= p.version %></span>
+          <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset <%= estadoPoliticaClases[p.estado] %>"><%= ESTADOS_POLITICA[p.estado] %></span>
+          <% if (alerta) { %>
+            <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset <%= revisionClases[alerta.nivel] %>"><%= alerta.nivel === 'vencida' ? '⚠ ' : '' %><%= alerta.texto %></span>
+          <% } %>
+        </div>
+      </div>
+      <% if (esAdmin) { %>
+        <a href="/politicas/<%= p.id %>/editar" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-700 hover:bg-slate-50 transition">Editar datos</a>
+      <% } %>
+    </div>
+
+    <%# Aceptación del usuario %>
+    <% if (puedeAceptar) { %>
+      <section class="mt-6 rounded-2xl border-2 border-indigo-300 bg-indigo-50 p-6">
+        <h2 class="text-lg font-semibold text-indigo-900">Lectura y aceptación obligatoria</h2>
+        <p class="mt-1 text-sm text-indigo-800">
+          Lee el documento vigente (versión <strong><%= p.version %></strong>) y confirma que lo has entendido.
+        </p>
+        <form action="/politicas/<%= p.id %>/aceptar" method="POST" class="mt-4">
+          <input type="hidden" name="version" value="<%= p.version %>">
+          <button type="submit" class="rounded-lg bg-indigo-600 px-5 py-2 font-medium text-white hover:bg-indigo-700 transition">
+            He leído y acepto esta política
+          </button>
+        </form>
+      </section>
+    <% } else if (miAceptacion) { %>
+      <p class="mt-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+        Aceptaste la versión <%= p.version %> el <%= fechaHora(miAceptacion.fecha_aceptacion) %>.
+      </p>
+    <% } %>
+
+    <div class="mt-6 grid gap-6 lg:grid-cols-3">
+      <section class="bg-white rounded-2xl shadow p-6 lg:col-span-2">
+        <h2 class="text-lg font-semibold text-slate-800">Documento vigente</h2>
+        <% if (vigente) { %>
+          <div class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 p-4">
+            <div>
+              <p class="font-medium text-slate-800">Versión <%= vigente.version %></p>
+              <p class="text-xs text-slate-500">
+                <%= vigente.nombre_archivo_original %> · <%= formatoTamano(vigente.tamano_bytes) %> ·
+                subido el <%= fechaHora(vigente.fecha_subida) %><%= vigente.subido_por ? ' por ' + vigente.subido_por.nombre : '' %>
+              </p>
+            </div>
+            <div class="flex gap-2">
+              <a href="<%= urlArchivo(vigente) %>" target="_blank" rel="noopener" class="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700">Ver</a>
+              <a href="<%= urlArchivo(vigente) %>?descargar=1" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100">Descargar</a>
+            </div>
+          </div>
+        <% } else { %>
+          <p class="mt-4 text-sm text-slate-500 italic">Todavía no se ha subido el PDF de este documento.</p>
+        <% } %>
+
+        <% if (p.descripcion) { %>
+          <h3 class="mt-6 text-sm font-medium text-slate-500">Descripción</h3>
+          <p class="mt-1 whitespace-pre-line text-slate-800"><%= p.descripcion %></p>
+        <% } %>
+      </section>
+
+      <section class="bg-white rounded-2xl shadow p-6">
+        <h2 class="text-lg font-semibold text-slate-800">Datos generales</h2>
+        <dl class="mt-4 space-y-3 text-sm">
+          <div><dt class="font-medium text-slate-500">Aprobación</dt>
+            <dd class="mt-0.5 text-slate-800"><%= p.fecha_aprobacion ? fechaHora(p.fecha_aprobacion) + (p.aprobado_por ? ' · ' + p.aprobado_por.nombre : '') : 'Sin aprobar' %></dd></div>
+          <div><dt class="font-medium text-slate-500">Próxima revisión</dt>
+            <dd class="mt-0.5 text-slate-800"><%= p.fecha_proxima_revision ? fecha(p.fecha_proxima_revision) : 'Sin fecha' %></dd></div>
+          <div><dt class="font-medium text-slate-500">Requiere aceptación</dt>
+            <dd class="mt-0.5 text-slate-800"><%= p.requiere_aceptacion ? 'Sí, de cada versión aprobada' : 'No' %></dd></div>
+          <div><dt class="font-medium text-slate-500">Creado</dt>
+            <dd class="mt-0.5 text-slate-800"><%= fechaHora(p.created_at) %><%= p.creado_por ? ' · ' + p.creado_por.nombre : '' %></dd></div>
+        </dl>
+      </section>
+    </div>
+
+    <% if (esAdmin) { %>
+      <section class="mt-6 bg-white rounded-2xl shadow p-6">
+        <h2 class="text-lg font-semibold text-slate-800">Gestión (Administrador)</h2>
+        <div class="mt-4 grid gap-6 md:grid-cols-2">
+          <form action="/politicas/<%= p.id %>/versiones" method="POST" enctype="multipart/form-data"
+                class="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 space-y-3">
+            <h3 class="font-medium text-slate-800"><%= vigente ? 'Subir nueva versión' : 'Subir el PDF del documento' %></h3>
+            <div>
+              <label for="archivo" class="block text-sm text-slate-700">Archivo PDF (máx. <%= tamanoMaximoMb %> MB)</label>
+              <input id="archivo" name="archivo" type="file" accept="application/pdf,.pdf" required
+                     class="mt-1 block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-600 file:px-3 file:py-2 file:text-white hover:file:bg-indigo-700">
+            </div>
+            <div>
+              <label for="version" class="block text-sm text-slate-700">Número de versión</label>
+              <input id="version" name="version" type="text" required maxlength="20" class="<%= inputClase %> font-mono"
+                     value="<%= vigente ? '' : p.version %>" placeholder="<%= vigente ? 'Ej.: 2.0' : '1.0' %>">
+            </div>
+            <label class="inline-flex items-center gap-2 text-sm text-slate-700">
+              <input type="checkbox" name="aprobar" class="w-4 h-4 rounded border-slate-300 text-indigo-600">
+              Aprobar esta versión ahora
+            </label>
+            <% if (vigente) { %>
+              <p class="text-xs text-slate-500">La versión <%= vigente.version %> quedará como histórica. Si requiere aceptación, se pedirá de nuevo al aprobar la nueva.</p>
+            <% } %>
+            <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition">Subir versión</button>
+          </form>
+
+          <form action="/politicas/<%= p.id %>/estado" method="POST" class="rounded-xl border border-slate-200 p-4 space-y-3">
+            <h3 class="font-medium text-slate-800">Estado del documento</h3>
+            <select name="estado" aria-label="Estado" class="<%= inputClase %>">
+              <% Object.entries(ESTADOS_POLITICA).forEach(([v, etiqueta]) => { %>
+                <option value="<%= v %>" <%= p.estado === v ? 'selected' : '' %>><%= etiqueta %></option>
+              <% }) %>
+            </select>
+            <p class="text-xs text-slate-500">Al aprobarla se registra la fecha y quién la aprueba. Para retirarla, márcala como Obsoleta.</p>
+            <button type="submit" class="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Cambiar estado</button>
+          </form>
+        </div>
+      </section>
+    <% } %>
+
+    <section class="mt-6 bg-white rounded-2xl shadow p-6">
+      <h2 class="text-lg font-semibold text-slate-800">Versiones anteriores (<%= historicos.length %>)</h2>
+      <% if (historicos.length === 0) { %>
+        <p class="mt-3 text-sm text-slate-500 italic">No hay versiones anteriores.</p>
+      <% } else { %>
+        <div class="mt-4 overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 text-left text-slate-600">
+              <tr>
+                <th class="px-4 py-2 font-medium">Versión</th>
+                <th class="px-4 py-2 font-medium">Archivo</th>
+                <th class="px-4 py-2 font-medium">Subida</th>
+                <th class="px-4 py-2 font-medium">Por</th>
+                <th class="px-4 py-2 font-medium text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <% historicos.forEach((a) => { %>
+                <tr>
+                  <td class="px-4 py-2 font-mono text-slate-700"><%= a.version %> <span class="ml-1 rounded bg-slate-100 px-1.5 py-0.5 font-sans text-xs text-slate-500">histórica</span></td>
+                  <td class="px-4 py-2 text-slate-600"><%= a.nombre_archivo_original %> · <%= formatoTamano(a.tamano_bytes) %></td>
+                  <td class="px-4 py-2 text-slate-600 whitespace-nowrap"><%= fechaHora(a.fecha_subida) %></td>
+                  <td class="px-4 py-2 text-slate-600"><%= a.subido_por ? a.subido_por.nombre : '—' %></td>
+                  <td class="px-4 py-2 text-right whitespace-nowrap">
+                    <a href="<%= urlArchivo(a) %>" target="_blank" rel="noopener" class="rounded-lg border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-100">Ver</a>
+                    <a href="<%= urlArchivo(a) %>?descargar=1" class="ml-1 rounded-lg border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-100">Descargar</a>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </section>
+
+    <% if (aceptaciones) { %>
+      <section class="mt-6 bg-white rounded-2xl shadow p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <h2 class="text-lg font-semibold text-slate-800">Aceptación de la versión <%= p.version %></h2>
+          <span class="text-sm text-slate-600">
+            <strong><%= aceptaciones.aceptado.length %></strong> de <%= aceptaciones.aceptado.length + aceptaciones.pendiente.length %> usuarios
+          </span>
+        </div>
+        <% if (p.estado !== 'APROBADA') { %>
+          <p class="mt-2 text-sm text-amber-700">La aceptación se pedirá al personal cuando esta versión esté aprobada.</p>
+        <% } %>
+        <div class="mt-4 grid gap-6 md:grid-cols-2">
+          <div>
+            <h3 class="text-sm font-medium text-green-700">Han aceptado (<%= aceptaciones.aceptado.length %>)</h3>
+            <ul class="mt-2 divide-y divide-slate-100 text-sm">
+              <% aceptaciones.aceptado.forEach((u) => { %>
+                <li class="flex justify-between gap-3 py-2">
+                  <span class="text-slate-800"><%= u.nombre %><% if (u.area) { %> <span class="text-xs text-slate-400"><%= u.area %></span><% } %></span>
+                  <span class="text-slate-500 whitespace-nowrap"><%= fechaHora(u.fecha) %></span>
+                </li>
+              <% }) %>
+              <% if (!aceptaciones.aceptado.length) { %><li class="py-2 text-slate-400 italic">Nadie todavía</li><% } %>
+            </ul>
+          </div>
+          <div>
+            <h3 class="text-sm font-medium text-amber-700">Pendientes (<%= aceptaciones.pendiente.length %>)</h3>
+            <ul class="mt-2 divide-y divide-slate-100 text-sm">
+              <% aceptaciones.pendiente.forEach((u) => { %>
+                <li class="flex justify-between gap-3 py-2">
+                  <span class="text-slate-800"><%= u.nombre %><% if (u.area) { %> <span class="text-xs text-slate-400"><%= u.area %></span><% } %></span>
+                  <span class="text-slate-500"><%= u.email %></span>
+                </li>
+              <% }) %>
+              <% if (!aceptaciones.pendiente.length) { %><li class="py-2 text-green-700">Todos han aceptado</li><% } %>
+            </ul>
+          </div>
+        </div>
+      </section>
+    <% } %>
+  </main>
+</body>
+</html>

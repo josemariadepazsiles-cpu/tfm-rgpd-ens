@@ -1,0 +1,83 @@
+<%
+  const inputClase = 'mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500';
+  const accion = politica.id ? '/politicas/' + politica.id : '/politicas';
+  const volver = politica.id ? '/politicas/' + politica.id : '/politicas';
+%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body class="min-h-screen bg-slate-100">
+  <%- include('../partials/nav') %>
+
+  <main class="max-w-2xl mx-auto px-4 py-8">
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-bold text-slate-800"><%= title %></h1>
+      <a href="<%= volver %>" class="text-sm text-indigo-600 hover:underline">Cancelar</a>
+    </div>
+    <% if (!politica.id) { %>
+      <p class="mt-1 text-sm text-slate-500">Se crea en Borrador. Después podrás subir el PDF de la versión y aprobarla.</p>
+    <% } %>
+
+    <% if (errores.length) { %>
+      <ul class="mt-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 list-disc list-inside" role="alert">
+        <% errores.forEach((e) => { %><li><%= e %></li><% }) %>
+      </ul>
+    <% } %>
+
+    <form action="<%= accion %>" method="POST" class="mt-6 bg-white rounded-2xl shadow p-6 space-y-4">
+      <div>
+        <label for="titulo" class="block text-sm font-medium text-slate-700">Título</label>
+        <input id="titulo" name="titulo" type="text" required maxlength="200" value="<%= politica.titulo || '' %>" class="<%= inputClase %>"
+               placeholder="Ej.: Política de Seguridad de la Información">
+      </div>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label for="tipo_documento" class="block text-sm font-medium text-slate-700">Tipo de documento</label>
+          <select id="tipo_documento" name="tipo_documento" class="<%= inputClase %>">
+            <% Object.entries(TIPOS_POLITICA).forEach(([v, etiqueta]) => { %>
+              <option value="<%= v %>" <%= politica.tipo_documento === v ? 'selected' : '' %>><%= etiqueta %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div>
+          <% if (politica.tieneArchivos) { %>
+            <span class="block text-sm font-medium text-slate-700">Versión vigente</span>
+            <p class="mt-2 font-mono text-slate-800"><%= politica.version %></p>
+            <p class="mt-1 text-xs text-slate-500">Cambia al subir una nueva versión del PDF.</p>
+          <% } else { %>
+            <label for="version" class="block text-sm font-medium text-slate-700">Versión</label>
+            <input id="version" name="version" type="text" required maxlength="20" value="<%= politica.version || '' %>" class="<%= inputClase %>" placeholder="1.0">
+          <% } %>
+        </div>
+      </div>
+      <div>
+        <label for="descripcion" class="block text-sm font-medium text-slate-700">Descripción <span class="font-normal text-slate-400">(opcional)</span></label>
+        <textarea id="descripcion" name="descripcion" rows="3" class="<%= inputClase %>"
+                  placeholder="Objeto y alcance del documento"><%= politica.descripcion || '' %></textarea>
+      </div>
+      <div class="sm:w-64">
+        <label for="fecha_proxima_revision" class="block text-sm font-medium text-slate-700">Próxima revisión</label>
+        <input id="fecha_proxima_revision" name="fecha_proxima_revision" type="date"
+               value="<%= aInputFecha(politica.fecha_proxima_revision) %>" class="<%= inputClase %>">
+        <p class="mt-1 text-xs text-slate-500">El ENS exige revisar periódicamente la documentación de seguridad. Se avisará <%= DIAS_AVISO_REVISION %> días antes.</p>
+      </div>
+      <div>
+        <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
+          <input type="checkbox" name="requiere_aceptacion" class="w-4 h-4 rounded border-slate-300 text-indigo-600"
+                 <%= politica.requiere_aceptacion ? 'checked' : '' %>>
+          El personal debe leerla y confirmar que la ha entendido
+        </label>
+        <p class="mt-1 text-xs text-slate-500">Se pedirá la aceptación de cada nueva versión aprobada.</p>
+      </div>
+      <div class="flex justify-end gap-3 pt-2">
+        <a href="<%= volver %>" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-700 hover:bg-slate-50">Cancelar</a>
+        <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 transition">
+          <%= politica.id ? 'Guardar cambios' : 'Crear documento' %>
+        </button>
+      </div>
+    </form>
+  </main>
+</body>
+</html>

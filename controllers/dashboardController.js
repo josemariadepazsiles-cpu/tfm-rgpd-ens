@@ -5,6 +5,7 @@ const {
   GRAVEDADES, ESTADOS_INCIDENTE, ESTADOS_ACTIVOS, whereAepdPendiente, plazoAepd,
 } = require('../lib/incidentes');
 const { TIPOS_DERECHO, ESTADOS_SOLICITUD, ESTADOS_ABIERTOS, urgencia } = require('../lib/derechos');
+const { pendientesDeRevision, pendientesDeAceptar, TIPOS_POLITICA } = require('../lib/politicas');
 
 // Resumen de incidentes: activos, notificaciones a la AEPD pendientes / fuera de plazo
 // y el incidente activo más grave (a igual gravedad, el detectado hace más tiempo)
@@ -57,7 +58,7 @@ const resumenProveedores = async () => {
 
 const index = async (req, res) => {
   // Resumen de cumplimiento ENS de la última evaluación de cada sistema
-  const [sistemas, incidentes, derechos, proveedores] = await Promise.all([
+  const [sistemas, incidentes, derechos, proveedores, politicasRevision, misPendientes] = await Promise.all([
     prisma.sistema.findMany({
       orderBy: { nombre: 'asc' },
       include: { evaluaciones: { orderBy: { created_at: 'desc' }, take: 1 } },
@@ -65,6 +66,8 @@ const index = async (req, res) => {
     resumenIncidentes(),
     resumenDerechos(),
     resumenProveedores(),
+    pendientesDeRevision(),
+    pendientesDeAceptar(req.user.id),
   ]);
   const resumenes = await resumenEvaluaciones(sistemas.flatMap((s) => s.evaluaciones.map((e) => e.id)));
 
@@ -77,6 +80,12 @@ const index = async (req, res) => {
     incidentes,
     derechos,
     proveedores,
+    politicas: {
+      revisionVencidas: politicasRevision.filter((p) => p.alerta.nivel === 'vencida').length,
+      revisionProximas: politicasRevision.filter((p) => p.alerta.nivel === 'proxima').length,
+      misPendientes,
+    },
+    TIPOS_POLITICA,
     categorias: CATEGORIAS,
     GRAVEDADES,
     ESTADOS_INCIDENTE,
