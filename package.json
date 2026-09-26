@@ -1,0 +1,35 @@
+{
+  "name": "tfm-rgpd-ens",
+  "version": "1.0.0",
+  "description": "TFM RGPD / ENS",
+  "main": "app.js",
+  "scripts": {
+    "build:css": "tailwindcss -i ./src/styles/input.css -o ./public/css/output.css --minify",
+    "watch:css": "tailwindcss -i ./src/styles/input.css -o ./public/css/output.css --watch",
+    "start": "node app.js",
+    "dev": "node --watch app.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "postinstall": "prisma generate"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
+    "dotenv": "^18.0.4",
+    "ejs": "^6.0.1",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "passport": "^0.7.0",
+    "passport-local": "^1.0.0",
+    "pg": "^8.23.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "prisma": "^7.10.0",
+    "tailwindcss": "^4.3.3"
+  }
+}

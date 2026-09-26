@@ -1,0 +1,11 @@
+node_modules/
+.env
+.env.*
+!.env.example
+
+# CSS generado por Tailwind
+public/css/output.css
+
+
+npm-debug.log*
+.DS_Store

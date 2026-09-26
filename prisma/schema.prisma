@@ -1,0 +1,25 @@
+// La URL de conexión (DATABASE_URL del .env) se configura en prisma.config.js
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Rol {
+  ADMIN
+  USUARIO
+}
+
+model Usuario {
+  id            Int     @id @default(autoincrement())
+  nombre        String
+  email         String  @unique
+  password_hash String
+  rol           Rol     @default(USUARIO)
+  area          String?
+
+  @@map("usuarios")
+}

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('partials/head') %>
+</head>
+<body class="min-h-screen bg-slate-100 flex items-center justify-center">
+  <main class="bg-white rounded-2xl shadow-lg p-10 text-center max-w-md" x-data="{ clics: 0 }">
+    <h1 class="text-4xl font-bold text-indigo-600">Hola mundo</h1>
+    <p class="mt-4 text-slate-600">Express + EJS + Tailwind CSS + Alpine.js funcionando.</p>
+    <button
+      class="mt-6 px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition"
+      @click="clics++">
+      Alpine.js: <span x-text="clics"></span> clics
+    </button>
+  </main>
+</body>
+</html>
