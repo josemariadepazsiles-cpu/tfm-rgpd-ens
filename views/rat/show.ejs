@@ -38,7 +38,7 @@
         <a href="/rat/<%= actividad.id %>/editar" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">Editar</a>
         <% if (user.rol === 'ADMIN') { %>
           <form action="/rat/<%= actividad.id %>/eliminar" method="POST"
-                onsubmit="return confirm('¿Eliminar esta actividad de tratamiento? Esta acción no se puede deshacer.')">
+                onsubmit="return confirm('¿Eliminar esta actividad de tratamiento?<%= actividad.riesgos.length ? ' También se eliminarán sus ' + actividad.riesgos.length + ' riesgos asociados.' : '' %> Esta acción no se puede deshacer.')">
             <button type="submit" class="rounded-lg border border-red-300 bg-white px-4 py-2 text-red-600 hover:bg-red-50 transition">Eliminar</button>
           </form>
         <% } %>
@@ -59,6 +59,26 @@
           </dl>
         </section>
       <% }) %>
+
+      <section class="bg-white rounded-2xl shadow p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <h2 class="text-lg font-semibold text-slate-800">Riesgos asociados (<%= actividad.riesgos.length %>)</h2>
+          <a href="/riesgos/nuevo?actividad=<%= actividad.id %>"
+             class="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700 transition">+ Añadir riesgo</a>
+        </div>
+        <% if (actividad.riesgos.length === 0) { %>
+          <p class="mt-4 text-sm text-slate-500">Esta actividad todavía no tiene riesgos evaluados.</p>
+        <% } else { %>
+          <ul class="mt-4 divide-y divide-slate-100">
+            <% actividad.riesgos.forEach((r) => { %>
+              <li class="flex items-center justify-between gap-4 py-3">
+                <a href="/riesgos/<%= r.id %>" class="text-slate-800 hover:text-indigo-600 hover:underline"><%= r.amenaza %></a>
+                <%- include('../partials/nivel-badge', { nivel: r.nivel_riesgo, nivelEtiquetas: niveles }) %>
+              </li>
+            <% }) %>
+          </ul>
+        <% } %>
+      </section>
     </div>
 
     <p class="mt-6 text-xs text-slate-400">

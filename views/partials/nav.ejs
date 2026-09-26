@@ -2,6 +2,7 @@
   const enlaces = [
     { href: '/dashboard', texto: 'Inicio' },
     { href: '/rat', texto: 'Actividades RAT' },
+    { href: '/riesgos', texto: 'Riesgos' },
   ];
   if (user.rol === 'ADMIN') enlaces.push({ href: '/registro', texto: 'Registrar usuario' });
   const activo = (href) => currentPath === href || currentPath.startsWith(href + '/');

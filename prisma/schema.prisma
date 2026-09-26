@@ -18,6 +18,25 @@ enum BaseLegal {
   INTERES_LEGITIMO
 }
 
+enum Probabilidad {
+  BAJA
+  MEDIA
+  ALTA
+}
+
+enum Impacto {
+  BAJO
+  MEDIO
+  ALTO
+}
+
+// Calculado a partir de probabilidad x impacto (ver lib/riesgo.js)
+enum NivelRiesgo {
+  BAJO
+  MEDIO
+  ALTO
+}
+
 enum Rol {
   ADMIN
   USUARIO
@@ -52,8 +71,27 @@ model ActividadRat {
   created_at             DateTime  @default(now())
   updated_at             DateTime  @updatedAt
 
-  responsable Usuario @relation(fields: [usuario_id], references: [id], onDelete: Restrict)
+  responsable Usuario  @relation(fields: [usuario_id], references: [id], onDelete: Restrict)
+  riesgos     Riesgo[]
 
   @@index([usuario_id])
   @@map("actividades_rat")
+}
+
+model Riesgo {
+  id                  Int          @id @default(autoincrement())
+  actividad_id        Int
+  amenaza             String
+  probabilidad        Probabilidad
+  impacto             Impacto
+  nivel_riesgo        NivelRiesgo
+  medidas_mitigadoras String?
+  created_at          DateTime     @default(now())
+  updated_at          DateTime     @updatedAt
+
+  actividad ActividadRat @relation(fields: [actividad_id], references: [id], onDelete: Cascade)
+
+  @@index([actividad_id])
+  @@index([nivel_riesgo])
+  @@map("riesgos")
 }

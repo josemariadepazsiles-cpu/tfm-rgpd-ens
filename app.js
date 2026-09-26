@@ -10,6 +10,8 @@ const indexRoutes = require('./routes/index');
 const authRoutes = require('./routes/auth');
 const dashboardRoutes = require('./routes/dashboard');
 const ratRoutes = require('./routes/rat');
+const riesgoRoutes = require('./routes/riesgos');
+const { NIVEL_CLASES } = require('./lib/riesgo');
 
 if (!process.env.SESSION_SECRET) {
   throw new Error('Falta SESSION_SECRET en el .env');
@@ -23,6 +25,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.locals.roles = ROLES;
+app.locals.nivelClases = NIVEL_CLASES;
 
 // Middlewares
 app.use(express.urlencoded({ extended: false }));
@@ -62,6 +65,7 @@ app.use('/', indexRoutes);
 app.use('/', authRoutes);
 app.use('/', dashboardRoutes);
 app.use('/rat', ratRoutes);
+app.use('/riesgos', riesgoRoutes);
 
 // 404
 app.use((req, res) => {

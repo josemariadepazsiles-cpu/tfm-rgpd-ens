@@ -1,10 +1,7 @@
 const prisma = require('../lib/prisma');
 const { BASES_LEGALES } = require('../config/baseLegal');
-
-const esAdmin = (user) => user.rol === 'ADMIN';
-
-// Un Usuario solo accede a las actividades de las que es responsable
-const ambito = (user) => (esAdmin(user) ? {} : { usuario_id: user.id });
+const { NIVELES } = require('../lib/riesgo');
+const { esAdmin, ambitoActividad: ambito } = require('../lib/permisos');
 
 const responsableSelect = { select: { id: true, nombre: true, email: true, area: true } };
 
@@ -15,12 +12,12 @@ const noEncontrada = (res) =>
   });
 
 // Devuelve la actividad solo si el usuario puede verla
-const buscarVisible = (req) => {
+const buscarVisible = (req, include = {}) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id <= 0) return null;
   return prisma.actividadRat.findFirst({
     where: { id, ...ambito(req.user) },
-    include: { responsable: responsableSelect },
+    include: { responsable: responsableSelect, ...include },
   });
 };
 
@@ -121,9 +118,16 @@ const list = async (req, res) => {
 };
 
 const show = async (req, res) => {
-  const actividad = await buscarVisible(req);
+  const actividad = await buscarVisible(req, {
+    riesgos: { orderBy: [{ nivel_riesgo: 'desc' }, { amenaza: 'asc' }] },
+  });
   if (!actividad) return noEncontrada(res);
-  res.render('rat/show', { title: actividad.nombre, actividad, basesLegales: BASES_LEGALES });
+  res.render('rat/show', {
+    title: actividad.nombre,
+    actividad,
+    basesLegales: BASES_LEGALES,
+    niveles: NIVELES,
+  });
 };
 
 const newForm = (req, res) =>

@@ -1,0 +1,76 @@
+<%
+  const filtros = [{ valor: '', texto: 'Todos', total }].concat(
+    Object.entries(niveles).map(([valor, texto]) => ({ valor, texto, total: totales[valor] }))
+  );
+%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body class="min-h-screen bg-slate-100">
+  <%- include('../partials/nav') %>
+
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    <%- include('../partials/flash') %>
+
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-800">Evaluación de riesgos</h1>
+        <p class="text-sm text-slate-500">Riesgos asociados a las actividades de tratamiento</p>
+      </div>
+      <a href="/riesgos/nuevo" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">
+        + Nuevo riesgo
+      </a>
+    </div>
+
+    <nav class="mt-6 flex flex-wrap gap-2" aria-label="Filtrar por nivel de riesgo">
+      <% filtros.forEach((f) => { %>
+        <a href="/riesgos<%= f.valor ? '?nivel=' + f.valor : '' %>"
+           class="rounded-full px-3 py-1 text-sm ring-1 ring-inset <%= nivel === f.valor ? (f.valor ? nivelClases[f.valor] + ' font-semibold' : 'bg-indigo-600 text-white ring-indigo-600') : 'bg-white text-slate-600 ring-slate-300 hover:bg-slate-50' %>">
+          <%= f.texto %> <span class="opacity-70">(<%= f.total %>)</span>
+        </a>
+      <% }) %>
+    </nav>
+
+    <div class="mt-4 bg-white rounded-2xl shadow overflow-x-auto">
+      <% if (riesgos.length === 0) { %>
+        <p class="p-8 text-center text-slate-500">
+          No hay riesgos<%= nivel ? ' de nivel ' + niveles[nivel].toLowerCase() : '' %>.
+        </p>
+      <% } else { %>
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 text-left text-slate-600">
+            <tr>
+              <th class="px-4 py-3 font-medium">Actividad</th>
+              <th class="px-4 py-3 font-medium">Amenaza</th>
+              <th class="px-4 py-3 font-medium">Probabilidad</th>
+              <th class="px-4 py-3 font-medium">Impacto</th>
+              <th class="px-4 py-3 font-medium">Nivel de riesgo</th>
+              <th class="px-4 py-3 font-medium text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <% riesgos.forEach((r) => { %>
+              <tr class="hover:bg-slate-50">
+                <td class="px-4 py-3">
+                  <a href="/rat/<%= r.actividad.id %>" class="text-indigo-600 hover:underline"><%= r.actividad.nombre %></a>
+                  <span class="block text-xs text-slate-400"><%= r.actividad.responsable.nombre %></span>
+                </td>
+                <td class="px-4 py-3 text-slate-800 max-w-xs"><p class="line-clamp-2"><%= r.amenaza %></p></td>
+                <td class="px-4 py-3 text-slate-600"><%= probabilidades[r.probabilidad] %></td>
+                <td class="px-4 py-3 text-slate-600"><%= impactos[r.impacto] %></td>
+                <td class="px-4 py-3"><%- include('../partials/nivel-badge', { nivel: r.nivel_riesgo, nivelEtiquetas: niveles }) %></td>
+                <td class="px-4 py-3 text-right whitespace-nowrap">
+                  <a href="/riesgos/<%= r.id %>" class="rounded-lg border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-100">Ver</a>
+                  <a href="/riesgos/<%= r.id %>/editar" class="ml-1 rounded-lg bg-indigo-600 px-3 py-1 text-white hover:bg-indigo-700">Editar</a>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+  </main>
+</body>
+</html>
