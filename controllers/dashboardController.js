@@ -6,6 +6,7 @@ const {
 } = require('../lib/incidentes');
 const { TIPOS_DERECHO, ESTADOS_SOLICITUD, ESTADOS_ABIERTOS, urgencia } = require('../lib/derechos');
 const { pendientesDeRevision, pendientesDeAceptar, TIPOS_POLITICA } = require('../lib/politicas');
+const { resumenBia } = require('../lib/bia');
 
 // Resumen de incidentes: activos, notificaciones a la AEPD pendientes / fuera de plazo
 // y el incidente activo más grave (a igual gravedad, el detectado hace más tiempo)
@@ -58,7 +59,7 @@ const resumenProveedores = async () => {
 
 const index = async (req, res) => {
   // Resumen de cumplimiento ENS de la última evaluación de cada sistema
-  const [sistemas, incidentes, derechos, proveedores, politicasRevision, misPendientes] = await Promise.all([
+  const [sistemas, incidentes, derechos, proveedores, politicasRevision, misPendientes, bia] = await Promise.all([
     prisma.sistema.findMany({
       orderBy: { nombre: 'asc' },
       include: { evaluaciones: { orderBy: { created_at: 'desc' }, take: 1 } },
@@ -68,6 +69,7 @@ const index = async (req, res) => {
     resumenProveedores(),
     pendientesDeRevision(),
     pendientesDeAceptar(req.user.id),
+    resumenBia(),
   ]);
   const resumenes = await resumenEvaluaciones(sistemas.flatMap((s) => s.evaluaciones.map((e) => e.id)));
 
@@ -86,6 +88,7 @@ const index = async (req, res) => {
       misPendientes,
     },
     TIPOS_POLITICA,
+    bia,
     categorias: CATEGORIAS,
     GRAVEDADES,
     ESTADOS_INCIDENTE,

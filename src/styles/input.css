@@ -9,6 +9,7 @@
 @source "../../lib/proveedores.js";
 @source "../../lib/declaraciones.js";
 @source "../../lib/politicas.js";
+@source "../../lib/bia.js";
 
 /* Alpine.js: oculta los elementos con x-cloak hasta que Alpine se inicializa */
 [x-cloak] {

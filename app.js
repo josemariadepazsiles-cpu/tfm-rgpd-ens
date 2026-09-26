@@ -19,6 +19,8 @@ const derechoRoutes = require('./routes/derechos');
 const proveedorRoutes = require('./routes/proveedores');
 const declaracionRoutes = require('./routes/declaraciones');
 const politicaRoutes = require('./routes/politicas');
+const biaRoutes = require('./routes/bia');
+const { CRITICIDAD_CLASES, ESTADO_REVISION_CLASES, RESULTADO_CLASES, ALERTA_BIA_CLASES } = require('./lib/bia');
 const { ESTADO_POLITICA_CLASES, REVISION_CLASES } = require('./lib/politicas');
 const { ESTADO_DECLARACION_CLASES } = require('./lib/declaraciones');
 const { fecha, fechaHora, aInputFechaHora, aInputFecha } = require('./lib/formato');
@@ -57,6 +59,10 @@ app.locals.alertaClases = ALERTA_CLASES;
 app.locals.estadoDeclaracionClases = ESTADO_DECLARACION_CLASES;
 app.locals.estadoPoliticaClases = ESTADO_POLITICA_CLASES;
 app.locals.revisionClases = REVISION_CLASES;
+app.locals.criticidadClases = CRITICIDAD_CLASES;
+app.locals.estadoRevisionClases = ESTADO_REVISION_CLASES;
+app.locals.resultadoClases = RESULTADO_CLASES;
+app.locals.alertaBiaClases = ALERTA_BIA_CLASES;
 
 // Middlewares
 app.use(express.urlencoded({ extended: false }));
@@ -105,6 +111,7 @@ app.use('/derechos', derechoRoutes);
 app.use('/proveedores', proveedorRoutes);
 app.use('/declaraciones', declaracionRoutes);
 app.use('/politicas', politicaRoutes);
+app.use('/bia', biaRoutes);
 // El checklist global se sustituyó por evaluaciones por sistema
 app.get('/checklist', (req, res) => res.redirect(301, '/sistemas'));
 

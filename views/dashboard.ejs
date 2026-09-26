@@ -183,6 +183,24 @@
 
     <section class="bg-white rounded-2xl shadow p-8">
       <div class="flex flex-wrap items-center justify-between gap-3">
+        <h2 class="text-lg font-semibold text-slate-800">BIA y continuidad</h2>
+        <a href="/bia" class="text-sm text-indigo-600 hover:underline">Ver procesos &rarr;</a>
+      </div>
+      <p class="mt-1 text-sm text-slate-500">Procesos de negocio de criticidad alta o crítica</p>
+      <div class="mt-6 grid gap-4 sm:grid-cols-2">
+        <div class="rounded-xl border p-5 <%= bia.sinPlan ? 'border-red-300 bg-red-50' : 'border-slate-200' %>">
+          <p class="text-sm font-medium <%= bia.sinPlan ? 'text-red-800' : 'text-slate-500' %>">Sin plan de contingencia definido</p>
+          <p class="mt-1 text-3xl font-bold <%= bia.sinPlan ? 'text-red-700' : 'text-slate-800' %>"><%= bia.sinPlan %></p>
+        </div>
+        <div class="rounded-xl border p-5 <%= bia.sinPrueba ? 'border-yellow-300 bg-yellow-50' : 'border-slate-200' %>">
+          <p class="text-sm font-medium <%= bia.sinPrueba ? 'text-yellow-800' : 'text-slate-500' %>">Sin prueba de continuidad en 12 meses</p>
+          <p class="mt-1 text-3xl font-bold text-slate-800"><%= bia.sinPrueba %></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="bg-white rounded-2xl shadow p-8">
+      <div class="flex flex-wrap items-center justify-between gap-3">
         <h2 class="text-lg font-semibold text-slate-800">Cumplimiento ENS por sistema</h2>
         <a href="/sistemas" class="text-sm text-indigo-600 hover:underline">Ver sistemas &rarr;</a>
       </div>

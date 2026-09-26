@@ -152,6 +152,33 @@ enum EstadoPolitica {
   OBSOLETA
 }
 
+// Análisis de Impacto en el Negocio (BIA) y continuidad (ENS, op.cont)
+enum CriticidadProceso {
+  BAJA
+  MEDIA
+  ALTA
+  CRITICA
+}
+
+enum EstadoRevisionBia {
+  PENDIENTE_ANALISIS
+  ANALIZADO
+  REQUIERE_PLAN
+  PLAN_DEFINIDO
+}
+
+enum TipoPruebaContinuidad {
+  SIMULACRO_DOCUMENTAL
+  PRUEBA_PARCIAL
+  PRUEBA_COMPLETA
+}
+
+enum ResultadoPrueba {
+  SATISFACTORIO
+  CON_INCIDENCIAS
+  FALLIDO
+}
+
 enum Rol {
   ADMIN
   USUARIO
@@ -185,6 +212,9 @@ model Usuario {
   politicasCreadas       Politica[]                  @relation("PoliticaCreador")
   archivosPoliticas      ArchivoPolitica[]
   aceptacionesPoliticas  AceptacionPolitica[]
+  procesosResponsable    ProcesoNegocio[]            @relation("ProcesoResponsable")
+  procesosCreados        ProcesoNegocio[]            @relation("ProcesoCreador")
+  pruebasContinuidad     PruebaContinuidad[]
 
   @@map("usuarios")
 }
@@ -258,6 +288,7 @@ model Sistema {
   creado_por    Usuario?                 @relation(fields: [creado_por_id], references: [id], onDelete: SetNull)
   evaluaciones  Evaluacion[]
   declaraciones DeclaracionConformidad[]
+  procesos      ProcesoNegocio[]
 
   @@map("sistemas")
 }
@@ -582,4 +613,55 @@ model AceptacionPolitica {
   @@unique([politica_id, version_aceptada, usuario_id])
   @@index([usuario_id])
   @@map("aceptaciones_politicas")
+}
+
+// Proceso de negocio evaluado en el BIA
+model ProcesoNegocio {
+  id                          Int               @id @default(autoincrement())
+  sistema_id                  Int?
+  nombre                      String
+  descripcion                 String?
+  departamento_responsable    String
+  criticidad                  CriticidadProceso
+  // Recovery Time Objective: horas máximas admisibles de interrupción
+  rto_horas                   Decimal           @db.Decimal(8, 2)
+  // Recovery Point Objective: máxima pérdida de datos admisible, en horas
+  rpo_horas                   Decimal           @db.Decimal(8, 2)
+  impacto_economico           String?
+  impacto_legal_reputacional  String?
+  recursos_minimos_necesarios String?
+  estrategia_continuidad      String?
+  estado_revision             EstadoRevisionBia @default(PENDIENTE_ANALISIS)
+  responsable_id              Int?
+  fecha_ultimo_analisis       DateTime?
+  creado_por_id               Int?
+  created_at                  DateTime          @default(now())
+  updated_at                  DateTime          @updatedAt
+
+  sistema     Sistema?            @relation(fields: [sistema_id], references: [id], onDelete: SetNull)
+  responsable Usuario?            @relation("ProcesoResponsable", fields: [responsable_id], references: [id], onDelete: SetNull)
+  creado_por  Usuario?            @relation("ProcesoCreador", fields: [creado_por_id], references: [id], onDelete: SetNull)
+  pruebas     PruebaContinuidad[]
+
+  @@index([criticidad])
+  @@index([estado_revision])
+  @@map("procesos_negocio")
+}
+
+// Simulacros y pruebas periódicas del plan de continuidad de un proceso
+model PruebaContinuidad {
+  id               Int                   @id @default(autoincrement())
+  proceso_id       Int
+  fecha_prueba     DateTime
+  tipo_prueba      TipoPruebaContinuidad
+  resultado        ResultadoPrueba
+  observaciones    String?
+  realizado_por_id Int?
+  created_at       DateTime              @default(now())
+
+  proceso       ProcesoNegocio @relation(fields: [proceso_id], references: [id], onDelete: Cascade)
+  realizado_por Usuario?       @relation(fields: [realizado_por_id], references: [id], onDelete: SetNull)
+
+  @@index([proceso_id, fecha_prueba])
+  @@map("pruebas_continuidad")
 }

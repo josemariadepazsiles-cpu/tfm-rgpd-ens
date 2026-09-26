@@ -1,0 +1,114 @@
+<%
+  const selectClase = 'mt-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500';
+  const conAlertaRoja = procesos.filter((p) => p.alertas.some((a) => a.nivel === 'rojo')).length;
+%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body class="min-h-screen bg-slate-100">
+  <%- include('../partials/nav') %>
+
+  <main class="max-w-7xl mx-auto px-4 py-8">
+    <%- include('../partials/flash') %>
+
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-800">BIA y Continuidad</h1>
+        <p class="text-sm text-slate-500">Análisis de impacto en el negocio: criticidad de los procesos, RTO/RPO y pruebas del plan de continuidad</p>
+      </div>
+      <% if (user.rol === 'ADMIN') { %>
+        <a href="/bia/nuevo" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">+ Nuevo proceso</a>
+      <% } %>
+    </div>
+
+    <% if (conAlertaRoja) { %>
+      <div class="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+        <strong><%= conAlertaRoja %> proceso(s)</strong> de criticidad alta o crítica siguen pendientes de análisis.
+      </div>
+    <% } %>
+
+    <form action="/bia" method="GET" class="mt-6 flex flex-wrap items-end gap-3">
+      <div>
+        <label for="criticidad" class="block text-sm font-medium text-slate-700">Criticidad</label>
+        <select id="criticidad" name="criticidad" onchange="this.form.submit()" class="<%= selectClase %>">
+          <option value="">Todas</option>
+          <% Object.entries(CRITICIDADES).forEach(([v, etiqueta]) => { %>
+            <option value="<%= v %>" <%= criticidad === v ? 'selected' : '' %>><%= etiqueta %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div>
+        <label for="estado" class="block text-sm font-medium text-slate-700">Estado de revisión</label>
+        <select id="estado" name="estado" onchange="this.form.submit()" class="<%= selectClase %>">
+          <option value="">Todos</option>
+          <% Object.entries(ESTADOS_REVISION_BIA).forEach(([v, etiqueta]) => { %>
+            <option value="<%= v %>" <%= estado === v ? 'selected' : '' %>><%= etiqueta %></option>
+          <% }) %>
+        </select>
+      </div>
+      <noscript><button type="submit" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">Filtrar</button></noscript>
+      <% if (criticidad || estado) { %><a href="/bia" class="py-2 text-sm text-indigo-600 hover:underline">Quitar filtros</a><% } %>
+    </form>
+
+    <div class="mt-4 bg-white rounded-2xl shadow overflow-x-auto">
+      <% if (procesos.length === 0) { %>
+        <p class="p-8 text-center text-slate-500"><%= criticidad || estado ? 'No hay procesos con esos filtros.' : 'No se ha registrado ningún proceso de negocio.' %></p>
+      <% } else { %>
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 text-left text-slate-600">
+            <tr>
+              <th class="px-4 py-3 font-medium">Proceso</th>
+              <th class="px-4 py-3 font-medium">Departamento</th>
+              <th class="px-4 py-3 font-medium">Criticidad</th>
+              <th class="px-4 py-3 font-medium">RTO</th>
+              <th class="px-4 py-3 font-medium">RPO</th>
+              <th class="px-4 py-3 font-medium">Estado de revisión</th>
+              <th class="px-4 py-3 font-medium">Alertas</th>
+              <th class="px-4 py-3 font-medium text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <% procesos.forEach((p) => { %>
+              <tr class="hover:bg-slate-50">
+                <td class="px-4 py-3">
+                  <a href="/bia/<%= p.id %>" class="font-medium text-slate-800 hover:text-indigo-600 hover:underline"><%= p.nombre %></a>
+                  <% if (p.sistema) { %><span class="block text-xs text-slate-500">Sistema: <%= p.sistema.nombre %></span><% } %>
+                </td>
+                <td class="px-4 py-3 text-slate-600"><%= p.departamento_responsable %></td>
+                <td class="px-4 py-3">
+                  <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset <%= criticidadClases[p.criticidad] %>"><%= CRITICIDADES[p.criticidad] %></span>
+                </td>
+                <td class="px-4 py-3 text-slate-700 whitespace-nowrap"><%= formatoHoras(p.rto_horas) %></td>
+                <td class="px-4 py-3 text-slate-700 whitespace-nowrap"><%= formatoHoras(p.rpo_horas) %></td>
+                <td class="px-4 py-3">
+                  <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset <%= estadoRevisionClases[p.estado_revision] %>"><%= ESTADOS_REVISION_BIA[p.estado_revision] %></span>
+                  <% if (p.ultimaPrueba) { %><span class="mt-1 block text-xs text-slate-500">Última prueba: <%= fecha(p.ultimaPrueba) %></span><% } %>
+                </td>
+                <td class="px-4 py-3">
+                  <div class="flex flex-wrap gap-1">
+                    <% p.alertas.forEach((a) => { %>
+                      <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset whitespace-nowrap <%= alertaBiaClases[a.nivel] %>" title="<%= a.detalle %>"><%= a.nivel === 'rojo' ? '⚠ ' : '' %><%= a.texto %></span>
+                    <% }) %>
+                  </div>
+                </td>
+                <td class="px-4 py-3 text-right whitespace-nowrap">
+                  <a href="/bia/<%= p.id %>" class="rounded-lg border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-100">Ver</a>
+                  <% if (p.editable) { %>
+                    <a href="/bia/<%= p.id %>/editar" class="ml-1 rounded-lg bg-indigo-600 px-3 py-1 text-white hover:bg-indigo-700">Editar</a>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+    <p class="mt-3 text-xs text-slate-500">
+      RTO: tiempo máximo de interrupción admisible · RPO: pérdida máxima de datos admisible.
+      Alertas (procesos de criticidad alta o crítica): rojo = pendiente de análisis · amarillo = sin prueba de continuidad en los últimos 12 meses.
+    </p>
+  </main>
+</body>
+</html>

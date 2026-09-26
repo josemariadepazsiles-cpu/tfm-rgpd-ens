@@ -20,11 +20,12 @@
     {
       id: 'ens',
       texto: 'ENS',
-      rutas: ['/sistemas', '/evaluaciones', '/controles', '/declaraciones', '/politicas'],
+      rutas: ['/sistemas', '/evaluaciones', '/controles', '/declaraciones', '/politicas', '/bia'],
       enlaces: [
         { href: '/sistemas', texto: 'Sistemas ENS' },
         { href: '/declaraciones', texto: 'Declaraciones de Conformidad' },
         { href: '/politicas', texto: 'Políticas y Documentación' },
+        { href: '/bia', texto: 'BIA y Continuidad' },
         ...(esAdmin ? [{ href: '/controles', texto: 'Catálogo de controles' }] : []),
       ],
     },

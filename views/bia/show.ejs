@@ -1,0 +1,175 @@
+<%
+  const p = proceso;
+  const inputClase = 'mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500';
+  const campo = (etiqueta, valor, vacio) => ({ etiqueta, valor, vacio });
+  const secciones = [
+    { titulo: 'Proceso', campos: [
+      campo('Descripción', p.descripcion, 'Sin descripción'),
+      campo('Departamento responsable', p.departamento_responsable),
+      campo('Responsable', p.responsable ? p.responsable.nombre : null, 'Sin asignar'),
+      campo('Sistema del que depende', p.sistema ? p.sistema.nombre : null, 'Ninguno'),
+    ] },
+    { titulo: 'Impacto', campos: [
+      campo('Impacto económico', p.impacto_economico, 'No evaluado'),
+      campo('Impacto legal y reputacional', p.impacto_legal_reputacional, 'No evaluado'),
+    ] },
+    { titulo: 'Continuidad', campos: [
+      campo('Recursos mínimos necesarios', p.recursos_minimos_necesarios, 'No definidos'),
+      campo('Estrategia de continuidad', p.estrategia_continuidad, 'No definida'),
+    ] },
+  ];
+%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body class="min-h-screen bg-slate-100">
+  <%- include('../partials/nav') %>
+
+  <main class="max-w-5xl mx-auto px-4 py-8">
+    <%- include('../partials/flash') %>
+
+    <a href="/bia" class="text-sm text-indigo-600 hover:underline">&larr; Volver a BIA y Continuidad</a>
+
+    <div class="mt-2 flex flex-wrap items-start justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-800"><%= p.nombre %></h1>
+        <div class="mt-2 flex flex-wrap items-center gap-2">
+          <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset <%= criticidadClases[p.criticidad] %>">Criticidad <%= CRITICIDADES[p.criticidad].toLowerCase() %></span>
+          <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset <%= estadoRevisionClases[p.estado_revision] %>"><%= ESTADOS_REVISION_BIA[p.estado_revision] %></span>
+          <% alertas.forEach((a) => { %>
+            <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset <%= alertaBiaClases[a.nivel] %>"><%= a.nivel === 'rojo' ? '⚠ ' : '' %><%= a.texto %></span>
+          <% }) %>
+        </div>
+      </div>
+      <% if (editable) { %>
+        <a href="/bia/<%= p.id %>/editar" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">Editar ficha</a>
+      <% } %>
+    </div>
+
+    <% if (alertas.length) { %>
+      <ul class="mt-6 space-y-2">
+        <% alertas.forEach((a) => { %>
+          <li class="rounded-lg border px-4 py-2 text-sm <%= a.nivel === 'rojo' ? 'border-red-200 bg-red-50 text-red-800' : 'border-yellow-200 bg-yellow-50 text-yellow-800' %>">
+            <strong><%= a.texto %>:</strong> <%= a.detalle %>.
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+
+    <section class="mt-6 grid gap-4 sm:grid-cols-4">
+      <div class="rounded-xl bg-white shadow p-4">
+        <p class="text-sm text-slate-500">RTO</p>
+        <p class="mt-1 text-xl font-bold text-slate-800"><%= formatoHoras(p.rto_horas) %></p>
+        <p class="text-xs text-slate-500">Interrupción máxima admisible</p>
+      </div>
+      <div class="rounded-xl bg-white shadow p-4">
+        <p class="text-sm text-slate-500">RPO</p>
+        <p class="mt-1 text-xl font-bold text-slate-800"><%= formatoHoras(p.rpo_horas) %></p>
+        <p class="text-xs text-slate-500">Pérdida de datos máxima</p>
+      </div>
+      <div class="rounded-xl bg-white shadow p-4">
+        <p class="text-sm text-slate-500">Último análisis</p>
+        <p class="mt-1 text-xl font-bold text-slate-800"><%= p.fecha_ultimo_analisis ? fecha(p.fecha_ultimo_analisis) : '—' %></p>
+      </div>
+      <div class="rounded-xl bg-white shadow p-4">
+        <p class="text-sm text-slate-500">Última prueba</p>
+        <% if (ultima) { %>
+          <p class="mt-1 text-xl font-bold text-slate-800"><%= fecha(ultima.fecha_prueba) %></p>
+          <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset <%= resultadoClases[ultima.resultado] %>"><%= RESULTADOS_PRUEBA[ultima.resultado] %></span>
+        <% } else { %>
+          <p class="mt-1 text-xl font-bold text-slate-400">Ninguna</p>
+        <% } %>
+      </div>
+    </section>
+
+    <div class="mt-6 grid gap-6 lg:grid-cols-3">
+      <% secciones.forEach((s) => { %>
+        <section class="bg-white rounded-2xl shadow p-6">
+          <h2 class="text-lg font-semibold text-slate-800"><%= s.titulo %></h2>
+          <dl class="mt-4 space-y-3">
+            <% s.campos.forEach((c) => { %>
+              <div>
+                <dt class="text-sm font-medium text-slate-500"><%= c.etiqueta %></dt>
+                <dd class="mt-0.5 whitespace-pre-line <%= c.valor ? 'text-slate-800' : 'text-slate-400 italic' %>"><%= c.valor || c.vacio %></dd>
+              </div>
+            <% }) %>
+          </dl>
+        </section>
+      <% }) %>
+    </div>
+
+    <section id="pruebas" class="mt-6 bg-white rounded-2xl shadow p-6 scroll-mt-20">
+      <h2 class="text-lg font-semibold text-slate-800">Historial de pruebas de continuidad (<%= p.pruebas.length %>)</h2>
+
+      <% if (p.pruebas.length === 0) { %>
+        <p class="mt-3 text-sm text-slate-500 italic">No se ha registrado ninguna prueba.</p>
+      <% } else { %>
+        <div class="mt-4 overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 text-left text-slate-600">
+              <tr>
+                <th class="px-4 py-2 font-medium">Fecha</th>
+                <th class="px-4 py-2 font-medium">Tipo</th>
+                <th class="px-4 py-2 font-medium">Resultado</th>
+                <th class="px-4 py-2 font-medium">Observaciones</th>
+                <th class="px-4 py-2 font-medium">Realizada por</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <% p.pruebas.forEach((t) => { %>
+                <tr>
+                  <td class="px-4 py-2 text-slate-700 whitespace-nowrap"><%= fechaHora(t.fecha_prueba) %></td>
+                  <td class="px-4 py-2 text-slate-700"><%= TIPOS_PRUEBA[t.tipo_prueba] %></td>
+                  <td class="px-4 py-2"><span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset whitespace-nowrap <%= resultadoClases[t.resultado] %>"><%= RESULTADOS_PRUEBA[t.resultado] %></span></td>
+                  <td class="px-4 py-2 text-slate-600 whitespace-pre-line max-w-md"><%= t.observaciones || '—' %></td>
+                  <td class="px-4 py-2 text-slate-600"><%= t.realizado_por ? t.realizado_por.nombre : '—' %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+
+      <% if (editable) { %>
+        <details class="mt-6 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4" <%= p.pruebas.length ? '' : 'open' %>>
+          <summary class="cursor-pointer font-medium text-indigo-700">+ Registrar nueva prueba</summary>
+          <form action="/bia/<%= p.id %>/pruebas" method="POST" class="mt-4 grid gap-4 sm:grid-cols-3" x-data="{ resultado: 'SATISFACTORIO' }">
+            <div>
+              <label for="fecha_prueba" class="block text-sm text-slate-700">Fecha y hora</label>
+              <input id="fecha_prueba" name="fecha_prueba" type="datetime-local" required value="<%= aInputFechaHora(new Date()) %>" class="<%= inputClase %>">
+            </div>
+            <div>
+              <label for="tipo_prueba" class="block text-sm text-slate-700">Tipo de prueba</label>
+              <select id="tipo_prueba" name="tipo_prueba" class="<%= inputClase %>">
+                <% Object.entries(TIPOS_PRUEBA).forEach(([v, etiqueta]) => { %><option value="<%= v %>"><%= etiqueta %></option><% }) %>
+              </select>
+            </div>
+            <div>
+              <label for="resultado" class="block text-sm text-slate-700">Resultado</label>
+              <select id="resultado" name="resultado" x-model="resultado" class="<%= inputClase %>">
+                <% Object.entries(RESULTADOS_PRUEBA).forEach(([v, etiqueta]) => { %><option value="<%= v %>"><%= etiqueta %></option><% }) %>
+              </select>
+            </div>
+            <div class="sm:col-span-3">
+              <label for="observaciones" class="block text-sm text-slate-700">
+                Observaciones <span class="text-slate-400" x-show="resultado === 'SATISFACTORIO'">(opcional)</span>
+              </label>
+              <textarea id="observaciones" name="observaciones" rows="3" class="<%= inputClase %>" :required="resultado !== 'SATISFACTORIO'"
+                        placeholder="Alcance de la prueba, tiempos de recuperación obtenidos, incidencias detectadas…"></textarea>
+            </div>
+            <div class="sm:col-span-3 flex justify-end">
+              <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition">Registrar prueba</button>
+            </div>
+          </form>
+        </details>
+      <% } %>
+    </section>
+
+    <p class="mt-6 text-xs text-slate-400">
+      Registrado el <%= fechaHora(p.created_at) %><%= p.creado_por ? ' por ' + p.creado_por.nombre : '' %> · última modificación el <%= fechaHora(p.updated_at) %>
+    </p>
+  </main>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<%
+  const inputClase = 'mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500';
+  const accion = proceso.id ? '/bia/' + proceso.id : '/bia';
+  const volver = proceso.id ? '/bia/' + proceso.id : '/bia';
+  const valor = (campo) => proceso[campo] ?? '';
+  const horas = (v) => (v === null || v === undefined || Number.isNaN(Number(v)) ? '' : String(Number(v)).replace('.', ','));
+%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body class="min-h-screen bg-slate-100">
+  <%- include('../partials/nav') %>
+
+  <main class="max-w-3xl mx-auto px-4 py-8">
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-bold text-slate-800"><%= title %></h1>
+      <a href="<%= volver %>" class="text-sm text-indigo-600 hover:underline">Cancelar</a>
+    </div>
+
+    <% if (errores.length) { %>
+      <ul class="mt-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 list-disc list-inside" role="alert">
+        <% errores.forEach((e) => { %><li><%= e %></li><% }) %>
+      </ul>
+    <% } %>
+
+    <form action="<%= accion %>" method="POST" class="mt-6 space-y-6">
+      <fieldset class="bg-white rounded-2xl shadow p-6 space-y-4">
+        <legend class="float-left w-full mb-2 text-lg font-semibold text-slate-800">1. Proceso</legend>
+        <div class="clear-both">
+          <label for="nombre" class="block text-sm font-medium text-slate-700">Nombre del proceso</label>
+          <input id="nombre" name="nombre" type="text" required value="<%= valor('nombre') %>" class="<%= inputClase %>" placeholder="Ej.: Facturación a clientes">
+        </div>
+        <div>
+          <label for="descripcion" class="block text-sm font-medium text-slate-700">Descripción <span class="font-normal text-slate-400">(opcional)</span></label>
+          <textarea id="descripcion" name="descripcion" rows="2" class="<%= inputClase %>"><%= valor('descripcion') %></textarea>
+        </div>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label for="departamento_responsable" class="block text-sm font-medium text-slate-700">Departamento responsable</label>
+            <input id="departamento_responsable" name="departamento_responsable" type="text" required value="<%= valor('departamento_responsable') %>" class="<%= inputClase %>">
+          </div>
+          <div>
+            <label for="sistema_id" class="block text-sm font-medium text-slate-700">Sistema del que depende <span class="font-normal text-slate-400">(opcional)</span></label>
+            <select id="sistema_id" name="sistema_id" class="<%= inputClase %>">
+              <option value="">Ninguno</option>
+              <% sistemas.forEach((s) => { %>
+                <option value="<%= s.id %>" <%= proceso.sistema_id === s.id ? 'selected' : '' %>><%= s.nombre %></option>
+              <% }) %>
+            </select>
+          </div>
+        </div>
+        <div>
+          <% if (user.rol === 'ADMIN') { %>
+            <label for="responsable_id" class="block text-sm font-medium text-slate-700">Responsable del proceso</label>
+            <select id="responsable_id" name="responsable_id" class="<%= inputClase %> sm:w-80">
+              <option value="">Sin asignar</option>
+              <% usuarios.forEach((u) => { %>
+                <option value="<%= u.id %>" <%= proceso.responsable_id === u.id ? 'selected' : '' %>><%= u.nombre %><%= u.area ? ' — ' + u.area : '' %></option>
+              <% }) %>
+            </select>
+            <p class="mt-1 text-xs text-slate-500">Podrá editar la ficha y registrar pruebas de continuidad.</p>
+          <% } else { %>
+            <span class="block text-sm font-medium text-slate-700">Responsable del proceso</span>
+            <p class="mt-1 text-slate-600"><%= proceso.responsable ? proceso.responsable.nombre : 'Sin asignar' %></p>
+          <% } %>
+        </div>
+      </fieldset>
+
+      <fieldset class="bg-white rounded-2xl shadow p-6 space-y-4">
+        <legend class="float-left w-full mb-2 text-lg font-semibold text-slate-800">2. Impacto y objetivos de recuperación</legend>
+        <div class="clear-both grid gap-4 sm:grid-cols-3">
+          <div>
+            <label for="criticidad" class="block text-sm font-medium text-slate-700">Criticidad</label>
+            <select id="criticidad" name="criticidad" class="<%= inputClase %>">
+              <% Object.entries(CRITICIDADES).forEach(([v, etiqueta]) => { %>
+                <option value="<%= v %>" <%= proceso.criticidad === v ? 'selected' : '' %>><%= etiqueta %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div>
+            <label for="rto_horas" class="block text-sm font-medium text-slate-700">RTO (horas)</label>
+            <input id="rto_horas" name="rto_horas" type="text" inputmode="decimal" required value="<%= horas(proceso.rto_horas) %>" class="<%= inputClase %>" placeholder="Ej.: 24">
+            <p class="mt-1 text-xs text-slate-500">Interrupción máxima admisible</p>
+          </div>
+          <div>
+            <label for="rpo_horas" class="block text-sm font-medium text-slate-700">RPO (horas)</label>
+            <input id="rpo_horas" name="rpo_horas" type="text" inputmode="decimal" required value="<%= horas(proceso.rpo_horas) %>" class="<%= inputClase %>" placeholder="Ej.: 4">
+            <p class="mt-1 text-xs text-slate-500">Pérdida de datos máxima admisible</p>
+          </div>
+        </div>
+        <div>
+          <label for="impacto_economico" class="block text-sm font-medium text-slate-700">Impacto económico <span class="font-normal text-slate-400">(opcional)</span></label>
+          <input id="impacto_economico" name="impacto_economico" type="text" value="<%= valor('impacto_economico') %>" class="<%= inputClase %>"
+                 placeholder="Ej.: ~15.000 € por día de interrupción">
+        </div>
+        <div>
+          <label for="impacto_legal_reputacional" class="block text-sm font-medium text-slate-700">Impacto legal y reputacional <span class="font-normal text-slate-400">(opcional)</span></label>
+          <textarea id="impacto_legal_reputacional" name="impacto_legal_reputacional" rows="2" class="<%= inputClase %>"><%= valor('impacto_legal_reputacional') %></textarea>
+        </div>
+      </fieldset>
+
+      <fieldset class="bg-white rounded-2xl shadow p-6 space-y-4">
+        <legend class="float-left w-full mb-2 text-lg font-semibold text-slate-800">3. Continuidad</legend>
+        <div class="clear-both">
+          <label for="recursos_minimos_necesarios" class="block text-sm font-medium text-slate-700">Recursos mínimos necesarios <span class="font-normal text-slate-400">(opcional)</span></label>
+          <textarea id="recursos_minimos_necesarios" name="recursos_minimos_necesarios" rows="3" class="<%= inputClase %>"
+                    placeholder="Personal, sistemas y proveedores clave para seguir operando"><%= valor('recursos_minimos_necesarios') %></textarea>
+        </div>
+        <div>
+          <label for="estrategia_continuidad" class="block text-sm font-medium text-slate-700">Estrategia de continuidad <span class="font-normal text-slate-400">(opcional)</span></label>
+          <textarea id="estrategia_continuidad" name="estrategia_continuidad" rows="3" class="<%= inputClase %>"
+                    placeholder="Cómo se recuperaría el proceso"><%= valor('estrategia_continuidad') %></textarea>
+        </div>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label for="estado_revision" class="block text-sm font-medium text-slate-700">Estado de revisión</label>
+            <select id="estado_revision" name="estado_revision" class="<%= inputClase %>">
+              <% Object.entries(ESTADOS_REVISION_BIA).forEach(([v, etiqueta]) => { %>
+                <option value="<%= v %>" <%= proceso.estado_revision === v ? 'selected' : '' %>><%= etiqueta %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div>
+            <label for="fecha_ultimo_analisis" class="block text-sm font-medium text-slate-700">Fecha del último análisis</label>
+            <input id="fecha_ultimo_analisis" name="fecha_ultimo_analisis" type="date" value="<%= aInputFecha(proceso.fecha_ultimo_analisis) %>" class="<%= inputClase %>">
+            <p class="mt-1 text-xs text-slate-500">Si la dejas vacía al pasar de «Pendiente de análisis», se usará la fecha actual.</p>
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="flex justify-end gap-3">
+        <a href="<%= volver %>" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-700 hover:bg-slate-50">Cancelar</a>
+        <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 transition">
+          <%= proceso.id ? 'Guardar cambios' : 'Registrar proceso' %>
+        </button>
+      </div>
+    </form>
+  </main>
+</body>
+</html>
