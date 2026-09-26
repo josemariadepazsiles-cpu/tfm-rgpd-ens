@@ -63,8 +63,11 @@ model Usuario {
   rol           Rol     @default(USUARIO)
   area          String?
 
-  actividades ActividadRat[]
-  controles   ControlEns[]
+  actividades          ActividadRat[]
+  controlesResponsable EvaluacionControl[]
+  evaluacionesCreadas  Evaluacion[]
+  cambiosEstado        HistorialEstado[]
+  sistemasCreados      Sistema[]
 
   @@map("usuarios")
 }
@@ -110,20 +113,84 @@ model Riesgo {
   @@map("riesgos")
 }
 
+// Catálogo de controles ENS; se evalúan todos en cada evaluación de cada sistema
 model ControlEns {
+  id         Int          @id @default(autoincrement())
+  nombre     String       @unique
+  categoria  CategoriaEns
+  created_at DateTime     @default(now())
+  updated_at DateTime     @updatedAt
+
+  evaluaciones EvaluacionControl[]
+
+  @@index([categoria])
+  @@map("controles_ens")
+}
+
+// Sistema de información de la organización que se evalúa frente al ENS
+model Sistema {
+  id                Int           @id @default(autoincrement())
+  nombre            String        @unique
+  descripcion       String?
+  // Categoría ENS del sistema (informativa; todas las evaluaciones incluyen todo el catálogo)
+  categoria_general CategoriaEns?
+  creado_por_id     Int?
+  created_at        DateTime      @default(now())
+  updated_at        DateTime      @updatedAt
+
+  creado_por   Usuario?     @relation(fields: [creado_por_id], references: [id], onDelete: SetNull)
+  evaluaciones Evaluacion[]
+
+  @@map("sistemas")
+}
+
+model Evaluacion {
+  id            Int      @id @default(autoincrement())
+  sistema_id    Int
+  nombre        String
+  creado_por_id Int?
+  created_at    DateTime @default(now())
+
+  sistema    Sistema             @relation(fields: [sistema_id], references: [id], onDelete: Cascade)
+  creado_por Usuario?            @relation(fields: [creado_por_id], references: [id], onDelete: SetNull)
+  controles  EvaluacionControl[]
+
+  @@index([sistema_id])
+  @@map("evaluaciones")
+}
+
+// Estado de un control dentro de una evaluación. Si no existe la fila, el control está Pendiente
+model EvaluacionControl {
   id             Int           @id @default(autoincrement())
-  nombre         String        @unique
-  categoria      CategoriaEns
+  evaluacion_id  Int
+  control_id     Int
   estado         EstadoControl @default(PENDIENTE)
   evidencia      String?
   responsable_id Int?
   fecha_revision DateTime?
-  created_at     DateTime      @default(now())
-  updated_at     DateTime      @updatedAt
 
-  responsable Usuario? @relation(fields: [responsable_id], references: [id], onDelete: SetNull)
+  evaluacion  Evaluacion        @relation(fields: [evaluacion_id], references: [id], onDelete: Cascade)
+  control     ControlEns        @relation(fields: [control_id], references: [id], onDelete: Restrict)
+  responsable Usuario?          @relation(fields: [responsable_id], references: [id], onDelete: SetNull)
+  historial   HistorialEstado[]
 
-  @@index([categoria])
+  @@unique([evaluacion_id, control_id])
   @@index([responsable_id])
-  @@map("controles_ens")
+  @@map("evaluacion_controles")
+}
+
+// Registro de cada cambio de estado (trazabilidad)
+model HistorialEstado {
+  id                    Int           @id @default(autoincrement())
+  evaluacion_control_id Int
+  estado_anterior       EstadoControl
+  estado_nuevo          EstadoControl
+  usuario_id            Int?
+  fecha                 DateTime      @default(now())
+
+  evaluacionControl EvaluacionControl @relation(fields: [evaluacion_control_id], references: [id], onDelete: Cascade)
+  usuario           Usuario?          @relation(fields: [usuario_id], references: [id], onDelete: SetNull)
+
+  @@index([evaluacion_control_id, fecha])
+  @@map("historial_estados")
 }

@@ -1,6 +1,3 @@
-<%
-  const fecha = (d) => d ? new Date(d).toLocaleDateString('es-ES') : '—';
-%>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -12,30 +9,40 @@
   <main class="max-w-6xl mx-auto px-4 py-8">
     <%- include('../partials/flash') %>
 
-    <div class="flex flex-wrap items-center justify-between gap-4">
+    <a href="/sistemas/<%= evaluacion.sistema.id %>" class="text-sm text-indigo-600 hover:underline">&larr; <%= evaluacion.sistema.nombre %></a>
+
+    <div class="mt-2 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-slate-800">Checklist ENS</h1>
-        <p class="text-sm text-slate-500">Controles del Esquema Nacional de Seguridad, compartidos por toda la organización</p>
+        <h1 class="text-2xl font-bold text-slate-800"><%= evaluacion.nombre %></h1>
+        <p class="text-sm text-slate-500">Checklist ENS del sistema <strong><%= evaluacion.sistema.nombre %></strong> · creada el <%= fechaHora(evaluacion.created_at) %></p>
       </div>
-      <% if (user.rol === 'ADMIN') { %>
-        <a href="/checklist/nuevo" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">
-          + Nuevo control
-        </a>
-      <% } %>
+      <div class="flex flex-wrap items-end gap-2">
+        <% if (otras.length > 1) { %>
+          <div>
+            <label for="ev" class="block text-xs font-medium text-slate-500">Cambiar de evaluación</label>
+            <select id="ev" onchange="location.href = '/evaluaciones/' + this.value"
+                    class="mt-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <% otras.forEach((o) => { %>
+                <option value="<%= o.id %>" <%= o.id === evaluacion.id ? 'selected' : '' %>><%= o.nombre %></option>
+              <% }) %>
+            </select>
+          </div>
+        <% } %>
+        <a href="/sistemas/<%= evaluacion.sistema.id %>/historial?evaluacion=<%= evaluacion.id %>"
+           class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-700 hover:bg-slate-50 transition">Ver histórico</a>
+      </div>
     </div>
 
-    <div class="mt-6 space-y-8">
+    <div class="mt-6">
+      <%- include('../partials/resumen-ens', { resumen: grupos }) %>
+    </div>
+
+    <div class="mt-8 space-y-8">
       <% grupos.forEach((g) => { const clases = categoriaClases[g.categoria]; %>
         <section class="bg-white rounded-2xl shadow overflow-hidden">
           <header class="flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4 <%= clases.cabecera %>">
             <h2 class="text-lg font-semibold">Categoría <%= categorias[g.categoria] %></h2>
-            <div class="flex items-center gap-3 text-sm">
-              <span><strong><%= g.implementados %>/<%= g.aplicables %></strong> implementados<%= g.noAplica ? ' · ' + g.noAplica + ' no aplicables' : '' %></span>
-              <div class="h-2 w-24 rounded-full bg-white/70 overflow-hidden" role="progressbar"
-                   aria-valuenow="<%= g.porcentaje %>" aria-valuemin="0" aria-valuemax="100">
-                <div class="h-full <%= clases.barra %>" style="width: <%= g.porcentaje %>%"></div>
-              </div>
-            </div>
+            <span class="text-sm"><strong><%= g.implementados %>/<%= g.aplicables %></strong> implementados<%= g.noAplica ? ' · ' + g.noAplica + ' no aplicables' : '' %></span>
           </header>
 
           <% if (g.controles.length === 0) { %>
@@ -47,18 +54,18 @@
                   <tr>
                     <th class="px-4 py-3 font-medium">Control</th>
                     <th class="px-4 py-3 font-medium">Estado</th>
+                    <th class="px-4 py-3 font-medium">Último cambio de estado</th>
                     <th class="px-4 py-3 font-medium">Responsable</th>
                     <th class="px-4 py-3 font-medium">Evidencia</th>
-                    <th class="px-4 py-3 font-medium">Revisión</th>
                     <th class="px-4 py-3 font-medium text-right">Acciones</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
-                  <% g.controles.forEach((c) => { %>
+                  <% g.controles.forEach((c) => { const base = '/evaluaciones/' + evaluacion.id + '/controles/' + c.id; %>
                     <tr id="control-<%= c.id %>" class="scroll-mt-20 hover:bg-slate-50">
                       <td class="px-4 py-3 font-medium text-slate-800"><%= c.nombre %></td>
                       <td class="px-4 py-3">
-                        <form action="/checklist/<%= c.id %>/estado" method="POST" class="flex items-center gap-2">
+                        <form action="<%= base %>/estado" method="POST" class="flex items-center gap-2">
                           <label for="estado-<%= c.id %>" class="sr-only">Estado de <%= c.nombre %></label>
                           <select id="estado-<%= c.id %>" name="estado" onchange="this.form.submit()"
                                   class="rounded-lg border px-2 py-1 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 <%= estadoClases[c.estado] %>">
@@ -70,13 +77,25 @@
                         </form>
                       </td>
                       <td class="px-4 py-3 text-slate-600 whitespace-nowrap">
+                        <% if (c.fecha_revision) { %>
+                          <span class="font-mono"><%= fechaHora(c.fecha_revision) %></span>
+                          <% if (c.ultimoCambio) { %>
+                            <span class="block text-xs text-slate-400">
+                              antes: <%= estados[c.ultimoCambio.estado_anterior] %><%= c.ultimoCambio.usuario ? ' · ' + c.ultimoCambio.usuario.nombre : '' %>
+                            </span>
+                          <% } %>
+                        <% } else { %>
+                          <span class="text-slate-400 italic">Sin cambios</span>
+                        <% } %>
+                      </td>
+                      <td class="px-4 py-3 text-slate-600 whitespace-nowrap">
                         <% if (c.responsable) { %>
                           <%= c.responsable.nombre %><%= c.responsable.id === user.id ? ' (tú)' : '' %>
                         <% } else { %>
                           <span class="text-slate-400 italic">Sin asignar</span>
                         <% } %>
                         <% if (!c.responsable || c.responsable.id !== user.id) { %>
-                          <form action="/checklist/<%= c.id %>/asignarme" method="POST" class="mt-1">
+                          <form action="<%= base %>/asignarme" method="POST" class="mt-1">
                             <button type="submit" class="text-xs text-indigo-600 hover:underline">Asignarme</button>
                           </form>
                         <% } %>
@@ -88,15 +107,10 @@
                           <span class="text-slate-400 italic">Sin evidencia</span>
                         <% } %>
                       </td>
-                      <td class="px-4 py-3 text-slate-600 whitespace-nowrap"><%= fecha(c.fecha_revision) %></td>
                       <td class="px-4 py-3 text-right whitespace-nowrap">
-                        <a href="/checklist/<%= c.id %>/editar" class="rounded-lg border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-100">Editar</a>
-                        <% if (user.rol === 'ADMIN') { %>
-                          <form action="/checklist/<%= c.id %>/eliminar" method="POST" class="inline" data-nombre="<%= c.nombre %>"
-                                onsubmit="return confirm('¿Eliminar el control «' + this.dataset.nombre + '»? Esta acción no se puede deshacer.')">
-                            <button type="submit" class="ml-1 rounded-lg border border-red-300 px-3 py-1 text-red-600 hover:bg-red-50">Eliminar</button>
-                          </form>
-                        <% } %>
+                        <a href="/sistemas/<%= evaluacion.sistema.id %>/historial?control=<%= c.id %>"
+                           class="rounded-lg border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-100">Ver historial</a>
+                        <a href="<%= base %>/editar" class="ml-1 rounded-lg border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-100">Editar</a>
                       </td>
                     </tr>
                   <% }) %>

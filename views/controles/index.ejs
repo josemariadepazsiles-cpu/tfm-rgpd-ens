@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body class="min-h-screen bg-slate-100">
+  <%- include('../partials/nav') %>
+
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    <%- include('../partials/flash') %>
+
+    <a href="/sistemas" class="text-sm text-indigo-600 hover:underline">&larr; Volver a sistemas</a>
+
+    <div class="mt-2 flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-800">Catálogo de controles ENS</h1>
+        <p class="text-sm text-slate-500">Todos estos controles se evalúan en cada evaluación de cada sistema</p>
+      </div>
+      <a href="/controles/nuevo" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">+ Nuevo control</a>
+    </div>
+
+    <div class="mt-6 space-y-6">
+      <% grupos.forEach((g) => { %>
+        <section class="bg-white rounded-2xl shadow overflow-hidden">
+          <header class="flex items-center justify-between border-b px-6 py-3 <%= categoriaClases[g.categoria].cabecera %>">
+            <h2 class="font-semibold">Categoría <%= categorias[g.categoria] %> (<%= g.controles.length %>)</h2>
+            <a href="/controles/nuevo?categoria=<%= g.categoria %>" class="text-sm hover:underline">+ Añadir</a>
+          </header>
+          <ul class="divide-y divide-slate-100">
+            <% g.controles.forEach((c) => { %>
+              <li class="flex flex-wrap items-center justify-between gap-3 px-6 py-3">
+                <div>
+                  <span class="text-slate-800"><%= c.nombre %></span>
+                  <span class="ml-2 text-xs text-slate-400">evaluado en <%= c._count.evaluaciones %> evaluación(es)</span>
+                </div>
+                <div class="flex gap-2 text-sm">
+                  <a href="/controles/<%= c.id %>/editar" class="rounded-lg border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-100">Editar</a>
+                  <form action="/controles/<%= c.id %>/eliminar" method="POST" data-nombre="<%= c.nombre %>"
+                        onsubmit="return confirm('¿Eliminar «' + this.dataset.nombre + '» del catálogo?')">
+                    <button type="submit" class="rounded-lg border border-red-300 px-3 py-1 text-red-600 hover:bg-red-50">Eliminar</button>
+                  </form>
+                </div>
+              </li>
+            <% }) %>
+            <% if (g.controles.length === 0) { %>
+              <li class="px-6 py-4 text-sm text-slate-500">No hay controles en esta categoría.</li>
+            <% } %>
+          </ul>
+        </section>
+      <% }) %>
+    </div>
+  </main>
+</body>
+</html>

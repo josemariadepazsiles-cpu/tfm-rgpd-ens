@@ -19,8 +19,8 @@
         <a href="/riesgos" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">
           Riesgos
         </a>
-        <a href="/checklist" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">
-          Checklist ENS
+        <a href="/sistemas" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">
+          Sistemas ENS
         </a>
         <% if (user.rol === 'ADMIN') { %>
           <a href="/registro" class="rounded-lg border border-slate-300 px-4 py-2 text-slate-700 hover:bg-slate-50 transition">
@@ -32,23 +32,36 @@
 
     <section class="bg-white rounded-2xl shadow p-8">
       <div class="flex flex-wrap items-center justify-between gap-3">
-        <h2 class="text-lg font-semibold text-slate-800">Cumplimiento ENS por categoría</h2>
-        <a href="/checklist" class="text-sm text-indigo-600 hover:underline">Ver checklist &rarr;</a>
+        <h2 class="text-lg font-semibold text-slate-800">Cumplimiento ENS por sistema</h2>
+        <a href="/sistemas" class="text-sm text-indigo-600 hover:underline">Ver sistemas &rarr;</a>
       </div>
 
-      <div class="mt-6 grid gap-4 sm:grid-cols-3">
-        <% resumenEns.forEach((r) => { const clases = categoriaClases[r.categoria]; %>
-          <div class="rounded-xl border p-5 <%= clases.cabecera %>">
-            <p class="text-sm font-medium"><%= categorias[r.categoria] %></p>
-            <p class="mt-1 text-3xl font-bold"><%= r.implementados %>/<%= r.aplicables %></p>
-            <div class="mt-3 h-2 rounded-full bg-white/70 overflow-hidden" role="progressbar"
-                 aria-valuenow="<%= r.porcentaje %>" aria-valuemin="0" aria-valuemax="100"
-                 aria-label="Cumplimiento categoría <%= categorias[r.categoria] %>">
-              <div class="h-full <%= clases.barra %>" style="width: <%= r.porcentaje %>%"></div>
+      <% if (sistemas.length === 0) { %>
+        <p class="mt-6 text-sm text-slate-500">
+          Todavía no hay sistemas.<% if (user.rol === 'ADMIN') { %> <a href="/sistemas/nuevo" class="text-indigo-600 hover:underline">Crea el primero</a>.<% } %>
+        </p>
+      <% } %>
+
+      <div class="mt-6 space-y-6">
+        <% sistemas.forEach((s) => { %>
+          <div>
+            <div class="flex flex-wrap items-baseline justify-between gap-2">
+              <div class="flex flex-wrap items-center gap-3">
+                <a href="/sistemas/<%= s.id %>" class="font-semibold text-slate-800 hover:text-indigo-600 hover:underline"><%= s.nombre %></a>
+                <% if (s.categoria_general) { %><%- include('partials/categoria-badge', { categoria: s.categoria_general }) %><% } %>
+                <% if (s.global) { %><%- include('partials/barra-global', { global: s.global }) %><% } %>
+              </div>
+              <% if (s.ultima) { %>
+                <a href="/evaluaciones/<%= s.ultima.id %>" class="text-xs text-slate-500 hover:underline">Última evaluación: <%= s.ultima.nombre %></a>
+              <% } %>
             </div>
-            <p class="mt-2 text-xs opacity-80">
-              <%= r.porcentaje %>% implementado<%= r.noAplica ? ' · ' + r.noAplica + ' no aplicables' : '' %>
-            </p>
+            <div class="mt-2">
+              <% if (s.resumen) { %>
+                <%- include('partials/resumen-ens', { resumen: s.resumen, compacto: true }) %>
+              <% } else { %>
+                <p class="text-sm text-slate-500 italic">Sin evaluaciones todavía.</p>
+              <% } %>
+            </div>
           </div>
         <% }) %>
       </div>

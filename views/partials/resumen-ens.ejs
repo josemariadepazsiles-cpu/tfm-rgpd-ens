@@ -1,0 +1,17 @@
+<%# Resumen por categoría de una evaluación. Recibe `resumen` y opcionalmente `compacto` %>
+<div class="grid gap-3 <%= typeof compacto !== 'undefined' && compacto ? 'grid-cols-3' : 'sm:grid-cols-3' %>">
+  <% resumen.forEach((r) => { const clases = categoriaClases[r.categoria]; %>
+    <div class="rounded-xl border <%= typeof compacto !== 'undefined' && compacto ? 'p-3' : 'p-5' %> <%= clases.cabecera %>">
+      <p class="text-sm font-medium"><%= categorias[r.categoria] %></p>
+      <p class="mt-1 <%= typeof compacto !== 'undefined' && compacto ? 'text-xl' : 'text-3xl' %> font-bold"><%= r.implementados %>/<%= r.aplicables %></p>
+      <div class="mt-2 h-2 rounded-full bg-white/70 overflow-hidden" role="progressbar"
+           aria-valuenow="<%= r.porcentaje %>" aria-valuemin="0" aria-valuemax="100"
+           aria-label="Cumplimiento categoría <%= categorias[r.categoria] %>">
+        <div class="h-full <%= clases.barra %>" style="width: <%= r.porcentaje %>%"></div>
+      </div>
+      <p class="mt-1 text-xs opacity-80">
+        <%= r.porcentaje %>%<%= r.noAplica ? ' · ' + r.noAplica + ' no aplic.' : '' %>
+      </p>
+    </div>
+  <% }) %>
+</div>

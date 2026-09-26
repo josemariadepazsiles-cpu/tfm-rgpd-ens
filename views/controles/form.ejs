@@ -1,0 +1,48 @@
+<%
+  const inputClase = 'mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500';
+  const accion = control.id ? '/controles/' + control.id : '/controles';
+%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body class="min-h-screen bg-slate-100">
+  <%- include('../partials/nav') %>
+
+  <main class="max-w-2xl mx-auto px-4 py-8">
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-bold text-slate-800"><%= title %></h1>
+      <a href="/controles" class="text-sm text-indigo-600 hover:underline">Cancelar</a>
+    </div>
+
+    <% if (errores.length) { %>
+      <ul class="mt-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 list-disc list-inside" role="alert">
+        <% errores.forEach((e) => { %><li><%= e %></li><% }) %>
+      </ul>
+    <% } %>
+
+    <form action="<%= accion %>" method="POST" class="mt-6 bg-white rounded-2xl shadow p-6 space-y-4">
+      <div>
+        <label for="nombre" class="block text-sm font-medium text-slate-700">Nombre del control</label>
+        <input id="nombre" name="nombre" type="text" required value="<%= control.nombre || '' %>" class="<%= inputClase %>">
+      </div>
+      <div>
+        <label for="categoria" class="block text-sm font-medium text-slate-700">Categoría</label>
+        <select id="categoria" name="categoria" required class="<%= inputClase %>">
+          <option value="" disabled <%= control.categoria ? '' : 'selected' %>>Selecciona una categoría</option>
+          <% Object.entries(categorias).forEach(([valor, etiqueta]) => { %>
+            <option value="<%= valor %>" <%= control.categoria === valor ? 'selected' : '' %>><%= etiqueta %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="flex justify-end gap-3 pt-2">
+        <a href="/controles" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-700 hover:bg-slate-50">Cancelar</a>
+        <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 transition">
+          <%= control.id ? 'Guardar cambios' : 'Crear control' %>
+        </button>
+      </div>
+    </form>
+  </main>
+</body>
+</html>

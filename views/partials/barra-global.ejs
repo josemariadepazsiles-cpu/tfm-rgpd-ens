@@ -1,0 +1,10 @@
+<%# % de implementación global. Recibe `global` (resultado de resumenGlobal) %>
+<div class="flex items-center gap-2">
+  <div class="h-2 w-24 rounded-full bg-slate-200 overflow-hidden" role="progressbar"
+       aria-valuenow="<%= global.porcentaje %>" aria-valuemin="0" aria-valuemax="100" aria-label="Implementación global">
+    <div class="h-full <%= global.porcentaje >= 80 ? 'bg-green-500' : global.porcentaje >= 50 ? 'bg-amber-500' : 'bg-red-500' %>"
+         style="width: <%= global.porcentaje %>%"></div>
+  </div>
+  <span class="text-sm font-semibold text-slate-700"><%= global.porcentaje %>%</span>
+  <span class="text-xs text-slate-500">(<%= global.implementados %>/<%= global.aplicables %>)</span>
+</div>

@@ -1,0 +1,71 @@
+<%
+  const inputClase = 'mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500';
+  const accion = sistema.id ? '/sistemas/' + sistema.id : '/sistemas';
+  const volver = sistema.id ? '/sistemas/' + sistema.id : '/sistemas';
+%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body class="min-h-screen bg-slate-100">
+  <%- include('../partials/nav') %>
+
+  <main class="max-w-2xl mx-auto px-4 py-8">
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-bold text-slate-800"><%= title %></h1>
+      <a href="<%= volver %>" class="text-sm text-indigo-600 hover:underline">Cancelar</a>
+    </div>
+
+    <% if (errores.length) { %>
+      <ul class="mt-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 list-disc list-inside" role="alert">
+        <% errores.forEach((e) => { %><li><%= e %></li><% }) %>
+      </ul>
+    <% } %>
+
+    <form action="<%= accion %>" method="POST" class="mt-6 bg-white rounded-2xl shadow p-6 space-y-4"
+          x-data="{ crear: <%= sistema.crear_evaluacion ? 'true' : 'false' %> }">
+      <div>
+        <label for="nombre" class="block text-sm font-medium text-slate-700">Nombre del sistema</label>
+        <input id="nombre" name="nombre" type="text" required value="<%= sistema.nombre || '' %>" class="<%= inputClase %>"
+               placeholder="Ej.: Sede electrónica, ERP de gestión, Correo corporativo">
+      </div>
+      <div>
+        <label for="descripcion" class="block text-sm font-medium text-slate-700">Descripción <span class="font-normal text-slate-400">(opcional)</span></label>
+        <textarea id="descripcion" name="descripcion" rows="3" class="<%= inputClase %>"><%= sistema.descripcion || '' %></textarea>
+      </div>
+      <div>
+        <label for="categoria_general" class="block text-sm font-medium text-slate-700">Categoría general ENS <span class="font-normal text-slate-400">(opcional)</span></label>
+        <select id="categoria_general" name="categoria_general" class="<%= inputClase %>">
+          <option value="">Sin definir</option>
+          <% Object.entries(categorias).forEach(([valor, etiqueta]) => { %>
+            <option value="<%= valor %>" <%= sistema.categoria_general === valor ? 'selected' : '' %>><%= etiqueta %></option>
+          <% }) %>
+        </select>
+        <p class="mt-1 text-xs text-slate-500">Categoría del sistema según el ENS (RD 311/2022). Es informativa: cada evaluación incluye todo el catálogo de controles.</p>
+      </div>
+
+      <% if (!sistema.id) { %>
+        <div class="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
+          <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
+            <input type="checkbox" name="crear_evaluacion" x-model="crear" class="w-4 h-4 rounded border-slate-300 text-indigo-600"
+                   <%= sistema.crear_evaluacion ? 'checked' : '' %>>
+            Crear ya su primera evaluación con el catálogo de controles estándar
+          </label>
+          <div x-show="crear" x-cloak>
+            <label for="nombre_evaluacion" class="block text-sm text-slate-600">Nombre de la evaluación</label>
+            <input id="nombre_evaluacion" name="nombre_evaluacion" type="text" value="<%= nombreSugerido %>" class="<%= inputClase %>">
+          </div>
+        </div>
+      <% } %>
+
+      <div class="flex justify-end gap-3 pt-2">
+        <a href="<%= volver %>" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-700 hover:bg-slate-50">Cancelar</a>
+        <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 transition">
+          <%= sistema.id ? 'Guardar cambios' : 'Crear sistema' %>
+        </button>
+      </div>
+    </form>
+  </main>
+</body>
+</html>

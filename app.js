@@ -11,7 +11,10 @@ const authRoutes = require('./routes/auth');
 const dashboardRoutes = require('./routes/dashboard');
 const ratRoutes = require('./routes/rat');
 const riesgoRoutes = require('./routes/riesgos');
-const checklistRoutes = require('./routes/checklist');
+const sistemaRoutes = require('./routes/sistemas');
+const evaluacionRoutes = require('./routes/evaluaciones');
+const controlRoutes = require('./routes/controles');
+const { fecha, fechaHora } = require('./lib/formato');
 const { NIVEL_CLASES } = require('./lib/riesgo');
 const { CATEGORIA_CLASES, ESTADO_CLASES } = require('./lib/ens');
 
@@ -30,6 +33,8 @@ app.locals.roles = ROLES;
 app.locals.nivelClases = NIVEL_CLASES;
 app.locals.categoriaClases = CATEGORIA_CLASES;
 app.locals.estadoClases = ESTADO_CLASES;
+app.locals.fecha = fecha;
+app.locals.fechaHora = fechaHora;
 
 // Middlewares
 app.use(express.urlencoded({ extended: false }));
@@ -70,7 +75,11 @@ app.use('/', authRoutes);
 app.use('/', dashboardRoutes);
 app.use('/rat', ratRoutes);
 app.use('/riesgos', riesgoRoutes);
-app.use('/checklist', checklistRoutes);
+app.use('/sistemas', sistemaRoutes);
+app.use('/evaluaciones', evaluacionRoutes);
+app.use('/controles', controlRoutes);
+// El checklist global se sustituyó por evaluaciones por sistema
+app.get('/checklist', (req, res) => res.redirect(301, '/sistemas'));
 
 // 404
 app.use((req, res) => {

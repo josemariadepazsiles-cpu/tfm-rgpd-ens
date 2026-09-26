@@ -1,0 +1,114 @@
+<%
+  const enlace = (p) => '/sistemas/' + sistema.id + '/historial?' + new URLSearchParams(Object.assign({},
+    filtroEvaluacion ? { evaluacion: filtroEvaluacion } : {},
+    controlFiltrado ? { control: controlFiltrado.id } : {},
+    p > 1 ? { pagina: p } : {})).toString();
+  const selectClase = 'mt-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 max-w-64';
+%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body class="min-h-screen bg-slate-100">
+  <%- include('../partials/nav') %>
+
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    <a href="/sistemas/<%= sistema.id %>" class="text-sm text-indigo-600 hover:underline">&larr; Volver a <%= sistema.nombre %></a>
+
+    <div class="mt-2 flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <% if (controlFiltrado) { %>
+          <h1 class="text-2xl font-bold text-slate-800">Historial de «<%= controlFiltrado.nombre %>»</h1>
+          <p class="text-sm text-slate-500">
+            <%= sistema.nombre %> · <%= total %> cambio(s) · hora de España ·
+            <a href="<%= '/sistemas/' + sistema.id + '/historial' + (filtroEvaluacion ? '?evaluacion=' + filtroEvaluacion : '') %>" class="text-indigo-600 hover:underline">ver todo el sistema</a>
+          </p>
+        <% } else { %>
+          <h1 class="text-2xl font-bold text-slate-800">Histórico de cambios de estado</h1>
+          <p class="text-sm text-slate-500"><%= sistema.nombre %> · <%= total %> cambio(s) registrados · hora de España</p>
+        <% } %>
+      </div>
+
+      <form action="/sistemas/<%= sistema.id %>/historial" method="GET" class="flex flex-wrap items-end gap-3">
+        <div>
+          <label for="evaluacion" class="block text-sm font-medium text-slate-700">Evaluación</label>
+          <select id="evaluacion" name="evaluacion" onchange="this.form.submit()" class="<%= selectClase %>">
+            <option value="">Todas las evaluaciones</option>
+            <% sistema.evaluaciones.forEach((e) => { %>
+              <option value="<%= e.id %>" <%= filtroEvaluacion === e.id ? 'selected' : '' %>><%= e.nombre %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div>
+          <label for="control" class="block text-sm font-medium text-slate-700">Control</label>
+          <select id="control" name="control" onchange="this.form.submit()" class="<%= selectClase %>">
+            <option value="">Todos los controles</option>
+            <% Object.entries(categorias).forEach(([cat, etiqueta]) => { %>
+              <optgroup label="Categoría <%= etiqueta %>">
+                <% controles.filter((c) => c.categoria === cat).forEach((c) => { %>
+                  <option value="<%= c.id %>" <%= controlFiltrado && controlFiltrado.id === c.id ? 'selected' : '' %>><%= c.nombre %></option>
+                <% }) %>
+              </optgroup>
+            <% }) %>
+          </select>
+        </div>
+        <noscript><button type="submit" class="text-sm text-indigo-600">Filtrar</button></noscript>
+      </form>
+    </div>
+
+    <div class="mt-6 bg-white rounded-2xl shadow overflow-x-auto">
+      <% if (cambios.length === 0) { %>
+        <p class="p-8 text-center text-slate-500">Todavía no se ha registrado ningún cambio de estado.</p>
+      <% } else { %>
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 text-left text-slate-600">
+            <tr>
+              <th class="px-4 py-3 font-medium">Fecha y hora</th>
+              <th class="px-4 py-3 font-medium">Control</th>
+              <th class="px-4 py-3 font-medium">Estado anterior</th>
+              <th class="px-4 py-3 font-medium"></th>
+              <th class="px-4 py-3 font-medium">Estado nuevo</th>
+              <th class="px-4 py-3 font-medium">Usuario</th>
+              <% if (!filtroEvaluacion) { %><th class="px-4 py-3 font-medium">Evaluación</th><% } %>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <% cambios.forEach((c) => { const ctl = c.evaluacionControl.control; %>
+              <tr class="hover:bg-slate-50">
+                <td class="px-4 py-3 whitespace-nowrap font-mono text-slate-700"><%= fechaHora(c.fecha) %></td>
+                <td class="px-4 py-3">
+                  <a href="/sistemas/<%= sistema.id %>/historial?control=<%= ctl.id %>" class="text-slate-800 hover:text-indigo-600 hover:underline"
+                     title="Ver solo el historial de este control"><%= ctl.nombre %></a>
+                  <span class="ml-1 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset <%= categoriaClases[ctl.categoria].badge %>"><%= categorias[ctl.categoria] %></span>
+                </td>
+                <td class="px-4 py-3"><%- include('../partials/estado-badge', { estado: c.estado_anterior }) %></td>
+                <td class="px-1 py-3 text-slate-400" aria-hidden="true">&rarr;</td>
+                <td class="px-4 py-3"><%- include('../partials/estado-badge', { estado: c.estado_nuevo }) %></td>
+                <td class="px-4 py-3 text-slate-600"><%= c.usuario ? c.usuario.nombre : '—' %></td>
+                <% if (!filtroEvaluacion) { %>
+                  <td class="px-4 py-3">
+                    <a href="/evaluaciones/<%= c.evaluacionControl.evaluacion.id %>" class="text-indigo-600 hover:underline"><%= c.evaluacionControl.evaluacion.nombre %></a>
+                  </td>
+                <% } %>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+
+    <% if (paginas > 1) { %>
+      <nav class="mt-4 flex items-center justify-between text-sm" aria-label="Paginación">
+        <% if (pagina > 1) { %>
+          <a href="<%= enlace(pagina - 1) %>" class="rounded-lg border border-slate-300 bg-white px-3 py-1 text-slate-700 hover:bg-slate-50">&larr; Más recientes</a>
+        <% } else { %><span></span><% } %>
+        <span class="text-slate-500">Página <%= pagina %> de <%= paginas %></span>
+        <% if (pagina < paginas) { %>
+          <a href="<%= enlace(pagina + 1) %>" class="rounded-lg border border-slate-300 bg-white px-3 py-1 text-slate-700 hover:bg-slate-50">Más antiguos &rarr;</a>
+        <% } else { %><span></span><% } %>
+      </nav>
+    <% } %>
+  </main>
+</body>
+</html>

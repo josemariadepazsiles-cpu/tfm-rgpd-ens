@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body class="min-h-screen bg-slate-100">
+  <%- include('../partials/nav') %>
+
+  <main class="max-w-5xl mx-auto px-4 py-8">
+    <%- include('../partials/flash') %>
+
+    <a href="/sistemas" class="text-sm text-indigo-600 hover:underline">&larr; Volver a sistemas</a>
+
+    <div class="mt-2 flex flex-wrap items-start justify-between gap-4">
+      <div>
+        <div class="flex flex-wrap items-center gap-3">
+          <h1 class="text-2xl font-bold text-slate-800"><%= sistema.nombre %></h1>
+          <% if (sistema.categoria_general) { %>
+            <span class="text-sm text-slate-500">Categoría general:</span>
+            <%- include('../partials/categoria-badge', { categoria: sistema.categoria_general }) %>
+          <% } %>
+        </div>
+        <% if (sistema.descripcion) { %><p class="mt-1 text-slate-600 whitespace-pre-line"><%= sistema.descripcion %></p><% } %>
+        <p class="mt-1 text-xs text-slate-500">
+          Creado el <%= fechaHora(sistema.created_at) %><%= sistema.creado_por ? ' por ' + sistema.creado_por.nombre : '' %>
+        </p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <a href="/sistemas/<%= sistema.id %>/historial" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-700 hover:bg-slate-50 transition">Ver histórico</a>
+        <% if (user.rol === 'ADMIN') { %>
+          <a href="/sistemas/<%= sistema.id %>/editar" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-700 hover:bg-slate-50 transition">Editar</a>
+          <form action="/sistemas/<%= sistema.id %>/eliminar" method="POST" data-nombre="<%= sistema.nombre %>"
+                onsubmit="return confirm('¿Eliminar el sistema «' + this.dataset.nombre + '»? Se borrarán sus <%= evaluaciones.length %> evaluaciones y todo su histórico. Esta acción no se puede deshacer.')">
+            <button type="submit" class="rounded-lg border border-red-300 bg-white px-4 py-2 text-red-600 hover:bg-red-50 transition">Eliminar</button>
+          </form>
+        <% } %>
+      </div>
+    </div>
+
+    <% if (user.rol === 'ADMIN') { %>
+      <form action="/sistemas/<%= sistema.id %>/evaluaciones" method="POST"
+            class="mt-6 bg-white rounded-2xl shadow p-6 flex flex-wrap items-end gap-4">
+        <div class="flex-1 min-w-56">
+          <label for="nombre" class="block text-sm font-medium text-slate-700">Nueva evaluación</label>
+          <input id="nombre" name="nombre" type="text" required value="<%= nombreSugerido %>"
+                 class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <% if (evaluaciones.length) { %>
+          <label class="inline-flex items-center gap-2 pb-2 text-sm text-slate-700">
+            <input type="checkbox" name="copiar" checked class="w-4 h-4 rounded border-slate-300 text-indigo-600">
+            Partir de los estados de «<%= evaluaciones[0].nombre %>»
+          </label>
+        <% } %>
+        <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 transition">
+          + Crear evaluación
+        </button>
+      </form>
+    <% } %>
+
+    <h2 class="mt-8 text-lg font-semibold text-slate-800">Evaluaciones (<%= evaluaciones.length %>)</h2>
+
+    <% if (evaluaciones.length === 0) { %>
+      <p class="mt-4 bg-white rounded-2xl shadow p-6 text-sm text-slate-500">
+        Este sistema todavía no tiene evaluaciones.<%= user.rol === 'ADMIN' ? ' Crea la primera con el formulario de arriba.' : '' %>
+      </p>
+    <% } %>
+
+    <div class="mt-4 space-y-4">
+      <% evaluaciones.forEach((e, i) => { %>
+        <article class="bg-white rounded-2xl shadow p-6">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 class="font-semibold text-slate-800">
+                <a href="/evaluaciones/<%= e.id %>" class="hover:text-indigo-600 hover:underline"><%= e.nombre %></a>
+                <% if (i === 0) { %><span class="ml-2 rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700">Última</span><% } %>
+              </h3>
+              <p class="text-xs text-slate-500">
+                Creada el <%= fechaHora(e.created_at) %><%= e.creado_por ? ' por ' + e.creado_por.nombre : '' %>
+              </p>
+              <div class="mt-2"><%- include('../partials/barra-global', { global: e.global }) %></div>
+            </div>
+            <div class="flex flex-wrap gap-2 text-sm">
+              <a href="/evaluaciones/<%= e.id %>" class="rounded-lg bg-indigo-600 px-3 py-1 text-white hover:bg-indigo-700">Abrir</a>
+              <a href="/sistemas/<%= sistema.id %>/historial?evaluacion=<%= e.id %>" class="rounded-lg border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-100">Histórico</a>
+              <% if (user.rol === 'ADMIN') { %>
+                <form action="/evaluaciones/<%= e.id %>/eliminar" method="POST" data-nombre="<%= e.nombre %>"
+                      onsubmit="return confirm('¿Eliminar la evaluación «' + this.dataset.nombre + '» y su histórico? Esta acción no se puede deshacer.')">
+                  <button type="submit" class="rounded-lg border border-red-300 px-3 py-1 text-red-600 hover:bg-red-50">Eliminar</button>
+                </form>
+              <% } %>
+            </div>
+          </div>
+          <div class="mt-4">
+            <%- include('../partials/resumen-ens', { resumen: e.resumen, compacto: true }) %>
+          </div>
+        </article>
+      <% }) %>
+    </div>
+  </main>
+</body>
+</html>
