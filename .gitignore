@@ -6,6 +6,8 @@ node_modules/
 # CSS generado por Tailwind
 public/css/output.css
 
+# Archivos subidos por los usuarios (contratos, certificados...)
+uploads/
 
 npm-debug.log*
 .DS_Store

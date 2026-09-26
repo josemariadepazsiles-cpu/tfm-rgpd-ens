@@ -1,0 +1,154 @@
+<%
+  const d = declaracion;
+  const pct = Number(d.porcentaje_implementacion);
+%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body class="min-h-screen bg-slate-100">
+  <%- include('../partials/nav') %>
+
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    <%- include('../partials/flash') %>
+
+    <a href="/declaraciones?sistema=<%= d.sistema_id %>" class="text-sm text-indigo-600 hover:underline">&larr; Declaraciones de <%= d.sistema_nombre %></a>
+
+    <div class="mt-2 flex flex-wrap items-start justify-between gap-4">
+      <div>
+        <p class="text-sm font-medium uppercase tracking-wide text-indigo-600">Declaración de Conformidad ENS</p>
+        <h1 class="text-2xl font-bold text-slate-800"><%= d.sistema_nombre %> · versión <%= d.version %></h1>
+        <div class="mt-2 flex flex-wrap items-center gap-2">
+          <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset <%= estadoDeclaracionClases[d.estado] %>"><%= ESTADOS_DECLARACION[d.estado] %></span>
+          <% if (otrasVersiones.length > 1) { %>
+            <span class="text-xs text-slate-500">Otras versiones:
+              <% otrasVersiones.filter((v) => v.id !== d.id).forEach((v, i) => { %><%= i ? ', ' : '' %><a href="/declaraciones/<%= v.id %>" class="text-indigo-600 hover:underline">v<%= v.version %></a><% }) %>
+            </span>
+          <% } %>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <a href="/declaraciones/<%= d.id %>/pdf?ver=1" target="_blank" rel="noopener" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-700 hover:bg-slate-50 transition">Ver PDF</a>
+        <a href="/declaraciones/<%= d.id %>/pdf" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">Exportar a PDF</a>
+        <% if (user.rol === 'ADMIN' && d.estado === 'BORRADOR') { %>
+          <form action="/declaraciones/<%= d.id %>/emitir" method="POST"
+                onsubmit="return confirm('¿Emitir la declaración versión <%= d.version %>? Una vez emitida no se podrá modificar.')">
+            <button type="submit" class="rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700 transition">Marcar como Emitida</button>
+          </form>
+        <% } %>
+      </div>
+    </div>
+
+    <% if (d.estado === 'SUPERADA') { %>
+      <div class="mt-6 rounded-lg border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+        Esta versión ha sido sustituida por una posterior. Se conserva como registro histórico.
+      </div>
+    <% } else if (d.estado === 'BORRADOR') { %>
+      <div class="mt-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        Borrador: revisa los datos y las observaciones antes de emitirla. El PDF lleva la marca de agua «BORRADOR».
+      </div>
+    <% } %>
+
+    <section class="mt-6 bg-white rounded-2xl shadow p-6">
+      <div class="grid gap-6 md:grid-cols-3">
+        <dl class="md:col-span-2 grid gap-4 sm:grid-cols-2">
+          <div>
+            <dt class="text-sm font-medium text-slate-500">Sistema de información</dt>
+            <dd class="mt-1 text-slate-800"><a href="/sistemas/<%= d.sistema_id %>" class="hover:text-indigo-600 hover:underline"><%= d.sistema_nombre %></a></dd>
+          </div>
+          <div>
+            <dt class="text-sm font-medium text-slate-500">Categoría ENS</dt>
+            <dd class="mt-1"><span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset <%= categoriaClases[d.categoria_ens].badge %>"><%= CATEGORIAS_SISTEMA[d.categoria_ens] %></span></dd>
+          </div>
+          <div>
+            <dt class="text-sm font-medium text-slate-500">Evaluación de origen</dt>
+            <dd class="mt-1 text-slate-800">
+              <% if (d.evaluacion_id) { %><a href="/evaluaciones/<%= d.evaluacion_id %>" class="hover:text-indigo-600 hover:underline"><%= d.evaluacion_nombre %></a><% } else { %><%= d.evaluacion_nombre %> <span class="text-xs text-slate-400">(eliminada)</span><% } %>
+            </dd>
+          </div>
+          <div>
+            <dt class="text-sm font-medium text-slate-500">Generada</dt>
+            <dd class="mt-1 text-slate-800"><%= fechaHora(d.fecha_generacion) %> · <%= d.generado_por_nombre %></dd>
+          </div>
+          <% if (d.fecha_emision) { %>
+            <div>
+              <dt class="text-sm font-medium text-slate-500">Emitida</dt>
+              <dd class="mt-1 text-slate-800"><%= fechaHora(d.fecha_emision) %> · <%= d.emitido_por_nombre %></dd>
+            </div>
+          <% } %>
+        </dl>
+        <div class="rounded-xl bg-indigo-50 p-5 text-center">
+          <p class="text-4xl font-bold text-indigo-900"><%= formatoPorcentaje(d.porcentaje_implementacion) %></p>
+          <p class="text-sm text-indigo-700">de implementación</p>
+          <div class="mt-3 h-2 rounded-full bg-white overflow-hidden">
+            <div class="h-full <%= pct >= 80 ? 'bg-green-500' : pct >= 50 ? 'bg-amber-500' : 'bg-red-500' %>" style="width: <%= pct %>%"></div>
+          </div>
+          <dl class="mt-4 grid grid-cols-4 gap-2 text-xs">
+            <div><dt class="text-slate-500">Total</dt><dd class="text-lg font-semibold text-slate-800"><%= d.numero_controles_total %></dd></div>
+            <div><dt class="text-slate-500">Implem.</dt><dd class="text-lg font-semibold text-green-700"><%= d.numero_controles_implementados %></dd></div>
+            <div><dt class="text-slate-500">Pend.</dt><dd class="text-lg font-semibold text-amber-700"><%= d.numero_controles_pendientes %></dd></div>
+            <div><dt class="text-slate-500">No aplic.</dt><dd class="text-lg font-semibold text-slate-600"><%= d.numero_controles_no_aplica %></dd></div>
+          </dl>
+          <p class="mt-2 text-xs text-slate-500">Implementados / aplicables</p>
+        </div>
+      </div>
+    </section>
+
+    <h2 class="mt-8 text-lg font-semibold text-slate-800">Estado de los controles en el momento de la generación</h2>
+    <div class="mt-4 space-y-6">
+      <% grupos.filter((g) => g.controles.length).forEach((g) => { const clases = categoriaClases[g.categoria]; %>
+        <section class="bg-white rounded-2xl shadow overflow-hidden">
+          <header class="flex flex-wrap items-center justify-between gap-3 border-b px-6 py-3 <%= clases.cabecera %>">
+            <h3 class="font-semibold">Categoría <%= CATEGORIAS_SISTEMA[g.categoria] %></h3>
+            <span class="text-sm"><strong><%= g.implementados %>/<%= g.aplicables %></strong> implementados</span>
+          </header>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-slate-50 text-left text-slate-600">
+                <tr>
+                  <th class="px-4 py-2 font-medium">Control</th>
+                  <th class="px-4 py-2 font-medium">Estado</th>
+                  <th class="px-4 py-2 font-medium">Responsable</th>
+                  <th class="px-4 py-2 font-medium">Último cambio</th>
+                  <th class="px-4 py-2 font-medium">Evidencia</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <% g.controles.forEach((c) => { %>
+                  <tr>
+                    <td class="px-4 py-2 font-medium text-slate-800"><%= c.control_nombre %></td>
+                    <td class="px-4 py-2"><%- include('../partials/estado-badge', { estado: c.estado_control }) %></td>
+                    <td class="px-4 py-2 text-slate-600"><%= c.responsable || '—' %></td>
+                    <td class="px-4 py-2 text-slate-600 whitespace-nowrap"><%= c.fecha_revision ? fechaHora(c.fecha_revision) : '—' %></td>
+                    <td class="px-4 py-2 text-slate-600 max-w-sm whitespace-pre-line"><%= c.evidencia || '—' %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      <% }) %>
+    </div>
+
+    <section class="mt-6 bg-white rounded-2xl shadow p-6">
+      <h2 class="text-lg font-semibold text-slate-800">Observaciones</h2>
+      <% if (user.rol === 'ADMIN' && d.estado === 'BORRADOR') { %>
+        <form action="/declaraciones/<%= d.id %>" method="POST" class="mt-3 space-y-3">
+          <textarea name="observaciones" rows="4" class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Contexto, salvedades o compromisos de implantación de los controles pendientes…"><%= d.observaciones || '' %></textarea>
+          <div class="flex justify-end">
+            <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition">Guardar observaciones</button>
+          </div>
+        </form>
+      <% } else { %>
+        <p class="mt-3 whitespace-pre-line <%= d.observaciones ? 'text-slate-800' : 'text-slate-400 italic' %>"><%= d.observaciones || 'Sin observaciones.' %></p>
+      <% } %>
+    </section>
+
+    <p class="mt-6 text-sm text-slate-600">
+      Generada por <strong><%= d.generado_por_nombre %></strong> el <%= fechaHora(d.fecha_generacion) %><% if (d.fecha_emision) { %> · emitida por <strong><%= d.emitido_por_nombre %></strong> el <%= fechaHora(d.fecha_emision) %><% } %>.
+    </p>
+  </main>
+</body>
+</html>

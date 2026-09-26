@@ -1,0 +1,5 @@
+<%# Alertas de un proveedor. Recibe `lista` (resultado de alertas()) %>
+<% lista.forEach((a) => { %>
+  <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset whitespace-nowrap <%= alertaClases[a.nivel] %>"
+        title="<%= a.detalle %>"><%= a.nivel === 'rojo' || a.nivel === 'naranjaFuerte' ? '⚠ ' : '' %><%= a.texto %></span>
+<% }) %>

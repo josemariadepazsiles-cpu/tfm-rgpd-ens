@@ -43,15 +43,28 @@ const resumenDerechos = async () => {
   return { abiertas: total, vencidas, proxima: proxima ? { ...proxima, urgencia: urgencia(proxima, ahora) } : null };
 };
 
+// Resumen de proveedores (sin contar los dados de baja): activos, sin contrato de encargado
+// y con transferencia internacional sin mecanismo señalado
+const resumenProveedores = async () => {
+  const vigentes = { estado: { not: 'BAJA' } };
+  const [activos, sinContrato, sinMecanismo] = await Promise.all([
+    prisma.proveedor.count({ where: { estado: 'ACTIVO' } }),
+    prisma.proveedor.count({ where: { ...vigentes, tiene_contrato_encargado: false } }),
+    prisma.proveedor.count({ where: { ...vigentes, fuera_ue: true, mecanismo_transferencia: 'NO_APLICA' } }),
+  ]);
+  return { activos, sinContrato, sinMecanismo };
+};
+
 const index = async (req, res) => {
   // Resumen de cumplimiento ENS de la última evaluación de cada sistema
-  const [sistemas, incidentes, derechos] = await Promise.all([
+  const [sistemas, incidentes, derechos, proveedores] = await Promise.all([
     prisma.sistema.findMany({
       orderBy: { nombre: 'asc' },
       include: { evaluaciones: { orderBy: { created_at: 'desc' }, take: 1 } },
     }),
     resumenIncidentes(),
     resumenDerechos(),
+    resumenProveedores(),
   ]);
   const resumenes = await resumenEvaluaciones(sistemas.flatMap((s) => s.evaluaciones.map((e) => e.id)));
 
@@ -63,6 +76,7 @@ const index = async (req, res) => {
     }),
     incidentes,
     derechos,
+    proveedores,
     categorias: CATEGORIAS,
     GRAVEDADES,
     ESTADOS_INCIDENTE,

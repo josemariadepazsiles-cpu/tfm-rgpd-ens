@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body class="min-h-screen bg-slate-100">
+  <%- include('../partials/nav') %>
+
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    <%- include('../partials/flash') %>
+
+    <div>
+      <h1 class="text-2xl font-bold text-slate-800">Declaraciones de Conformidad ENS</h1>
+      <p class="text-sm text-slate-500">
+        Informes formales de adecuación generados a partir del checklist de cada sistema.
+        <% if (user.rol === 'ADMIN') { %>Para generar una nueva, abre la evaluación del sistema y pulsa «Generar Declaración de Conformidad».<% } %>
+      </p>
+    </div>
+
+    <form action="/declaraciones" method="GET" class="mt-6 flex flex-wrap items-end gap-3">
+      <div>
+        <label for="sistema" class="block text-sm font-medium text-slate-700">Sistema</label>
+        <select id="sistema" name="sistema" onchange="this.form.submit()"
+                class="mt-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value="">Todos los sistemas</option>
+          <% sistemas.forEach((s) => { %>
+            <option value="<%= s.id %>" <%= filtro === s.id ? 'selected' : '' %>><%= s.nombre %></option>
+          <% }) %>
+        </select>
+      </div>
+      <noscript><button type="submit" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">Filtrar</button></noscript>
+      <% if (filtro) { %><a href="/declaraciones" class="py-2 text-sm text-indigo-600 hover:underline">Quitar filtro</a><% } %>
+    </form>
+
+    <div class="mt-4 bg-white rounded-2xl shadow overflow-x-auto">
+      <% if (declaraciones.length === 0) { %>
+        <p class="p-8 text-center text-slate-500">Todavía no se ha generado ninguna declaración<%= filtro ? ' para este sistema' : '' %>.</p>
+      <% } else { %>
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 text-left text-slate-600">
+            <tr>
+              <th class="px-4 py-3 font-medium">Sistema</th>
+              <th class="px-4 py-3 font-medium">Categoría ENS</th>
+              <th class="px-4 py-3 font-medium">Versión</th>
+              <th class="px-4 py-3 font-medium">Implementación</th>
+              <th class="px-4 py-3 font-medium">Generada</th>
+              <th class="px-4 py-3 font-medium">Estado</th>
+              <th class="px-4 py-3 font-medium text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <% declaraciones.forEach((d) => { const pct = Number(d.porcentaje_implementacion); %>
+              <tr class="hover:bg-slate-50 <%= d.estado === 'SUPERADA' ? 'opacity-60' : '' %>">
+                <td class="px-4 py-3">
+                  <a href="/declaraciones/<%= d.id %>" class="font-medium text-slate-800 hover:text-indigo-600 hover:underline"><%= d.sistema_nombre %></a>
+                  <span class="block text-xs text-slate-500"><%= d.evaluacion_nombre %></span>
+                </td>
+                <td class="px-4 py-3">
+                  <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset <%= categoriaClases[d.categoria_ens].badge %>"><%= CATEGORIAS_SISTEMA[d.categoria_ens] %></span>
+                </td>
+                <td class="px-4 py-3 font-mono text-slate-700">v<%= d.version %></td>
+                <td class="px-4 py-3">
+                  <div class="flex items-center gap-2">
+                    <div class="h-2 w-20 rounded-full bg-slate-200 overflow-hidden">
+                      <div class="h-full <%= pct >= 80 ? 'bg-green-500' : pct >= 50 ? 'bg-amber-500' : 'bg-red-500' %>" style="width: <%= pct %>%"></div>
+                    </div>
+                    <span class="text-sm font-semibold text-slate-700"><%= formatoPorcentaje(d.porcentaje_implementacion) %></span>
+                  </div>
+                </td>
+                <td class="px-4 py-3 text-slate-600 whitespace-nowrap"><%= fechaHora(d.fecha_generacion) %></td>
+                <td class="px-4 py-3">
+                  <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset whitespace-nowrap <%= estadoDeclaracionClases[d.estado] %>"><%= ESTADOS_DECLARACION[d.estado] %></span>
+                </td>
+                <td class="px-4 py-3 text-right whitespace-nowrap">
+                  <a href="/declaraciones/<%= d.id %>" class="rounded-lg border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-100">Ver</a>
+                  <a href="/declaraciones/<%= d.id %>/pdf" class="ml-1 rounded-lg border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-100">PDF</a>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+  </main>
+</body>
+</html>

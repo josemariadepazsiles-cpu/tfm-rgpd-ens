@@ -1,0 +1,145 @@
+const prisma = require('../lib/prisma');
+const { idValido } = require('../lib/permisos');
+const { CATEGORIAS, ESTADOS } = require('../lib/ens');
+const { cabeceraDisposicion } = require('../lib/subidas');
+const { escribirPdf } = require('../lib/pdfDeclaracion');
+const {
+  CATEGORIAS_SISTEMA, ESTADOS_DECLARACION, ErrorDeclaracion, generarDeclaracion, emitirDeclaracion, formatoPorcentaje,
+} = require('../lib/declaraciones');
+
+// Cualquier usuario autenticado puede consultar las declaraciones y descargar su PDF.
+// Generarlas, editar las observaciones del borrador y emitirlas es solo para el
+// Administrador (las rutas usan ensureAdmin).
+
+const opciones = { CATEGORIAS_SISTEMA, ESTADOS_DECLARACION, formatoPorcentaje };
+
+const noEncontrada = (res) =>
+  res.status(404).render('error', { title: 'Declaración no encontrada', mensaje: 'La declaración no existe.' });
+
+const buscar = (req, include = {}) => {
+  const id = idValido(req.params.id);
+  return id ? prisma.declaracionConformidad.findUnique({ where: { id }, include }) : null;
+};
+
+const conDetalles = {
+  detalles: { orderBy: [{ control_categoria: 'asc' }, { control_nombre: 'asc' }] },
+};
+
+const list = async (req, res) => {
+  const sistemas = await prisma.sistema.findMany({ select: { id: true, nombre: true }, orderBy: { nombre: 'asc' } });
+  const sistemaId = idValido(req.query.sistema);
+  const filtro = sistemas.some((s) => s.id === sistemaId) ? sistemaId : null;
+
+  const declaraciones = await prisma.declaracionConformidad.findMany({
+    where: filtro ? { sistema_id: filtro } : {},
+    orderBy: [{ sistema_nombre: 'asc' }, { version: 'desc' }],
+  });
+
+  res.render('declaraciones/index', {
+    title: 'Declaraciones de Conformidad',
+    declaraciones,
+    sistemas,
+    filtro,
+    ...opciones,
+  });
+};
+
+const show = async (req, res) => {
+  const declaracion = await buscar(req, conDetalles);
+  if (!declaracion) return noEncontrada(res);
+
+  // Agrupa los controles congelados por categoría, igual que el checklist
+  const grupos = Object.keys(CATEGORIAS).map((categoria) => {
+    const controles = declaracion.detalles.filter((d) => d.control_categoria === categoria);
+    return {
+      categoria,
+      controles,
+      implementados: controles.filter((d) => d.estado_control === 'IMPLEMENTADO').length,
+      aplicables: controles.filter((d) => d.estado_control !== 'NO_APLICA').length,
+    };
+  });
+  const otrasVersiones = await prisma.declaracionConformidad.findMany({
+    where: { sistema_id: declaracion.sistema_id },
+    select: { id: true, version: true, estado: true },
+    orderBy: { version: 'desc' },
+  });
+
+  res.render('declaraciones/show', {
+    title: `Declaración v${declaracion.version} · ${declaracion.sistema_nombre}`,
+    declaracion,
+    grupos,
+    otrasVersiones,
+    categorias: CATEGORIAS,
+    estados: ESTADOS,
+    ...opciones,
+  });
+};
+
+// Solo administradores: genera una declaración en Borrador a partir de una evaluación
+const generar = async (req, res) => {
+  const evaluacionId = idValido(req.params.id);
+  if (!evaluacionId) return noEncontrada(res);
+  try {
+    const { declaracion, superadas } = await generarDeclaracion(evaluacionId, req.user);
+    req.session.flash = {
+      tipo: 'exito',
+      mensaje: `Declaración versión ${declaracion.version} generada en Borrador (${formatoPorcentaje(declaracion.porcentaje_implementacion)} de implementación).` +
+        (superadas ? ` ${superadas} declaración(es) anterior(es) pasan a "Superada por nueva versión".` : ''),
+    };
+    res.redirect(`/declaraciones/${declaracion.id}`);
+  } catch (err) {
+    if (!(err instanceof ErrorDeclaracion)) throw err;
+    req.session.flash = { tipo: 'error', mensaje: err.message };
+    res.redirect(`/evaluaciones/${evaluacionId}`);
+  }
+};
+
+// Solo administradores: observaciones del borrador (una declaración emitida no se modifica)
+const actualizarObservaciones = async (req, res) => {
+  const declaracion = await buscar(req);
+  if (!declaracion) return noEncontrada(res);
+  if (declaracion.estado !== 'BORRADOR') {
+    req.session.flash = { tipo: 'error', mensaje: 'Solo se pueden modificar las observaciones de un borrador.' };
+    return res.redirect(`/declaraciones/${declaracion.id}`);
+  }
+  const observaciones = typeof req.body.observaciones === 'string' ? req.body.observaciones.trim() : '';
+  const { count } = await prisma.declaracionConformidad.updateMany({
+    where: { id: declaracion.id, estado: 'BORRADOR' },
+    data: { observaciones: observaciones || null },
+  });
+  req.session.flash = count
+    ? { tipo: 'exito', mensaje: 'Observaciones guardadas.' }
+    : { tipo: 'error', mensaje: 'La declaración ya no está en Borrador.' };
+  res.redirect(`/declaraciones/${declaracion.id}`);
+};
+
+// Solo administradores
+const emitir = async (req, res) => {
+  const id = idValido(req.params.id);
+  if (!id) return noEncontrada(res);
+  try {
+    const declaracion = await emitirDeclaracion(id, req.user);
+    req.session.flash = { tipo: 'exito', mensaje: `Declaración versión ${declaracion.version} emitida. Ya no se puede modificar.` };
+  } catch (err) {
+    if (!(err instanceof ErrorDeclaracion)) throw err;
+    req.session.flash = { tipo: 'error', mensaje: err.message };
+  }
+  res.redirect(`/declaraciones/${id}`);
+};
+
+const pdf = async (req, res) => {
+  const declaracion = await buscar(req, conDetalles);
+  if (!declaracion) return noEncontrada(res);
+
+  const nombre = `Declaracion_Conformidad_ENS_${declaracion.sistema_nombre}_v${declaracion.version}.pdf`
+    .replace(/[\\/:*?"<>|\s]+/g, '_');
+  res.set({
+    'Content-Type': 'application/pdf',
+    'Content-Disposition': cabeceraDisposicion(req.query.ver ? 'inline' : 'attachment', nombre),
+    'X-Content-Type-Options': 'nosniff',
+    'Cache-Control': 'private, no-store',
+  });
+  escribirPdf(declaracion, res);
+};
+
+module.exports = { list, show, generar, actualizarObservaciones, emitir, pdf };

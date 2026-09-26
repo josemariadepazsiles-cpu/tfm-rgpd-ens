@@ -30,8 +30,20 @@
         <% } %>
         <a href="/sistemas/<%= evaluacion.sistema.id %>/historial?evaluacion=<%= evaluacion.id %>"
            class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-700 hover:bg-slate-50 transition">Ver histórico</a>
+        <% if (user.rol === 'ADMIN' && evaluacion.sistema.categoria_general) { %>
+          <form action="/evaluaciones/<%= evaluacion.id %>/declaracion" method="POST"
+                onsubmit="return confirm('Se generará una Declaración de Conformidad en Borrador con el estado actual de todos los controles. Las declaraciones anteriores de este sistema pasarán a «Superada por nueva versión». ¿Continuar?')">
+            <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">Generar Declaración de Conformidad</button>
+          </form>
+        <% } %>
       </div>
     </div>
+    <% if (user.rol === 'ADMIN' && !evaluacion.sistema.categoria_general) { %>
+      <p class="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800">
+        Para generar la Declaración de Conformidad, primero
+        <a href="/sistemas/<%= evaluacion.sistema.id %>/editar" class="font-medium underline">indica la categoría ENS del sistema</a>.
+      </p>
+    <% } %>
 
     <div class="mt-6">
       <%- include('../partials/resumen-ens', { resumen: grupos }) %>

@@ -162,6 +162,16 @@ const remove = async (req, res) => {
   const sistema = await buscar(req);
   if (!sistema) return noEncontrado(res);
 
+  // Las declaraciones de conformidad son registros formales: impiden borrar el sistema
+  const declaraciones = await prisma.declaracionConformidad.count({ where: { sistema_id: sistema.id } });
+  if (declaraciones) {
+    req.session.flash = {
+      tipo: 'error',
+      mensaje: `No se puede eliminar "${sistema.nombre}": tiene ${declaraciones} declaración(es) de conformidad registradas.`,
+    };
+    return res.redirect(`/sistemas/${sistema.id}`);
+  }
+
   await prisma.sistema.delete({ where: { id: sistema.id } });
   req.session.flash = { tipo: 'exito', mensaje: `Sistema "${sistema.nombre}" eliminado.` };
   res.redirect('/sistemas');

@@ -99,6 +99,43 @@ enum EstadoSolicitud {
   AMPLIADA
 }
 
+// Encargados del tratamiento / proveedores (art. 28 RGPD)
+enum MecanismoTransferencia {
+  NO_APLICA
+  CLAUSULAS_TIPO
+  DECISION_ADECUACION
+  NORMAS_CORPORATIVAS
+  OTRO
+}
+
+enum NivelEnsProveedor {
+  NO_APLICA
+  BASICO
+  MEDIO
+  ALTO
+  NO_ACREDITADO
+}
+
+enum EstadoProveedor {
+  ACTIVO
+  EN_REVISION
+  BAJA
+}
+
+enum TipoDocumentoProveedor {
+  CONTRATO
+  ANEXO
+  CERTIFICADO
+  CLAUSULAS_TRANSFERENCIA
+  OTRO
+}
+
+enum EstadoDeclaracion {
+  BORRADOR
+  EMITIDA
+  SUPERADA
+}
+
 enum Rol {
   ADMIN
   USUARIO
@@ -123,6 +160,11 @@ model Usuario {
   solicitudesResponsable SolicitudDerecho[]          @relation("SolicitudResponsable")
   solicitudesCreadas     SolicitudDerecho[]          @relation("SolicitudCreador")
   cambiosSolicitud       HistorialSolicitudDerecho[]
+  proveedoresResponsable Proveedor[]                 @relation("ProveedorResponsable")
+  proveedoresCreados     Proveedor[]                 @relation("ProveedorCreador")
+  documentosSubidos      DocumentoProveedor[]
+  declaracionesGeneradas DeclaracionConformidad[]    @relation("DeclaracionGenerador")
+  declaracionesEmitidas  DeclaracionConformidad[]    @relation("DeclaracionEmisor")
 
   @@map("usuarios")
 }
@@ -193,8 +235,9 @@ model Sistema {
   created_at        DateTime      @default(now())
   updated_at        DateTime      @updatedAt
 
-  creado_por   Usuario?     @relation(fields: [creado_por_id], references: [id], onDelete: SetNull)
-  evaluaciones Evaluacion[]
+  creado_por    Usuario?                 @relation(fields: [creado_por_id], references: [id], onDelete: SetNull)
+  evaluaciones  Evaluacion[]
+  declaraciones DeclaracionConformidad[]
 
   @@map("sistemas")
 }
@@ -206,9 +249,10 @@ model Evaluacion {
   creado_por_id Int?
   created_at    DateTime @default(now())
 
-  sistema    Sistema             @relation(fields: [sistema_id], references: [id], onDelete: Cascade)
-  creado_por Usuario?            @relation(fields: [creado_por_id], references: [id], onDelete: SetNull)
-  controles  EvaluacionControl[]
+  sistema       Sistema                  @relation(fields: [sistema_id], references: [id], onDelete: Cascade)
+  creado_por    Usuario?                 @relation(fields: [creado_por_id], references: [id], onDelete: SetNull)
+  controles     EvaluacionControl[]
+  declaraciones DeclaracionConformidad[]
 
   @@index([sistema_id])
   @@map("evaluaciones")
@@ -348,4 +392,113 @@ model HistorialSolicitudDerecho {
 
   @@index([solicitud_id, fecha])
   @@map("historial_solicitudes_derechos")
+}
+
+// Encargados del tratamiento: proveedores con acceso a datos personales (art. 28 RGPD)
+model Proveedor {
+  id                        Int                    @id @default(autoincrement())
+  nombre_empresa            String
+  cif                       String?
+  direccion                 String?
+  persona_contacto          String?
+  email_contacto            String?
+  telefono_contacto         String?
+  servicio_prestado         String
+  categorias_datos_tratados String
+  pais_tratamiento          String
+  fuera_ue                  Boolean                @default(false)
+  mecanismo_transferencia   MecanismoTransferencia @default(NO_APLICA)
+  tiene_contrato_encargado  Boolean                @default(false)
+  fecha_firma_contrato      DateTime?
+  fecha_revision_contrato   DateTime?
+  nivel_cumplimiento_ens    NivelEnsProveedor      @default(NO_APLICA)
+  estado                    EstadoProveedor        @default(ACTIVO)
+  responsable_id            Int?
+  creado_por_id             Int?
+  created_at                DateTime               @default(now())
+  updated_at                DateTime               @updatedAt
+
+  responsable Usuario?             @relation("ProveedorResponsable", fields: [responsable_id], references: [id], onDelete: SetNull)
+  creado_por  Usuario?             @relation("ProveedorCreador", fields: [creado_por_id], references: [id], onDelete: SetNull)
+  documentos  DocumentoProveedor[]
+
+  @@index([estado])
+  @@index([responsable_id])
+  @@map("proveedores")
+}
+
+// PDF adjuntos a un proveedor. El archivo se guarda en uploads/ (fuera del repositorio)
+model DocumentoProveedor {
+  id                      Int                    @id @default(autoincrement())
+  proveedor_id            Int
+  nombre_documento        String
+  tipo_documento          TipoDocumentoProveedor
+  // Ruta relativa a la carpeta de subidas, con nombre único generado por el servidor
+  ruta_archivo            String                 @unique
+  nombre_archivo_original String
+  tamano_bytes            Int
+  subido_por_id           Int?
+  fecha_subida            DateTime               @default(now())
+
+  proveedor  Proveedor @relation(fields: [proveedor_id], references: [id], onDelete: Cascade)
+  subido_por Usuario?  @relation(fields: [subido_por_id], references: [id], onDelete: SetNull)
+
+  @@index([proveedor_id])
+  @@map("documentos_proveedores")
+}
+
+// Declaración de Conformidad ENS: foto fija del checklist de una evaluación del sistema
+model DeclaracionConformidad {
+  id                             Int               @id @default(autoincrement())
+  sistema_id                     Int
+  // Nombres congelados al generar/emitir: si luego se renombran o se borran, la declaración no cambia
+  sistema_nombre                 String
+  generado_por_nombre            String
+  emitido_por_nombre             String?
+  // Evaluación de la que se tomó la foto (puede borrarse después sin afectar a la declaración)
+  evaluacion_id                  Int?
+  evaluacion_nombre              String
+  categoria_ens                  CategoriaEns
+  fecha_generacion               DateTime          @default(now())
+  // Implementados / aplicables (sin contar los "No aplicable"), en %
+  porcentaje_implementacion      Decimal           @db.Decimal(5, 2)
+  numero_controles_total         Int
+  numero_controles_implementados Int
+  numero_controles_pendientes    Int
+  numero_controles_no_aplica     Int
+  observaciones                  String?
+  estado                         EstadoDeclaracion @default(BORRADOR)
+  version                        Int
+  generado_por_id                Int?
+  emitido_por_id                 Int?
+  fecha_emision                  DateTime?
+  created_at                     DateTime          @default(now())
+  updated_at                     DateTime          @updatedAt
+
+  sistema      Sistema                     @relation(fields: [sistema_id], references: [id], onDelete: Restrict)
+  evaluacion   Evaluacion?                 @relation(fields: [evaluacion_id], references: [id], onDelete: SetNull)
+  generado_por Usuario?                    @relation("DeclaracionGenerador", fields: [generado_por_id], references: [id], onDelete: SetNull)
+  emitido_por  Usuario?                    @relation("DeclaracionEmisor", fields: [emitido_por_id], references: [id], onDelete: SetNull)
+  detalles     DetalleDeclaracionControl[]
+
+  @@unique([sistema_id, version])
+  @@index([estado])
+  @@map("declaraciones_conformidad")
+}
+
+// Estado de cada control en el momento de generar la declaración (no cambia después)
+model DetalleDeclaracionControl {
+  id                Int           @id @default(autoincrement())
+  declaracion_id    Int
+  control_nombre    String
+  control_categoria CategoriaEns
+  estado_control    EstadoControl
+  responsable       String?
+  evidencia         String?
+  fecha_revision    DateTime?
+
+  declaracion DeclaracionConformidad @relation(fields: [declaracion_id], references: [id], onDelete: Cascade)
+
+  @@index([declaracion_id])
+  @@map("detalles_declaracion_control")
 }

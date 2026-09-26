@@ -16,7 +16,11 @@ const evaluacionRoutes = require('./routes/evaluaciones');
 const controlRoutes = require('./routes/controles');
 const incidenteRoutes = require('./routes/incidentes');
 const derechoRoutes = require('./routes/derechos');
-const { fecha, fechaHora, aInputFechaHora } = require('./lib/formato');
+const proveedorRoutes = require('./routes/proveedores');
+const declaracionRoutes = require('./routes/declaraciones');
+const { ESTADO_DECLARACION_CLASES } = require('./lib/declaraciones');
+const { fecha, fechaHora, aInputFechaHora, aInputFecha } = require('./lib/formato');
+const { ESTADO_PROVEEDOR_CLASES, NIVEL_ENS_CLASES, ALERTA_CLASES } = require('./lib/proveedores');
 const { NIVEL_CLASES } = require('./lib/riesgo');
 const { CATEGORIA_CLASES, ESTADO_CLASES } = require('./lib/ens');
 const { GRAVEDAD_CLASES, ESTADO_INCIDENTE_CLASES } = require('./lib/incidentes');
@@ -44,6 +48,11 @@ app.locals.gravedadClases = GRAVEDAD_CLASES;
 app.locals.estadoIncidenteClases = ESTADO_INCIDENTE_CLASES;
 app.locals.urgenciaClases = URGENCIA_CLASES;
 app.locals.estadoSolicitudClases = ESTADO_SOLICITUD_CLASES;
+app.locals.aInputFecha = aInputFecha;
+app.locals.estadoProveedorClases = ESTADO_PROVEEDOR_CLASES;
+app.locals.nivelEnsClases = NIVEL_ENS_CLASES;
+app.locals.alertaClases = ALERTA_CLASES;
+app.locals.estadoDeclaracionClases = ESTADO_DECLARACION_CLASES;
 
 // Middlewares
 app.use(express.urlencoded({ extended: false }));
@@ -89,6 +98,8 @@ app.use('/evaluaciones', evaluacionRoutes);
 app.use('/controles', controlRoutes);
 app.use('/incidentes', incidenteRoutes);
 app.use('/derechos', derechoRoutes);
+app.use('/proveedores', proveedorRoutes);
+app.use('/declaraciones', declaracionRoutes);
 // El checklist global se sustituyó por evaluaciones por sistema
 app.get('/checklist', (req, res) => res.redirect(301, '/sistemas'));
 

@@ -8,20 +8,22 @@
     {
       id: 'rgpd',
       texto: 'RGPD',
-      rutas: ['/rat', '/riesgos', '/incidentes', '/derechos'],
+      rutas: ['/rat', '/riesgos', '/incidentes', '/derechos', '/proveedores'],
       enlaces: [
         { href: '/rat', texto: 'Actividades RAT' },
         { href: '/riesgos', texto: 'Riesgos' },
         { href: '/incidentes', texto: 'Incidentes / Brechas' },
         { href: '/derechos', texto: 'Derechos de los Interesados' },
+        { href: '/proveedores', texto: 'Proveedores' },
       ],
     },
     {
       id: 'ens',
       texto: 'ENS',
-      rutas: ['/sistemas', '/evaluaciones', '/controles'],
+      rutas: ['/sistemas', '/evaluaciones', '/controles', '/declaraciones'],
       enlaces: [
         { href: '/sistemas', texto: 'Sistemas ENS' },
+        { href: '/declaraciones', texto: 'Declaraciones de Conformidad' },
         ...(esAdmin ? [{ href: '/controles', texto: 'Catálogo de controles' }] : []),
       ],
     },

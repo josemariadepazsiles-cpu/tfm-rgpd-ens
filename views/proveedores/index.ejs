@@ -1,0 +1,124 @@
+<%
+  const selectClase = 'mt-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500';
+  const sinContrato = proveedores.filter((p) => p.estado !== 'BAJA' && !p.tiene_contrato_encargado).length;
+%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body class="min-h-screen bg-slate-100">
+  <%- include('../partials/nav') %>
+
+  <main class="max-w-7xl mx-auto px-4 py-8">
+    <%- include('../partials/flash') %>
+
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-800">Encargados del tratamiento / Proveedores</h1>
+        <p class="text-sm text-slate-500">Proveedores externos con acceso a datos personales (art. 28 RGPD)</p>
+      </div>
+      <% if (user.rol === 'ADMIN') { %>
+        <a href="/proveedores/nuevo" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">+ Nuevo proveedor</a>
+      <% } %>
+    </div>
+
+    <% if (sinContrato) { %>
+      <div class="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+        <strong><%= sinContrato %> proveedor(es)</strong> sin contrato de encargado del tratamiento firmado (art. 28.3), sin contar los dados de baja.
+      </div>
+    <% } %>
+
+    <form action="/proveedores" method="GET" class="mt-6 flex flex-wrap items-end gap-3">
+      <div>
+        <label for="estado" class="block text-sm font-medium text-slate-700">Estado</label>
+        <select id="estado" name="estado" onchange="this.form.submit()" class="<%= selectClase %>">
+          <option value="">Todos</option>
+          <% Object.entries(ESTADOS_PROVEEDOR).forEach(([v, etiqueta]) => { %>
+            <option value="<%= v %>" <%= estado === v ? 'selected' : '' %>><%= etiqueta %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div>
+        <label for="contrato" class="block text-sm font-medium text-slate-700">Contrato de encargado</label>
+        <select id="contrato" name="contrato" onchange="this.form.submit()" class="<%= selectClase %>">
+          <option value="">Todos</option>
+          <option value="si" <%= contrato === 'si' ? 'selected' : '' %>>Firmado</option>
+          <option value="no" <%= contrato === 'no' ? 'selected' : '' %>>Sin contrato</option>
+        </select>
+      </div>
+      <noscript><button type="submit" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">Filtrar</button></noscript>
+      <% if (estado || contrato) { %>
+        <a href="/proveedores" class="py-2 text-sm text-indigo-600 hover:underline">Quitar filtros</a>
+      <% } %>
+    </form>
+
+    <div class="mt-4 bg-white rounded-2xl shadow overflow-x-auto">
+      <% if (proveedores.length === 0) { %>
+        <p class="p-8 text-center text-slate-500">
+          <%= estado || contrato ? 'No hay proveedores con esos filtros.' : 'No se ha registrado ningún proveedor.' %>
+        </p>
+      <% } else { %>
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 text-left text-slate-600">
+            <tr>
+              <th class="px-4 py-3 font-medium">Empresa</th>
+              <th class="px-4 py-3 font-medium">Servicio prestado</th>
+              <th class="px-4 py-3 font-medium">Contrato</th>
+              <th class="px-4 py-3 font-medium">Fuera del EEE</th>
+              <th class="px-4 py-3 font-medium">Nivel ENS</th>
+              <th class="px-4 py-3 font-medium">Estado</th>
+              <th class="px-4 py-3 font-medium">Alertas</th>
+              <th class="px-4 py-3 font-medium text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <% proveedores.forEach((p) => { %>
+              <tr class="hover:bg-slate-50 <%= p.estado === 'BAJA' ? 'opacity-60' : '' %>">
+                <td class="px-4 py-3">
+                  <a href="/proveedores/<%= p.id %>" class="font-medium text-slate-800 hover:text-indigo-600 hover:underline"><%= p.nombre_empresa %></a>
+                  <span class="block text-xs text-slate-500"><%= p.pais_tratamiento %><%= p._count.documentos ? ' · ' + p._count.documentos + ' doc.' : '' %></span>
+                </td>
+                <td class="px-4 py-3 text-slate-600 max-w-xs"><p class="line-clamp-2"><%= p.servicio_prestado %></p></td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                  <% if (p.tiene_contrato_encargado) { %>
+                    <span class="text-green-700 font-medium">✓ Firmado</span>
+                    <% if (p.fecha_firma_contrato) { %><span class="block text-xs text-slate-500"><%= fecha(p.fecha_firma_contrato) %></span><% } %>
+                  <% } else { %>
+                    <span class="text-red-700 font-medium">✗ No</span>
+                  <% } %>
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                  <% if (p.fuera_ue) { %>
+                    <span class="font-medium text-orange-700">Sí</span>
+                    <span class="block text-xs text-slate-500"><%= MECANISMOS[p.mecanismo_transferencia] %></span>
+                  <% } else { %>
+                    <span class="text-slate-500">No</span>
+                  <% } %>
+                </td>
+                <td class="px-4 py-3">
+                  <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset whitespace-nowrap <%= nivelEnsClases[p.nivel_cumplimiento_ens] %>"><%= NIVELES_ENS[p.nivel_cumplimiento_ens] %></span>
+                </td>
+                <td class="px-4 py-3">
+                  <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset whitespace-nowrap <%= estadoProveedorClases[p.estado] %>"><%= ESTADOS_PROVEEDOR[p.estado] %></span>
+                </td>
+                <td class="px-4 py-3"><div class="flex flex-wrap gap-1"><%- include('../partials/alertas-proveedor', { lista: p.alertas }) %></div></td>
+                <td class="px-4 py-3 text-right whitespace-nowrap">
+                  <a href="/proveedores/<%= p.id %>" class="rounded-lg border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-100">Ver</a>
+                  <% if (user.rol === 'ADMIN') { %>
+                    <a href="/proveedores/<%= p.id %>/editar" class="ml-1 rounded-lg bg-indigo-600 px-3 py-1 text-white hover:bg-indigo-700">Editar</a>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+    <p class="mt-3 text-xs text-slate-500">
+      Alertas: rojo = sin contrato de encargado · amarillo = revisión del contrato en <%= DIAS_AVISO_REVISION %> días o menos, o vencida ·
+      naranja = transferencia internacional fuera del EEE (más intenso si no se ha señalado mecanismo de transferencia).
+    </p>
+  </main>
+</body>
+</html>

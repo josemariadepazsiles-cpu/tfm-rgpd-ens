@@ -1,0 +1,155 @@
+<%
+  const inputClase = 'mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500';
+  const campo = (etiqueta, valor, vacio) => ({ etiqueta, valor, vacio });
+  const p = proveedor;
+  const secciones = [
+    { titulo: 'Empresa y contacto', campos: [
+      campo('CIF', p.cif, 'No indicado'),
+      campo('Dirección', p.direccion, 'No indicada'),
+      campo('Persona de contacto', p.persona_contacto, 'No indicada'),
+      campo('Email', p.email_contacto, 'No indicado'),
+      campo('Teléfono', p.telefono_contacto, 'No indicado'),
+    ] },
+    { titulo: 'Tratamiento que realiza', campos: [
+      campo('Servicio prestado', p.servicio_prestado),
+      campo('Categorías de datos tratados', p.categorias_datos_tratados),
+      campo('País del tratamiento', p.pais_tratamiento),
+      campo('Transferencia fuera del EEE', p.fuera_ue ? 'Sí · ' + (p.mecanismo_transferencia === 'NO_APLICA' ? 'sin mecanismo señalado' : MECANISMOS[p.mecanismo_transferencia]) : 'No'),
+      campo('Nivel ENS declarado', NIVELES_ENS[p.nivel_cumplimiento_ens]),
+    ] },
+    { titulo: 'Contrato de encargado y gestión', campos: [
+      campo('Contrato de encargado (art. 28.3)', p.tiene_contrato_encargado ? 'Firmado' + (p.fecha_firma_contrato ? ' el ' + fecha(p.fecha_firma_contrato) : '') : null, 'No consta contrato firmado'),
+      campo('Próxima revisión o renovación', p.fecha_revision_contrato ? fecha(p.fecha_revision_contrato) : null, 'Sin fecha'),
+      campo('Responsable de la relación', p.responsable ? p.responsable.nombre : null, 'Sin asignar'),
+    ] },
+  ];
+%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body class="min-h-screen bg-slate-100">
+  <%- include('../partials/nav') %>
+
+  <main class="max-w-5xl mx-auto px-4 py-8">
+    <%- include('../partials/flash') %>
+
+    <a href="/proveedores" class="text-sm text-indigo-600 hover:underline">&larr; Volver a proveedores</a>
+
+    <div class="mt-2 flex flex-wrap items-start justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-800"><%= p.nombre_empresa %></h1>
+        <div class="mt-2 flex flex-wrap items-center gap-2">
+          <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset <%= estadoProveedorClases[p.estado] %>"><%= ESTADOS_PROVEEDOR[p.estado] %></span>
+          <%- include('../partials/alertas-proveedor', { lista: alertas }) %>
+          <span class="text-xs text-slate-500">Registrado el <%= fechaHora(p.created_at) %><%= p.creado_por ? ' por ' + p.creado_por.nombre : '' %></span>
+        </div>
+      </div>
+      <% if (user.rol === 'ADMIN') { %>
+        <a href="/proveedores/<%= p.id %>/editar" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">Editar</a>
+      <% } %>
+    </div>
+
+    <% if (alertas.length) { %>
+      <ul class="mt-6 space-y-2" role="list">
+        <% alertas.forEach((a) => { %>
+          <li class="rounded-lg border px-4 py-2 text-sm <%= a.nivel === 'rojo' ? 'border-red-200 bg-red-50 text-red-800' : a.nivel === 'amarillo' ? 'border-yellow-200 bg-yellow-50 text-yellow-800' : 'border-orange-200 bg-orange-50 text-orange-800' %>">
+            <strong><%= a.texto %>:</strong> <%= a.detalle %>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+
+    <div class="mt-6 grid gap-6 lg:grid-cols-3">
+      <% secciones.forEach((s) => { %>
+        <section class="bg-white rounded-2xl shadow p-6">
+          <h2 class="text-lg font-semibold text-slate-800"><%= s.titulo %></h2>
+          <dl class="mt-4 space-y-3">
+            <% s.campos.forEach((c) => { %>
+              <div>
+                <dt class="text-sm font-medium text-slate-500"><%= c.etiqueta %></dt>
+                <dd class="mt-0.5 whitespace-pre-line <%= c.valor ? 'text-slate-800' : 'text-slate-400 italic' %>"><%= c.valor || c.vacio %></dd>
+              </div>
+            <% }) %>
+          </dl>
+        </section>
+      <% }) %>
+    </div>
+
+    <section id="documentos" class="mt-6 bg-white rounded-2xl shadow p-6 scroll-mt-20">
+      <h2 class="text-lg font-semibold text-slate-800">Documentos (<%= p.documentos.length %>)</h2>
+      <p class="text-sm text-slate-500">Contrato de encargado, anexos, certificados ENS/ISO, cláusulas de transferencia…</p>
+
+      <% if (p.documentos.length === 0) { %>
+        <p class="mt-4 text-sm text-slate-500 italic">No se ha adjuntado ningún documento.</p>
+      <% } else { %>
+        <div class="mt-4 overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 text-left text-slate-600">
+              <tr>
+                <th class="px-4 py-2 font-medium">Documento</th>
+                <th class="px-4 py-2 font-medium">Tipo</th>
+                <th class="px-4 py-2 font-medium">Subido</th>
+                <th class="px-4 py-2 font-medium">Por</th>
+                <th class="px-4 py-2 font-medium text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <% p.documentos.forEach((d) => { const url = '/proveedores/' + p.id + '/documentos/' + d.id; %>
+                <tr class="hover:bg-slate-50">
+                  <td class="px-4 py-2">
+                    <span class="font-medium text-slate-800"><%= d.nombre_documento %></span>
+                    <span class="block text-xs text-slate-500"><%= d.nombre_archivo_original %> · <%= formatoTamano(d.tamano_bytes) %></span>
+                  </td>
+                  <td class="px-4 py-2 text-slate-600"><%= TIPOS_DOCUMENTO[d.tipo_documento] %></td>
+                  <td class="px-4 py-2 text-slate-600 whitespace-nowrap"><%= fechaHora(d.fecha_subida) %></td>
+                  <td class="px-4 py-2 text-slate-600"><%= d.subido_por ? d.subido_por.nombre : '—' %></td>
+                  <td class="px-4 py-2 text-right whitespace-nowrap">
+                    <a href="<%= url %>" target="_blank" rel="noopener" class="rounded-lg border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-100">Ver</a>
+                    <a href="<%= url %>?descargar=1" class="ml-1 rounded-lg border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-100">Descargar</a>
+                    <% if (gestionaDocumentos) { %>
+                      <form action="<%= url %>/eliminar" method="POST" class="inline" data-nombre="<%= d.nombre_documento %>"
+                            onsubmit="return confirm('¿Eliminar el documento «' + this.dataset.nombre + '»? Se borrará el archivo del servidor.')">
+                        <button type="submit" class="ml-1 rounded-lg border border-red-300 px-3 py-1 text-red-600 hover:bg-red-50">Eliminar</button>
+                      </form>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+
+      <% if (gestionaDocumentos) { %>
+        <form action="/proveedores/<%= p.id %>/documentos" method="POST" enctype="multipart/form-data"
+              class="mt-6 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 grid gap-4 sm:grid-cols-4 sm:items-end">
+          <div class="sm:col-span-2">
+            <label for="archivo" class="block text-sm font-medium text-slate-700">Archivo PDF (máx. <%= tamanoMaximoMb %> MB)</label>
+            <input id="archivo" name="archivo" type="file" accept="application/pdf,.pdf" required
+                   class="mt-1 block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-600 file:px-3 file:py-2 file:text-white hover:file:bg-indigo-700">
+          </div>
+          <div>
+            <label for="nombre_documento" class="block text-sm font-medium text-slate-700">Nombre</label>
+            <input id="nombre_documento" name="nombre_documento" type="text" required maxlength="200" placeholder="Ej.: Contrato encargado 2026" class="<%= inputClase %>">
+          </div>
+          <div>
+            <label for="tipo_documento" class="block text-sm font-medium text-slate-700">Tipo</label>
+            <select id="tipo_documento" name="tipo_documento" class="<%= inputClase %>">
+              <% Object.entries(TIPOS_DOCUMENTO).forEach(([v, etiqueta]) => { %>
+                <option value="<%= v %>"><%= etiqueta %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="sm:col-span-4 flex justify-end">
+            <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition">Subir documento</button>
+          </div>
+        </form>
+      <% } %>
+    </section>
+
+    <p class="mt-6 text-xs text-slate-400">Última modificación el <%= fechaHora(p.updated_at) %></p>
+  </main>
+</body>
+</html>

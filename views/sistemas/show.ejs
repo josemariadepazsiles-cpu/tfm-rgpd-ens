@@ -27,6 +27,7 @@
       </div>
       <div class="flex flex-wrap gap-2">
         <a href="/sistemas/<%= sistema.id %>/historial" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-700 hover:bg-slate-50 transition">Ver histórico</a>
+        <a href="/declaraciones?sistema=<%= sistema.id %>" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-700 hover:bg-slate-50 transition">Declaraciones</a>
         <% if (user.rol === 'ADMIN') { %>
           <a href="/sistemas/<%= sistema.id %>/editar" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-700 hover:bg-slate-50 transition">Editar</a>
           <form action="/sistemas/<%= sistema.id %>/eliminar" method="POST" data-nombre="<%= sistema.nombre %>"

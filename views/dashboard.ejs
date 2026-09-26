@@ -25,6 +25,9 @@
         <a href="/derechos" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">
           Derechos de los Interesados
         </a>
+        <a href="/proveedores" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">
+          Proveedores
+        </a>
         <a href="/sistemas" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">
           Sistemas ENS
         </a>
@@ -107,6 +110,31 @@
           <% } else { %>
             <p class="mt-1 text-sm text-slate-500 italic">Ninguna solicitud pendiente dentro de plazo</p>
           <% } %>
+        </div>
+      </div>
+    </section>
+
+    <section class="bg-white rounded-2xl shadow p-8">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <h2 class="text-lg font-semibold text-slate-800">Encargados del tratamiento / Proveedores</h2>
+        <a href="/proveedores" class="text-sm text-indigo-600 hover:underline">Ver proveedores &rarr;</a>
+      </div>
+
+      <div class="mt-6 grid gap-4 sm:grid-cols-3">
+        <a href="/proveedores?estado=ACTIVO" class="block rounded-xl border border-slate-200 p-5 hover:shadow">
+          <p class="text-sm font-medium text-slate-500">Proveedores activos</p>
+          <p class="mt-1 text-3xl font-bold text-slate-800"><%= proveedores.activos %></p>
+          <p class="mt-1 text-xs text-slate-500">Con relación vigente</p>
+        </a>
+        <a href="/proveedores?contrato=no" class="block rounded-xl border p-5 hover:shadow <%= proveedores.sinContrato ? 'border-red-300 bg-red-50' : 'border-slate-200' %>">
+          <p class="text-sm font-medium <%= proveedores.sinContrato ? 'text-red-800' : 'text-slate-500' %>">Sin contrato de encargado</p>
+          <p class="mt-1 text-3xl font-bold <%= proveedores.sinContrato ? 'text-red-700' : 'text-slate-800' %>"><%= proveedores.sinContrato %></p>
+          <p class="mt-1 text-xs <%= proveedores.sinContrato ? 'font-semibold text-red-700' : 'text-slate-500' %>">Art. 28.3 · sin contar las bajas</p>
+        </a>
+        <div class="rounded-xl border p-5 <%= proveedores.sinMecanismo ? 'border-orange-300 bg-orange-50' : 'border-slate-200' %>">
+          <p class="text-sm font-medium <%= proveedores.sinMecanismo ? 'text-orange-800' : 'text-slate-500' %>">Transferencia internacional sin garantías</p>
+          <p class="mt-1 text-3xl font-bold <%= proveedores.sinMecanismo ? 'text-orange-700' : 'text-slate-800' %>"><%= proveedores.sinMecanismo %></p>
+          <p class="mt-1 text-xs <%= proveedores.sinMecanismo ? 'font-semibold text-orange-700' : 'text-slate-500' %>">Fuera del EEE sin mecanismo señalado</p>
         </div>
       </div>
     </section>

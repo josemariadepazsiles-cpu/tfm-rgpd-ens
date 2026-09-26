@@ -1,0 +1,162 @@
+<%
+  const inputClase = 'mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500';
+  const accion = proveedor.id ? '/proveedores/' + proveedor.id : '/proveedores';
+  const volver = proveedor.id ? '/proveedores/' + proveedor.id : '/proveedores';
+  const valor = (campo) => proveedor[campo] ?? '';
+  const estadoInicial = { fueraUe: !!proveedor.fuera_ue, contrato: !!proveedor.tiene_contrato_encargado };
+%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body class="min-h-screen bg-slate-100">
+  <%- include('../partials/nav') %>
+
+  <main class="max-w-3xl mx-auto px-4 py-8">
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-bold text-slate-800"><%= title %></h1>
+      <a href="<%= volver %>" class="text-sm text-indigo-600 hover:underline">Cancelar</a>
+    </div>
+
+    <% if (errores.length) { %>
+      <ul class="mt-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 list-disc list-inside" role="alert">
+        <% errores.forEach((e) => { %><li><%= e %></li><% }) %>
+      </ul>
+    <% } %>
+
+    <form action="<%= accion %>" method="POST" class="mt-6 space-y-6" x-data='<%= JSON.stringify(estadoInicial) %>'>
+
+      <fieldset class="bg-white rounded-2xl shadow p-6 space-y-4">
+        <legend class="float-left w-full mb-2 text-lg font-semibold text-slate-800">1. Empresa y contacto</legend>
+        <div class="clear-both grid gap-4 sm:grid-cols-3">
+          <div class="sm:col-span-2">
+            <label for="nombre_empresa" class="block text-sm font-medium text-slate-700">Nombre de la empresa</label>
+            <input id="nombre_empresa" name="nombre_empresa" type="text" required value="<%= valor('nombre_empresa') %>" class="<%= inputClase %>">
+          </div>
+          <div>
+            <label for="cif" class="block text-sm font-medium text-slate-700">CIF <span class="font-normal text-slate-400">(opcional)</span></label>
+            <input id="cif" name="cif" type="text" value="<%= valor('cif') %>" class="<%= inputClase %>">
+          </div>
+        </div>
+        <div>
+          <label for="direccion" class="block text-sm font-medium text-slate-700">Dirección <span class="font-normal text-slate-400">(opcional)</span></label>
+          <input id="direccion" name="direccion" type="text" value="<%= valor('direccion') %>" class="<%= inputClase %>">
+        </div>
+        <div class="grid gap-4 sm:grid-cols-3">
+          <div>
+            <label for="persona_contacto" class="block text-sm font-medium text-slate-700">Persona de contacto</label>
+            <input id="persona_contacto" name="persona_contacto" type="text" value="<%= valor('persona_contacto') %>" class="<%= inputClase %>">
+          </div>
+          <div>
+            <label for="email_contacto" class="block text-sm font-medium text-slate-700">Email</label>
+            <input id="email_contacto" name="email_contacto" type="email" value="<%= valor('email_contacto') %>" class="<%= inputClase %>">
+          </div>
+          <div>
+            <label for="telefono_contacto" class="block text-sm font-medium text-slate-700">Teléfono</label>
+            <input id="telefono_contacto" name="telefono_contacto" type="tel" value="<%= valor('telefono_contacto') %>" class="<%= inputClase %>">
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="bg-white rounded-2xl shadow p-6 space-y-4">
+        <legend class="float-left w-full mb-2 text-lg font-semibold text-slate-800">2. Tratamiento que realiza</legend>
+        <div class="clear-both">
+          <label for="servicio_prestado" class="block text-sm font-medium text-slate-700">Servicio prestado</label>
+          <textarea id="servicio_prestado" name="servicio_prestado" rows="2" required class="<%= inputClase %>"
+                    placeholder="Ej.: hosting, gestoría laboral, envío de email marketing…"><%= valor('servicio_prestado') %></textarea>
+        </div>
+        <div>
+          <label for="categorias_datos_tratados" class="block text-sm font-medium text-slate-700">Categorías de datos personales que trata en nuestro nombre</label>
+          <textarea id="categorias_datos_tratados" name="categorias_datos_tratados" rows="2" required class="<%= inputClase %>"
+                    placeholder="Ej.: identificativos y de contacto de clientes, datos de nómina de empleados…"><%= valor('categorias_datos_tratados') %></textarea>
+        </div>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label for="pais_tratamiento" class="block text-sm font-medium text-slate-700">País del tratamiento</label>
+            <input id="pais_tratamiento" name="pais_tratamiento" type="text" required value="<%= valor('pais_tratamiento') %>" class="<%= inputClase %>"
+                   placeholder="Dónde están sus servidores o su sede">
+          </div>
+          <div>
+            <label for="nivel_cumplimiento_ens" class="block text-sm font-medium text-slate-700">Nivel ENS que declara</label>
+            <select id="nivel_cumplimiento_ens" name="nivel_cumplimiento_ens" class="<%= inputClase %>">
+              <% Object.entries(NIVELES_ENS).forEach(([v, etiqueta]) => { %>
+                <option value="<%= v %>" <%= proveedor.nivel_cumplimiento_ens === v ? 'selected' : '' %>><%= etiqueta %></option>
+              <% }) %>
+            </select>
+          </div>
+        </div>
+        <div class="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
+          <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
+            <input type="checkbox" name="fuera_ue" x-model="fueraUe" class="w-4 h-4 rounded border-slate-300 text-indigo-600"
+                   <%= proveedor.fuera_ue ? 'checked' : '' %>>
+            Implica transferencia internacional fuera del Espacio Económico Europeo
+          </label>
+          <div x-show="fueraUe" x-cloak>
+            <label for="mecanismo_transferencia" class="block text-sm text-slate-600">Mecanismo de transferencia (arts. 45-49)</label>
+            <select id="mecanismo_transferencia" name="mecanismo_transferencia" class="<%= inputClase %> sm:w-96">
+              <% Object.entries(MECANISMOS).forEach(([v, etiqueta]) => { %>
+                <option value="<%= v %>" <%= proveedor.mecanismo_transferencia === v ? 'selected' : '' %>><%= v === 'NO_APLICA' ? 'Sin señalar' : etiqueta %></option>
+              <% }) %>
+            </select>
+            <p class="mt-1 text-xs text-slate-500">Si no se señala ningún mecanismo, el proveedor aparecerá con la alerta «Transferencia internacional sin garantías».</p>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="bg-white rounded-2xl shadow p-6 space-y-4">
+        <legend class="float-left w-full mb-2 text-lg font-semibold text-slate-800">3. Contrato de encargado (art. 28.3)</legend>
+        <div class="clear-both">
+          <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
+            <input type="checkbox" name="tiene_contrato_encargado" x-model="contrato" class="w-4 h-4 rounded border-slate-300 text-indigo-600"
+                   <%= proveedor.tiene_contrato_encargado ? 'checked' : '' %>>
+            Existe contrato de encargado del tratamiento firmado
+          </label>
+        </div>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div x-show="contrato" x-cloak>
+            <label for="fecha_firma_contrato" class="block text-sm font-medium text-slate-700">Fecha de firma</label>
+            <input id="fecha_firma_contrato" name="fecha_firma_contrato" type="date" value="<%= aInputFecha(proveedor.fecha_firma_contrato) %>" class="<%= inputClase %>">
+          </div>
+          <div>
+            <label for="fecha_revision_contrato" class="block text-sm font-medium text-slate-700">Próxima revisión o renovación</label>
+            <input id="fecha_revision_contrato" name="fecha_revision_contrato" type="date" value="<%= aInputFecha(proveedor.fecha_revision_contrato) %>" class="<%= inputClase %>">
+            <p class="mt-1 text-xs text-slate-500">Se avisará <%= DIAS_AVISO_REVISION %> días antes.</p>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="bg-white rounded-2xl shadow p-6 space-y-4">
+        <legend class="float-left w-full mb-2 text-lg font-semibold text-slate-800">4. Gestión</legend>
+        <div class="clear-both grid gap-4 sm:grid-cols-2">
+          <div>
+            <label for="estado" class="block text-sm font-medium text-slate-700">Estado de la relación</label>
+            <select id="estado" name="estado" class="<%= inputClase %>">
+              <% Object.entries(ESTADOS_PROVEEDOR).forEach(([v, etiqueta]) => { %>
+                <option value="<%= v %>" <%= proveedor.estado === v ? 'selected' : '' %>><%= etiqueta %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div>
+            <label for="responsable_id" class="block text-sm font-medium text-slate-700">Responsable de la relación</label>
+            <select id="responsable_id" name="responsable_id" class="<%= inputClase %>">
+              <option value="">Sin asignar</option>
+              <% usuarios.forEach((u) => { %>
+                <option value="<%= u.id %>" <%= proveedor.responsable_id === u.id ? 'selected' : '' %>><%= u.nombre %><%= u.area ? ' — ' + u.area : '' %></option>
+              <% }) %>
+            </select>
+            <p class="mt-1 text-xs text-slate-500">Podrá subir y eliminar los documentos del proveedor.</p>
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="flex justify-end gap-3">
+        <a href="<%= volver %>" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-700 hover:bg-slate-50">Cancelar</a>
+        <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 transition">
+          <%= proveedor.id ? 'Guardar cambios' : 'Registrar proveedor' %>
+        </button>
+      </div>
+    </form>
+  </main>
+</body>
+</html>
