@@ -37,6 +37,19 @@ enum NivelRiesgo {
   ALTO
 }
 
+// Categoría del sistema según el ENS (RD 311/2022)
+enum CategoriaEns {
+  BAJA
+  MEDIA
+  ALTA
+}
+
+enum EstadoControl {
+  IMPLEMENTADO
+  PENDIENTE
+  NO_APLICA
+}
+
 enum Rol {
   ADMIN
   USUARIO
@@ -51,6 +64,7 @@ model Usuario {
   area          String?
 
   actividades ActividadRat[]
+  controles   ControlEns[]
 
   @@map("usuarios")
 }
@@ -94,4 +108,22 @@ model Riesgo {
   @@index([actividad_id])
   @@index([nivel_riesgo])
   @@map("riesgos")
+}
+
+model ControlEns {
+  id             Int           @id @default(autoincrement())
+  nombre         String        @unique
+  categoria      CategoriaEns
+  estado         EstadoControl @default(PENDIENTE)
+  evidencia      String?
+  responsable_id Int?
+  fecha_revision DateTime?
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
+
+  responsable Usuario? @relation(fields: [responsable_id], references: [id], onDelete: SetNull)
+
+  @@index([categoria])
+  @@index([responsable_id])
+  @@map("controles_ens")
 }

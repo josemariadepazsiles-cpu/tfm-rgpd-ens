@@ -11,7 +11,9 @@ const authRoutes = require('./routes/auth');
 const dashboardRoutes = require('./routes/dashboard');
 const ratRoutes = require('./routes/rat');
 const riesgoRoutes = require('./routes/riesgos');
+const checklistRoutes = require('./routes/checklist');
 const { NIVEL_CLASES } = require('./lib/riesgo');
+const { CATEGORIA_CLASES, ESTADO_CLASES } = require('./lib/ens');
 
 if (!process.env.SESSION_SECRET) {
   throw new Error('Falta SESSION_SECRET en el .env');
@@ -26,6 +28,8 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.locals.roles = ROLES;
 app.locals.nivelClases = NIVEL_CLASES;
+app.locals.categoriaClases = CATEGORIA_CLASES;
+app.locals.estadoClases = ESTADO_CLASES;
 
 // Middlewares
 app.use(express.urlencoded({ extended: false }));
@@ -66,6 +70,7 @@ app.use('/', authRoutes);
 app.use('/', dashboardRoutes);
 app.use('/rat', ratRoutes);
 app.use('/riesgos', riesgoRoutes);
+app.use('/checklist', checklistRoutes);
 
 // 404
 app.use((req, res) => {

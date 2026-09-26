@@ -1,0 +1,112 @@
+<%
+  const fecha = (d) => d ? new Date(d).toLocaleDateString('es-ES') : '—';
+%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body class="min-h-screen bg-slate-100">
+  <%- include('../partials/nav') %>
+
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    <%- include('../partials/flash') %>
+
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-800">Checklist ENS</h1>
+        <p class="text-sm text-slate-500">Controles del Esquema Nacional de Seguridad, compartidos por toda la organización</p>
+      </div>
+      <% if (user.rol === 'ADMIN') { %>
+        <a href="/checklist/nuevo" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">
+          + Nuevo control
+        </a>
+      <% } %>
+    </div>
+
+    <div class="mt-6 space-y-8">
+      <% grupos.forEach((g) => { const clases = categoriaClases[g.categoria]; %>
+        <section class="bg-white rounded-2xl shadow overflow-hidden">
+          <header class="flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4 <%= clases.cabecera %>">
+            <h2 class="text-lg font-semibold">Categoría <%= categorias[g.categoria] %></h2>
+            <div class="flex items-center gap-3 text-sm">
+              <span><strong><%= g.implementados %>/<%= g.aplicables %></strong> implementados<%= g.noAplica ? ' · ' + g.noAplica + ' no aplicables' : '' %></span>
+              <div class="h-2 w-24 rounded-full bg-white/70 overflow-hidden" role="progressbar"
+                   aria-valuenow="<%= g.porcentaje %>" aria-valuemin="0" aria-valuemax="100">
+                <div class="h-full <%= clases.barra %>" style="width: <%= g.porcentaje %>%"></div>
+              </div>
+            </div>
+          </header>
+
+          <% if (g.controles.length === 0) { %>
+            <p class="px-6 py-6 text-sm text-slate-500">No hay controles en esta categoría.</p>
+          <% } else { %>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead class="bg-slate-50 text-left text-slate-600">
+                  <tr>
+                    <th class="px-4 py-3 font-medium">Control</th>
+                    <th class="px-4 py-3 font-medium">Estado</th>
+                    <th class="px-4 py-3 font-medium">Responsable</th>
+                    <th class="px-4 py-3 font-medium">Evidencia</th>
+                    <th class="px-4 py-3 font-medium">Revisión</th>
+                    <th class="px-4 py-3 font-medium text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <% g.controles.forEach((c) => { %>
+                    <tr id="control-<%= c.id %>" class="scroll-mt-20 hover:bg-slate-50">
+                      <td class="px-4 py-3 font-medium text-slate-800"><%= c.nombre %></td>
+                      <td class="px-4 py-3">
+                        <form action="/checklist/<%= c.id %>/estado" method="POST" class="flex items-center gap-2">
+                          <label for="estado-<%= c.id %>" class="sr-only">Estado de <%= c.nombre %></label>
+                          <select id="estado-<%= c.id %>" name="estado" onchange="this.form.submit()"
+                                  class="rounded-lg border px-2 py-1 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 <%= estadoClases[c.estado] %>">
+                            <% Object.entries(estados).forEach(([valor, etiqueta]) => { %>
+                              <option value="<%= valor %>" <%= c.estado === valor ? 'selected' : '' %>><%= etiqueta %></option>
+                            <% }) %>
+                          </select>
+                          <noscript><button type="submit" class="text-xs text-indigo-600">Guardar</button></noscript>
+                        </form>
+                      </td>
+                      <td class="px-4 py-3 text-slate-600 whitespace-nowrap">
+                        <% if (c.responsable) { %>
+                          <%= c.responsable.nombre %><%= c.responsable.id === user.id ? ' (tú)' : '' %>
+                        <% } else { %>
+                          <span class="text-slate-400 italic">Sin asignar</span>
+                        <% } %>
+                        <% if (!c.responsable || c.responsable.id !== user.id) { %>
+                          <form action="/checklist/<%= c.id %>/asignarme" method="POST" class="mt-1">
+                            <button type="submit" class="text-xs text-indigo-600 hover:underline">Asignarme</button>
+                          </form>
+                        <% } %>
+                      </td>
+                      <td class="px-4 py-3 text-slate-600 max-w-xs">
+                        <% if (c.evidencia) { %>
+                          <p class="line-clamp-2" title="<%= c.evidencia %>"><%= c.evidencia %></p>
+                        <% } else { %>
+                          <span class="text-slate-400 italic">Sin evidencia</span>
+                        <% } %>
+                      </td>
+                      <td class="px-4 py-3 text-slate-600 whitespace-nowrap"><%= fecha(c.fecha_revision) %></td>
+                      <td class="px-4 py-3 text-right whitespace-nowrap">
+                        <a href="/checklist/<%= c.id %>/editar" class="rounded-lg border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-100">Editar</a>
+                        <% if (user.rol === 'ADMIN') { %>
+                          <form action="/checklist/<%= c.id %>/eliminar" method="POST" class="inline" data-nombre="<%= c.nombre %>"
+                                onsubmit="return confirm('¿Eliminar el control «' + this.dataset.nombre + '»? Esta acción no se puede deshacer.')">
+                            <button type="submit" class="ml-1 rounded-lg border border-red-300 px-3 py-1 text-red-600 hover:bg-red-50">Eliminar</button>
+                          </form>
+                        <% } %>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          <% } %>
+        </section>
+      <% }) %>
+    </div>
+  </main>
+</body>
+</html>

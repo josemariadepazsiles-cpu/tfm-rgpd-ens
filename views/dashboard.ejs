@@ -6,7 +6,7 @@
 <body class="min-h-screen bg-slate-100">
   <%- include('partials/nav') %>
 
-  <main class="max-w-6xl mx-auto px-4 py-8">
+  <main class="max-w-6xl mx-auto px-4 py-8 space-y-6">
     <div class="bg-white rounded-2xl shadow p-8">
       <h1 class="text-2xl font-bold text-slate-800">
         Bienvenido, <%= user.nombre %> (<%= roles[user.rol] %>)
@@ -19,6 +19,9 @@
         <a href="/riesgos" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">
           Riesgos
         </a>
+        <a href="/checklist" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">
+          Checklist ENS
+        </a>
         <% if (user.rol === 'ADMIN') { %>
           <a href="/registro" class="rounded-lg border border-slate-300 px-4 py-2 text-slate-700 hover:bg-slate-50 transition">
             Registrar usuario
@@ -26,6 +29,30 @@
         <% } %>
       </div>
     </div>
+
+    <section class="bg-white rounded-2xl shadow p-8">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <h2 class="text-lg font-semibold text-slate-800">Cumplimiento ENS por categoría</h2>
+        <a href="/checklist" class="text-sm text-indigo-600 hover:underline">Ver checklist &rarr;</a>
+      </div>
+
+      <div class="mt-6 grid gap-4 sm:grid-cols-3">
+        <% resumenEns.forEach((r) => { const clases = categoriaClases[r.categoria]; %>
+          <div class="rounded-xl border p-5 <%= clases.cabecera %>">
+            <p class="text-sm font-medium"><%= categorias[r.categoria] %></p>
+            <p class="mt-1 text-3xl font-bold"><%= r.implementados %>/<%= r.aplicables %></p>
+            <div class="mt-3 h-2 rounded-full bg-white/70 overflow-hidden" role="progressbar"
+                 aria-valuenow="<%= r.porcentaje %>" aria-valuemin="0" aria-valuemax="100"
+                 aria-label="Cumplimiento categoría <%= categorias[r.categoria] %>">
+              <div class="h-full <%= clases.barra %>" style="width: <%= r.porcentaje %>%"></div>
+            </div>
+            <p class="mt-2 text-xs opacity-80">
+              <%= r.porcentaje %>% implementado<%= r.noAplica ? ' · ' + r.noAplica + ' no aplicables' : '' %>
+            </p>
+          </div>
+        <% }) %>
+      </div>
+    </section>
   </main>
 </body>
 </html>
