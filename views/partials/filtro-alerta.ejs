@@ -1,7 +1,7 @@
 <%# Aviso de filtro rápido activo (desde el panel de control). Recibe `filtroAlerta` = { texto, quitar } o null %>
 <% if (typeof filtroAlerta !== 'undefined' && filtroAlerta) { %>
-  <div class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm text-indigo-800" role="status">
-    <span>Filtrando por: <strong><%= filtroAlerta.texto %></strong></span>
-    <a href="<%= filtroAlerta.quitar %>" class="font-medium underline">Quitar filtro</a>
+  <div class="alerta alerta-info mt-6 items-center justify-between" role="status">
+    <span class="flex items-center gap-2"><%- icono('list-filter', 'h-4 w-4') %>Filtrando por: <strong class="font-semibold"><%= filtroAlerta.texto %></strong></span>
+    <a href="<%= filtroAlerta.quitar %>" class="inline-flex items-center gap-1 font-medium hover:underline"><%- icono('x', 'h-3.5 w-3.5') %>Quitar filtro</a>
   </div>
 <% } %>

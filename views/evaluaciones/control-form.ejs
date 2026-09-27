@@ -1,5 +1,5 @@
 <%
-  const inputClase = 'mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500';
+  const inputClase = 'input';
   const volver = '/evaluaciones/' + evaluacion.id + '#control-' + control.id;
 %>
 <!DOCTYPE html>
@@ -7,48 +7,48 @@
 <head>
   <%- include('../partials/head') %>
 </head>
-<body class="min-h-screen bg-slate-100">
+<body class="min-h-screen bg-fondo">
   <%- include('../partials/nav') %>
 
-  <main class="max-w-2xl mx-auto px-4 py-8">
-    <a href="<%= volver %>" class="text-sm text-indigo-600 hover:underline">&larr; <%= evaluacion.sistema.nombre %> · <%= evaluacion.nombre %></a>
+  <main class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+    <%- include('../partials/migas', { migas: [{ texto: 'ENS' }, { texto: 'Sistemas ENS', href: '/sistemas' }, { texto: evaluacion.sistema.nombre, href: '/sistemas/' + evaluacion.sistema.id }, { texto: evaluacion.nombre, href: '/evaluaciones/' + evaluacion.id }, { texto: control.nombre }] }) %>
 
     <div class="mt-2 flex flex-wrap items-center gap-3">
-      <h1 class="text-2xl font-bold text-slate-800"><%= control.nombre %></h1>
-      <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset <%= categoriaClases[control.categoria].badge %>">
+      <h1 class="titulo-pagina"><%= control.nombre %></h1>
+      <span class="badge <%= categoriaClases[control.categoria].badge %>">
         Categoría <%= categorias[control.categoria] %>
       </span>
     </div>
 
     <% if (errores.length) { %>
-      <ul class="mt-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 list-disc list-inside" role="alert">
+      <ul class="mt-6 rounded-xl border border-red-200 bg-red-50/60 px-4 py-3 text-sm text-red-800 list-disc list-inside space-y-0.5" role="alert">
         <% errores.forEach((e) => { %><li><%= e %></li><% }) %>
       </ul>
     <% } %>
 
-    <form action="/evaluaciones/<%= evaluacion.id %>/controles/<%= control.id %>" method="POST" class="mt-6 bg-white rounded-2xl shadow p-6 space-y-4">
+    <form action="/evaluaciones/<%= evaluacion.id %>/controles/<%= control.id %>" method="POST" class="mt-6 card p-6 space-y-4">
       <div>
-        <label for="estado" class="block text-sm font-medium text-slate-700">Estado</label>
+        <label for="estado" class="label">Estado</label>
         <select id="estado" name="estado" required class="<%= inputClase %>">
           <% Object.entries(estados).forEach(([valor, etiqueta]) => { %>
             <option value="<%= valor %>" <%= valores.estado === valor ? 'selected' : '' %>><%= etiqueta %></option>
           <% }) %>
         </select>
-        <p class="mt-1 text-xs text-slate-500">
+        <p class="ayuda">
           <% if (valores.fecha_revision) { %>Último cambio de estado: <%= fechaHora(valores.fecha_revision) %>. <% } %>
           Si cambias el estado se registrará con la fecha y hora actuales en el histórico.
         </p>
       </div>
 
       <div>
-        <label for="evidencia" class="block text-sm font-medium text-slate-700">Evidencia</label>
+        <label for="evidencia" class="label">Evidencia</label>
         <textarea id="evidencia" name="evidencia" rows="4" class="<%= inputClase %>"
                   placeholder="Ej.: Política aprobada el 15/09/2026, documento POL-SEG-03"><%= valores.evidencia || '' %></textarea>
       </div>
 
       <div>
         <% if (user.rol === 'ADMIN') { %>
-          <label for="responsable_id" class="block text-sm font-medium text-slate-700">Responsable</label>
+          <label for="responsable_id" class="label">Responsable</label>
           <select id="responsable_id" name="responsable_id" class="<%= inputClase %>">
             <option value="">Sin asignar</option>
             <% usuarios.forEach((u) => { %>
@@ -58,10 +58,10 @@
             <% }) %>
           </select>
         <% } else { %>
-          <span class="block text-sm font-medium text-slate-700">Responsable</span>
+          <span class="label">Responsable</span>
           <p class="mt-1 text-slate-600"><%= valores.responsable ? valores.responsable.nombre : 'Sin asignar' %></p>
           <label class="mt-2 inline-flex items-center gap-2 text-sm text-slate-700">
-            <input type="checkbox" name="asignarme" class="w-4 h-4 rounded border-slate-300 text-indigo-600"
+            <input type="checkbox" name="asignarme" class="check"
                    <%= valores.responsable_id === user.id ? 'checked' : '' %>>
             Soy el responsable de este control
           </label>
@@ -69,8 +69,8 @@
       </div>
 
       <div class="flex justify-end gap-3 pt-2">
-        <a href="<%= volver %>" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-700 hover:bg-slate-50">Cancelar</a>
-        <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 transition">Guardar cambios</button>
+        <a href="<%= volver %>" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary">Guardar cambios</button>
       </div>
     </form>
   </main>

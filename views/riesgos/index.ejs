@@ -8,19 +8,19 @@
 <head>
   <%- include('../partials/head') %>
 </head>
-<body class="min-h-screen bg-slate-100">
+<body class="min-h-screen bg-fondo">
   <%- include('../partials/nav') %>
 
-  <main class="max-w-6xl mx-auto px-4 py-8">
+  <main class="contenedor py-8 sm:py-10">
+    <%- include('../partials/migas', { migas: [{ texto: 'RGPD' }, { texto: 'Riesgos' }] }) %>
     <%- include('../partials/flash') %>
 
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-slate-800">Evaluación de riesgos</h1>
-        <p class="text-sm text-slate-500">Riesgos asociados a las actividades de tratamiento</p>
+        <h1 class="titulo-pagina">Evaluación de riesgos</h1>
+        <p class="subtitulo-pagina">Riesgos asociados a las actividades de tratamiento</p>
       </div>
-      <a href="/riesgos/nuevo" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">
-        + Nuevo riesgo
+      <a href="/riesgos/nuevo" class="btn btn-primary"><%- icono('plus', 'h-4 w-4') %>Nuevo riesgo
       </a>
     </div>
 
@@ -33,24 +33,24 @@
       <% }) %>
     </nav>
 
-    <div class="mt-4 bg-white rounded-2xl shadow overflow-x-auto">
+    <div class="mt-4 tabla-contenedor">
       <% if (riesgos.length === 0) { %>
         <p class="p-8 text-center text-slate-500">
           No hay riesgos<%= nivel ? ' de nivel ' + niveles[nivel].toLowerCase() : '' %>.
         </p>
       <% } else { %>
-        <table class="w-full text-sm">
-          <thead class="bg-slate-50 text-left text-slate-600">
+        <table class="tabla">
+          <thead>
             <tr>
-              <th class="px-4 py-3 font-medium">Actividad</th>
-              <th class="px-4 py-3 font-medium">Amenaza</th>
-              <th class="px-4 py-3 font-medium">Probabilidad</th>
-              <th class="px-4 py-3 font-medium">Impacto</th>
-              <th class="px-4 py-3 font-medium">Nivel de riesgo</th>
-              <th class="px-4 py-3 font-medium text-right">Acciones</th>
+              <th>Actividad</th>
+              <th>Amenaza</th>
+              <th>Probabilidad</th>
+              <th>Impacto</th>
+              <th>Nivel de riesgo</th>
+              <th class="text-right">Acciones</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-100">
+          <tbody>
             <% riesgos.forEach((r) => { %>
               <tr class="hover:bg-slate-50">
                 <td class="px-4 py-3">
@@ -62,8 +62,8 @@
                 <td class="px-4 py-3 text-slate-600"><%= impactos[r.impacto] %></td>
                 <td class="px-4 py-3"><%- include('../partials/nivel-badge', { nivel: r.nivel_riesgo, nivelEtiquetas: niveles }) %></td>
                 <td class="px-4 py-3 text-right whitespace-nowrap">
-                  <a href="/riesgos/<%= r.id %>" class="rounded-lg border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-100">Ver</a>
-                  <a href="/riesgos/<%= r.id %>/editar" class="ml-1 rounded-lg bg-indigo-600 px-3 py-1 text-white hover:bg-indigo-700">Editar</a>
+                  <a href="/riesgos/<%= r.id %>" class="btn btn-secondary btn-sm"><%- icono('eye', 'h-3.5 w-3.5') %>Ver</a>
+                  <a href="/riesgos/<%= r.id %>/editar" class="ml-1 btn btn-primary btn-sm"><%- icono('pencil', 'h-3.5 w-3.5') %>Editar</a>
                 </td>
               </tr>
             <% }) %>

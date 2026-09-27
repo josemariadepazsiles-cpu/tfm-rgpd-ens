@@ -3,41 +3,42 @@
 <head>
   <%- include('../partials/head') %>
 </head>
-<body class="min-h-screen bg-slate-100">
+<body class="min-h-screen bg-fondo">
   <%- include('../partials/nav') %>
 
-  <main class="max-w-6xl mx-auto px-4 py-8">
+  <main class="contenedor py-8 sm:py-10">
+    <%- include('../partials/migas', { migas: [{ texto: 'ENS' }, { texto: 'Sistemas ENS' }] }) %>
     <%- include('../partials/flash') %>
 
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-slate-800">Sistemas ENS</h1>
-        <p class="text-sm text-slate-500">Sistemas de información de la organización y sus evaluaciones del Esquema Nacional de Seguridad</p>
+        <h1 class="titulo-pagina">Sistemas ENS</h1>
+        <p class="subtitulo-pagina">Sistemas de información de la organización y sus evaluaciones del Esquema Nacional de Seguridad</p>
       </div>
       <% if (user.rol === 'ADMIN') { %>
         <div class="flex flex-wrap gap-2">
-          <a href="/controles" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-700 hover:bg-slate-50 transition">Catálogo de controles</a>
-          <a href="/sistemas/nuevo" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">+ Nuevo sistema</a>
+          <a href="/controles" class="btn btn-secondary"><%- icono('list-checks', 'h-4 w-4') %>Catálogo de controles</a>
+          <a href="/sistemas/nuevo" class="btn btn-primary"><%- icono('plus', 'h-4 w-4') %>Nuevo sistema</a>
         </div>
       <% } %>
     </div>
 
-    <div class="mt-6 bg-white rounded-2xl shadow overflow-x-auto">
+    <div class="mt-6 tabla-contenedor">
       <% if (sistemas.length === 0) { %>
         <p class="p-8 text-center text-slate-500">Todavía no hay sistemas registrados.</p>
       <% } else { %>
-        <table class="w-full text-sm">
-          <thead class="bg-slate-50 text-left text-slate-600">
+        <table class="tabla">
+          <thead>
             <tr>
-              <th class="px-4 py-3 font-medium">Sistema</th>
-              <th class="px-4 py-3 font-medium">Categoría general</th>
-              <th class="px-4 py-3 font-medium">Controles</th>
-              <th class="px-4 py-3 font-medium">Implementación global</th>
-              <th class="px-4 py-3 font-medium">Última evaluación</th>
-              <th class="px-4 py-3 font-medium text-right">Acciones</th>
+              <th>Sistema</th>
+              <th>Categoría general</th>
+              <th>Controles</th>
+              <th>Implementación global</th>
+              <th>Última evaluación</th>
+              <th class="text-right">Acciones</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-100">
+          <tbody>
             <% sistemas.forEach((s) => { %>
               <tr class="hover:bg-slate-50">
                 <td class="px-4 py-3">
@@ -70,10 +71,10 @@
                 </td>
                 <td class="px-4 py-3 text-right whitespace-nowrap">
                   <% if (s.ultima) { %>
-                    <a href="/evaluaciones/<%= s.ultima.id %>" class="rounded-lg bg-indigo-600 px-3 py-1 text-white hover:bg-indigo-700">Checklist</a>
+                    <a href="/evaluaciones/<%= s.ultima.id %>" class="btn btn-primary btn-sm"><%- icono('list-checks', 'h-3.5 w-3.5') %>Checklist</a>
                   <% } %>
-                  <a href="/sistemas/<%= s.id %>" class="ml-1 rounded-lg border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-100">Evaluaciones</a>
-                  <a href="/sistemas/<%= s.id %>/historial" class="ml-1 rounded-lg border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-100">Histórico</a>
+                  <a href="/sistemas/<%= s.id %>" class="ml-1 btn btn-secondary btn-sm"><%- icono('layers', 'h-3.5 w-3.5') %>Evaluaciones</a>
+                  <a href="/sistemas/<%= s.id %>/historial" class="ml-1 btn btn-secondary btn-sm"><%- icono('history', 'h-3.5 w-3.5') %>Histórico</a>
                 </td>
               </tr>
             <% }) %>

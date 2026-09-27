@@ -10,8 +10,256 @@
 @source "../../lib/declaraciones.js";
 @source "../../lib/politicas.js";
 @source "../../lib/bia.js";
+@source "../../lib/asistente.js";
+
+/* ==========================================================================
+   Compliance AI · Sistema de diseño
+   Interfaz clara, azul profundo con acento índigo/violeta. Los colores
+   semánticos (verde, amarillo, rojo, azul) solo comunican estado.
+   ========================================================================== */
+
+/* Tipografía Inter alojada en el propio servidor (sin enviar datos a terceros) */
+@font-face {
+  font-family: "Inter Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("/fuentes/inter-latin-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Inter Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("/fuentes/inter-latin-ext-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@theme {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --color-fondo: #f6f8fc;
+  --color-marca-50: #eef0ff;
+  --color-marca-100: #e0e3ff;
+  --color-marca-600: #4f46e5;
+  --color-marca-700: #4338ca;
+  --color-marca-900: #1e1b4b;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "cv11", "ss01";
+  }
+  body {
+    @apply bg-fondo text-[15px] text-slate-700;
+  }
+  /* Foco siempre visible al navegar con teclado */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-indigo-500;
+  }
+  ::selection {
+    @apply bg-indigo-100 text-indigo-900;
+  }
+}
+
+@layer components {
+  /* --- Estructura de página --- */
+  .contenedor {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+  .titulo-pagina {
+    @apply text-[26px] font-semibold tracking-tight text-slate-900 sm:text-[28px];
+  }
+  .subtitulo-pagina {
+    @apply mt-1 text-sm text-slate-500;
+  }
+  .titulo-seccion {
+    @apply text-lg font-semibold tracking-tight text-slate-900;
+  }
+  .eyebrow {
+    @apply text-xs font-semibold uppercase tracking-wider text-indigo-600;
+  }
+
+  /* --- Tarjetas: fondo blanco, borde sutil, sin sombras fuertes --- */
+  .card {
+    @apply rounded-2xl border border-slate-200/80 bg-white;
+  }
+  .card-cabecera {
+    @apply flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4;
+  }
+
+  /* --- Botones --- */
+  .btn {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium whitespace-nowrap transition duration-150 select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply bg-indigo-600 text-white shadow-sm shadow-indigo-600/20 hover:bg-indigo-700 active:bg-indigo-800;
+  }
+  .btn-secondary {
+    @apply border border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50;
+  }
+  .btn-danger {
+    @apply border border-red-200 bg-white text-red-600 hover:border-red-300 hover:bg-red-50;
+  }
+  .btn-success {
+    @apply bg-emerald-600 text-white shadow-sm hover:bg-emerald-700;
+  }
+  .btn-ghost {
+    @apply text-slate-600 hover:bg-slate-100 hover:text-slate-900;
+  }
+  .btn-sm {
+    @apply gap-1.5 px-2.5 py-1.5 text-xs;
+  }
+  .enlace {
+    @apply font-medium text-indigo-600 underline-offset-2 transition hover:text-indigo-700 hover:underline;
+  }
+
+  /* --- Formularios --- */
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-slate-700;
+  }
+  .input {
+    @apply block w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-xs transition duration-150 placeholder:text-slate-400 hover:border-slate-300 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/15 disabled:bg-slate-50;
+  }
+  .ayuda {
+    @apply mt-1.5 text-xs text-slate-500;
+  }
+  .check {
+    @apply h-4 w-4 rounded border-slate-300 text-indigo-600 accent-indigo-600 focus:ring-indigo-500;
+  }
+  .form-seccion {
+    @apply rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6;
+  }
+  .form-seccion > legend {
+    @apply float-left mb-4 w-full text-base font-semibold text-slate-900;
+  }
+
+  /* --- Badges y estados --- */
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap ring-1 ring-inset;
+  }
+  .punto {
+    @apply inline-block h-2 w-2 shrink-0 rounded-full;
+  }
+
+  /* --- Tablas --- */
+  .tabla-contenedor {
+    @apply overflow-hidden rounded-2xl border border-slate-200/80 bg-white;
+  }
+  .tabla {
+    @apply w-full text-sm;
+  }
+  .tabla thead th {
+    @apply border-b border-slate-200 bg-slate-50/70 px-4 py-3 text-left text-xs font-semibold tracking-wide whitespace-nowrap text-slate-500 uppercase;
+  }
+  .tabla tbody td {
+    @apply border-b border-slate-100 px-4 py-3.5 align-middle;
+  }
+  .tabla tbody tr:last-child td {
+    @apply border-b-0;
+  }
+  .tabla tbody tr {
+    @apply transition-colors duration-150 hover:bg-slate-50/80;
+  }
+
+  /* --- Alertas --- */
+  .alerta {
+    @apply flex items-start gap-3 rounded-xl border px-4 py-3 text-sm;
+  }
+  .alerta-error { @apply border-red-200 bg-red-50/60 text-red-800; }
+  .alerta-aviso { @apply border-amber-200 bg-amber-50/60 text-amber-900; }
+  .alerta-exito { @apply border-emerald-200 bg-emerald-50/60 text-emerald-800; }
+  .alerta-info { @apply border-indigo-200 bg-indigo-50/60 text-indigo-900; }
+  /* Variante en bloque para avisos con texto enriquecido (negritas, enlaces) */
+  .aviso {
+    @apply rounded-xl border px-4 py-3 text-sm leading-relaxed;
+  }
+  .aviso > svg:first-child {
+    @apply mr-1.5 inline h-4 w-4 align-[-3px];
+  }
+
+  /* --- Pestañas --- */
+  .pestanas {
+    @apply flex gap-1 overflow-x-auto border-b border-slate-200;
+  }
+  .pestana {
+    @apply -mb-px inline-flex cursor-pointer items-center gap-2 border-b-2 border-transparent px-3 py-2.5 text-sm font-medium whitespace-nowrap text-slate-500 transition hover:text-slate-800;
+  }
+  .pestana[aria-selected="true"] {
+    @apply border-indigo-600 text-indigo-700;
+  }
+
+  /* --- Estado vacío --- */
+  .vacio {
+    @apply flex flex-col items-center justify-center gap-2 px-6 py-12 text-center text-sm text-slate-500;
+  }
+
+  /* --- Barra de progreso --- */
+  .progreso {
+    @apply h-2 w-full overflow-hidden rounded-full bg-slate-100;
+  }
+  .progreso > span {
+    @apply block h-full rounded-full transition-[width] duration-700 ease-out;
+  }
+}
+
+/* Tablas en móvil: cada fila se muestra como una ficha con etiquetas (sin scroll horizontal).
+   Las etiquetas (data-label) las copia un pequeño script de head.ejs desde la cabecera. */
+@media (max-width: 767px) {
+  .tabla thead {
+    display: none;
+  }
+  .tabla,
+  .tabla tbody,
+  .tabla tr,
+  .tabla td {
+    display: block;
+    width: 100%;
+  }
+  .tabla tbody tr {
+    border-bottom: 1px solid var(--color-slate-100);
+    padding: 0.5rem 0;
+  }
+  /* La etiqueta flota a la izquierda y el contenido (texto, badges, botones) queda unido a la derecha */
+  .tabla tbody td {
+    border: 0;
+    padding: 0.4rem 1rem;
+    text-align: right;
+    white-space: normal;
+  }
+  .tabla tbody td::before {
+    content: attr(data-label);
+    float: left;
+    margin-right: 1rem;
+    padding-top: 0.1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-slate-500);
+    text-align: left;
+  }
+  .tabla tbody td::after {
+    content: "";
+    display: table;
+    clear: both;
+  }
+  .tabla tbody td[data-label=""]::before {
+    content: none;
+  }
+}
 
 /* Alpine.js: oculta los elementos con x-cloak hasta que Alpine se inicializa */
 [x-cloak] {
   display: none !important;
+}
+
+/* Movimiento reducido: respeta la preferencia del sistema */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

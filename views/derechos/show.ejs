@@ -1,44 +1,44 @@
 <%
-  const campo = (etiqueta, valor, vacio) => ({ etiqueta, valor, vacio });
+  const campo = (etiqueta, valor, vacio, completo) => ({ etiqueta, valor, vacio, completo });
   const resuelta = solicitud.estado === 'ESTIMADA' || solicitud.estado === 'DENEGADA';
   const secciones = [
-    { titulo: 'Solicitante', campos: [
+    { titulo: 'Solicitud', icono: 'file-text', campos: [
+      campo('Derecho ejercido', TIPOS_DERECHO[solicitud.tipo_derecho] + ' (' + ARTICULOS_DERECHO[solicitud.tipo_derecho] + ' RGPD)'),
+      campo('Canal de entrada', CANALES[solicitud.canal_entrada]),
+      campo('Qué solicita', solicitud.descripcion, null, true),
+    ] },
+    { titulo: 'Solicitante', icono: 'user', campos: [
       campo('Nombre', solicitud.nombre_solicitante),
       campo('Email', solicitud.email_solicitante),
       campo('Teléfono', solicitud.telefono_solicitante, 'No indicado'),
     ] },
-    { titulo: 'Solicitud', campos: [
-      campo('Derecho ejercido', TIPOS_DERECHO[solicitud.tipo_derecho] + ' (' + ARTICULOS_DERECHO[solicitud.tipo_derecho] + ' RGPD)'),
-      campo('Qué solicita', solicitud.descripcion),
-      campo('Canal de entrada', CANALES[solicitud.canal_entrada]),
-      campo('Responsable de la tramitación', solicitud.responsable ? solicitud.responsable.nombre : null, 'Sin asignar'),
-    ] },
-    { titulo: 'Respuesta', campos: [
-      ...(solicitud.estado === 'DENEGADA' ? [campo('Motivo de la denegación', solicitud.motivo_denegacion)] : []),
-      campo('Respuesta enviada', solicitud.respuesta_enviada, 'Sin respuesta registrada'),
+    { titulo: 'Respuesta', icono: 'mail-check', campos: [
+      ...(solicitud.estado === 'DENEGADA' ? [campo('Motivo de la denegación', solicitud.motivo_denegacion, null, true)] : []),
+      campo('Respuesta enviada', solicitud.respuesta_enviada, 'Sin respuesta registrada', true),
       campo('Fecha y hora de la respuesta', solicitud.fecha_respuesta ? fechaHora(solicitud.fecha_respuesta) : null, 'Pendiente'),
     ] },
   ];
+  const tonoPlazo = urgencia.nivel === 'rojo' ? 'border-red-200 bg-red-50/60' : urgencia.nivel === 'amarillo' ? 'border-amber-200 bg-amber-50/60' : 'border-slate-200/80 bg-white';
 %>
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <%- include('../partials/head') %>
 </head>
-<body class="min-h-screen bg-slate-100">
+<body class="min-h-screen bg-fondo">
   <%- include('../partials/nav') %>
 
-  <main class="max-w-4xl mx-auto px-4 py-8">
+  <main class="contenedor py-8 sm:py-10">
+    <%- include('../partials/migas', { migas: [{ texto: 'RGPD' }, { texto: 'Derechos de los Interesados', href: '/derechos' }, { texto: 'Solicitud de ' + solicitud.nombre_solicitante }] }) %>
     <%- include('../partials/flash') %>
 
-    <a href="/derechos" class="text-sm text-indigo-600 hover:underline">&larr; Volver a solicitudes</a>
-
-    <div class="mt-2 flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold text-slate-800">
+    <div class="flex flex-wrap items-start justify-between gap-4">
+      <div class="min-w-0">
+        <p class="eyebrow">Solicitud de derecho</p>
+        <h1 class="mt-1 titulo-pagina">
           Derecho de <%= TIPOS_DERECHO[solicitud.tipo_derecho].toLowerCase() %> · <%= solicitud.nombre_solicitante %>
         </h1>
-        <div class="mt-2 flex flex-wrap items-center gap-2">
+        <div class="mt-2.5 flex flex-wrap items-center gap-2">
           <%- include('../partials/estado-solicitud', { estadoSolicitud: solicitud.estado }) %>
           <%- include('../partials/urgencia-derecho', { u: urgencia }) %>
           <span class="text-xs text-slate-500">
@@ -47,73 +47,78 @@
         </div>
       </div>
       <div class="flex flex-wrap gap-2">
-        <a href="/derechos/<%= solicitud.id %>/historial" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-700 hover:bg-slate-50 transition">
-          Ver historial (<%= solicitud._count.historial %>)
-        </a>
+        <a href="/derechos/<%= solicitud.id %>/historial" class="btn btn-secondary"><%- icono('history', 'h-4 w-4') %>Ver historial (<%= solicitud._count.historial %>)</a>
         <% if (gestionable) { %>
-          <a href="/derechos/<%= solicitud.id %>/editar" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">Tramitar</a>
+          <a href="/derechos/<%= solicitud.id %>/editar" class="btn btn-primary"><%- icono('pencil', 'h-4 w-4') %>Tramitar</a>
         <% } %>
       </div>
     </div>
 
-    <section class="mt-6 rounded-2xl border p-5 <%= urgencia.nivel === 'rojo' ? 'border-red-300 bg-red-50' : urgencia.nivel === 'amarillo' ? 'border-yellow-300 bg-yellow-50' : 'border-slate-200 bg-white' %>">
-      <dl class="grid gap-4 sm:grid-cols-3">
-        <div>
-          <dt class="text-sm font-medium text-slate-500">Recepción</dt>
-          <dd class="mt-1 text-slate-800"><%= fechaHora(solicitud.fecha_recepcion) %></dd>
-        </div>
-        <div>
-          <dt class="text-sm font-medium text-slate-500">Fecha límite <%= solicitud.plazo_ampliado ? '(ampliada)' : '' %></dt>
-          <dd class="mt-1 font-semibold text-slate-800"><%= fechaHora(solicitud.fecha_limite) %></dd>
-        </div>
-        <div>
-          <dt class="text-sm font-medium text-slate-500">Plazo</dt>
-          <dd class="mt-1 text-sm text-slate-700">
-            <%= solicitud.plazo_ampliado ? '1 mes + ' + MESES_AMPLIACION + ' meses de ampliación' : '1 mes (art. 12.3)' %>
-          </dd>
-        </div>
-      </dl>
-      <% if (solicitud.plazo_ampliado && solicitud.motivo_ampliacion) { %>
-        <p class="mt-3 text-sm text-slate-700"><span class="font-medium">Motivo de la ampliación:</span> <%= solicitud.motivo_ampliacion %></p>
-      <% } %>
-      <% if (urgencia.nivel === 'rojo') { %>
-        <p class="mt-3 text-sm font-semibold text-red-800" role="alert">La fecha límite ha vencido y la solicitud sigue sin resolver.</p>
-      <% } %>
-    </section>
-
-    <% if (gestionable && !resuelta) { %>
-      <form action="/derechos/<%= solicitud.id %>/estado" method="POST"
-            class="mt-6 bg-white rounded-2xl shadow p-4 flex flex-wrap items-end gap-3">
-        <div>
-          <label for="estado" class="block text-sm font-medium text-slate-700">Cambiar estado</label>
-          <select id="estado" name="estado" class="mt-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <% Object.entries(estadosRapidos).forEach(([v, etiqueta]) => { %>
-              <option value="<%= v %>" <%= solicitud.estado === v ? 'selected' : '' %>><%= etiqueta %></option>
-            <% }) %>
-          </select>
-        </div>
-        <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition">Aplicar</button>
-        <p class="text-xs text-slate-500">Para ampliar el plazo o denegar con motivo, usa «Tramitar».</p>
-      </form>
+    <% if (urgencia.nivel === 'rojo') { %>
+      <p class="mt-6 aviso alerta-error" role="alert"><%- icono('triangle-alert') %><strong>Plazo vencido:</strong> la fecha límite ha vencido y la solicitud sigue sin resolver.</p>
     <% } %>
 
-    <div class="mt-6 space-y-6">
-      <% secciones.forEach((s) => { %>
-        <section class="bg-white rounded-2xl shadow p-6">
-          <h2 class="text-lg font-semibold text-slate-800"><%= s.titulo %></h2>
-          <dl class="mt-4 space-y-4">
-            <% s.campos.forEach((c) => { %>
-              <div>
-                <dt class="text-sm font-medium text-slate-500"><%= c.etiqueta %></dt>
-                <dd class="mt-1 whitespace-pre-line <%= c.valor ? 'text-slate-800' : 'text-slate-400 italic' %>"><%= c.valor || c.vacio %></dd>
-              </div>
-            <% }) %>
+    <div class="mt-8 grid items-start gap-6 lg:grid-cols-3">
+      <div class="space-y-6 lg:col-span-2">
+        <% secciones.forEach((s) => { %><%- include('../partials/ficha-seccion', { s }) %><% }) %>
+      </div>
+
+      <aside class="space-y-6">
+        <section class="rounded-2xl border p-5 <%= tonoPlazo %>">
+          <h2 class="flex items-center gap-2 text-sm font-semibold text-slate-900"><%- icono('calendar-clock', 'h-4 w-4 text-slate-400') %>Plazo de respuesta</h2>
+          <dl class="mt-3 space-y-3 text-sm">
+            <div class="flex items-center justify-between gap-3">
+              <dt class="text-slate-500">Recepción</dt>
+              <dd class="text-right text-slate-800 tabular-nums"><%= fechaHora(solicitud.fecha_recepcion) %></dd>
+            </div>
+            <div class="flex items-center justify-between gap-3">
+              <dt class="text-slate-500">Fecha límite <%= solicitud.plazo_ampliado ? '(ampliada)' : '' %></dt>
+              <dd class="text-right font-semibold text-slate-900 tabular-nums"><%= fechaHora(solicitud.fecha_limite) %></dd>
+            </div>
+            <div class="flex items-center justify-between gap-3">
+              <dt class="text-slate-500">Plazo</dt>
+              <dd class="text-right text-slate-700"><%= solicitud.plazo_ampliado ? '1 mes + ' + MESES_AMPLIACION + ' meses de ampliación' : '1 mes (art. 12.3)' %></dd>
+            </div>
+          </dl>
+          <% if (solicitud.plazo_ampliado && solicitud.motivo_ampliacion) { %>
+            <p class="mt-3 border-t border-slate-200/70 pt-3 text-sm text-slate-700"><span class="font-medium">Motivo de la ampliación:</span> <%= solicitud.motivo_ampliacion %></p>
+          <% } %>
+        </section>
+
+        <% if (gestionable && !resuelta) { %>
+          <form action="/derechos/<%= solicitud.id %>/estado" method="POST" class="card p-5">
+            <label for="estado" class="text-sm font-semibold text-slate-900">Cambiar estado</label>
+            <div class="mt-3 flex gap-2">
+              <select id="estado" name="estado" class="input">
+                <% Object.entries(estadosRapidos).forEach(([v, etiqueta]) => { %>
+                  <option value="<%= v %>" <%= solicitud.estado === v ? 'selected' : '' %>><%= etiqueta %></option>
+                <% }) %>
+              </select>
+              <button type="submit" class="btn btn-primary">Aplicar</button>
+            </div>
+            <p class="mt-2 text-xs text-slate-500">Para ampliar el plazo o denegar con motivo, usa «Tramitar».</p>
+          </form>
+        <% } %>
+
+        <section class="card p-5">
+          <h2 class="text-sm font-semibold text-slate-900">Gestión</h2>
+          <dl class="mt-3 space-y-3 text-sm">
+            <div class="flex items-center justify-between gap-3">
+              <dt class="text-slate-500">Responsable</dt>
+              <dd class="text-right font-medium <%= solicitud.responsable ? 'text-slate-800' : 'italic text-slate-400' %>"><%= solicitud.responsable ? solicitud.responsable.nombre : 'Sin asignar' %></dd>
+            </div>
+            <div class="flex items-center justify-between gap-3">
+              <dt class="text-slate-500">Cambios de estado</dt>
+              <dd><a href="/derechos/<%= solicitud.id %>/historial" class="enlace"><%= solicitud._count.historial %> registrados</a></dd>
+            </div>
+            <div class="flex items-center justify-between gap-3">
+              <dt class="text-slate-500">Última modificación</dt>
+              <dd class="text-right text-slate-600"><%= fechaHora(solicitud.updated_at) %></dd>
+            </div>
           </dl>
         </section>
-      <% }) %>
+      </aside>
     </div>
-
-    <p class="mt-6 text-xs text-slate-400">Última modificación el <%= fechaHora(solicitud.updated_at) %></p>
   </main>
 </body>
 </html>

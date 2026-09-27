@@ -1,3 +1,4 @@
 <%# Badge de gravedad o de estado de un incidente. Recibe `gravedadBadge` o `estadoBadge` %>
-<% if (typeof gravedadBadge !== 'undefined') { %><span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset <%= gravedadClases[gravedadBadge] %>"><%= GRAVEDADES[gravedadBadge] %></span><% } %>
-<% if (typeof estadoBadge !== 'undefined') { %><span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset whitespace-nowrap <%= estadoIncidenteClases[estadoBadge] %>"><%= ESTADOS_INCIDENTE[estadoBadge] %></span><% } %>
+<% const puntoGravedad = { BAJA: 'bg-green-500', MEDIA: 'bg-yellow-500', ALTA: 'bg-orange-500', CRITICA: 'bg-red-500' }; %>
+<% if (typeof gravedadBadge !== 'undefined') { %><span class="badge <%= gravedadClases[gravedadBadge] %>"><span class="punto h-1.5 w-1.5 <%= puntoGravedad[gravedadBadge] %>" aria-hidden="true"></span><%= GRAVEDADES[gravedadBadge] %></span><% } %>
+<% if (typeof estadoBadge !== 'undefined') { %><span class="badge <%= estadoIncidenteClases[estadoBadge] %>"><%= ESTADOS_INCIDENTE[estadoBadge] %></span><% } %>

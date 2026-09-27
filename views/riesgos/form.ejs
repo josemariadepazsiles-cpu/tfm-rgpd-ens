@@ -1,5 +1,5 @@
 <%
-  const inputClase = 'mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500';
+  const inputClase = 'input';
   const accion = riesgo.id ? '/riesgos/' + riesgo.id : '/riesgos';
   const volver = riesgo.id ? '/riesgos/' + riesgo.id : (riesgo.actividad_id ? '/rat/' + riesgo.actividad_id : '/riesgos');
   const estado = {
@@ -15,17 +15,17 @@
 <head>
   <%- include('../partials/head') %>
 </head>
-<body class="min-h-screen bg-slate-100">
+<body class="min-h-screen bg-fondo">
   <%- include('../partials/nav') %>
 
-  <main class="max-w-3xl mx-auto px-4 py-8">
+  <main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+    <%- include('../partials/migas', { migas: [{ texto: 'RGPD' }, { texto: 'Riesgos', href: '/riesgos' }, { texto: title }] }) %>
     <div class="flex items-center justify-between">
-      <h1 class="text-2xl font-bold text-slate-800"><%= title %></h1>
-      <a href="<%= volver %>" class="text-sm text-indigo-600 hover:underline">Cancelar</a>
+      <h1 class="titulo-pagina"><%= title %></h1>
     </div>
 
     <% if (errores.length) { %>
-      <ul class="mt-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 list-disc list-inside" role="alert">
+      <ul class="mt-6 rounded-xl border border-red-200 bg-red-50/60 px-4 py-3 text-sm text-red-800 list-disc list-inside space-y-0.5" role="alert">
         <% errores.forEach((e) => { %><li><%= e %></li><% }) %>
       </ul>
     <% } %>
@@ -38,10 +38,10 @@
 
     <form action="<%= accion %>" method="POST" class="mt-6 space-y-6"
           x-data='<%= JSON.stringify(estado) %>'>
-      <fieldset class="bg-white rounded-2xl shadow p-6 space-y-4">
-        <legend class="float-left w-full mb-2 text-lg font-semibold text-slate-800">Riesgo</legend>
+      <fieldset class="card p-6 space-y-4">
+        <legend class="float-left w-full mb-4 text-base font-semibold text-slate-900">Riesgo</legend>
         <div class="clear-both">
-          <label for="actividad_id" class="block text-sm font-medium text-slate-700">Actividad de tratamiento</label>
+          <label for="actividad_id" class="label">Actividad de tratamiento</label>
           <select id="actividad_id" name="actividad_id" required class="<%= inputClase %>">
             <option value="" disabled <%= riesgo.actividad_id ? '' : 'selected' %>>Selecciona una actividad</option>
             <% actividades.forEach((a) => { %>
@@ -50,17 +50,17 @@
           </select>
         </div>
         <div>
-          <label for="amenaza" class="block text-sm font-medium text-slate-700">Amenaza</label>
+          <label for="amenaza" class="label">Amenaza</label>
           <textarea id="amenaza" name="amenaza" rows="2" required class="<%= inputClase %>"
                     placeholder="Ej.: Acceso no autorizado a los datos de nóminas"><%= riesgo.amenaza || '' %></textarea>
         </div>
       </fieldset>
 
-      <fieldset class="bg-white rounded-2xl shadow p-6 space-y-4">
-        <legend class="float-left w-full mb-2 text-lg font-semibold text-slate-800">Valoración</legend>
+      <fieldset class="card p-6 space-y-4">
+        <legend class="float-left w-full mb-4 text-base font-semibold text-slate-900">Valoración</legend>
         <div class="clear-both grid gap-4 sm:grid-cols-2">
           <div>
-            <label for="probabilidad" class="block text-sm font-medium text-slate-700">Probabilidad</label>
+            <label for="probabilidad" class="label">Probabilidad</label>
             <select id="probabilidad" name="probabilidad" required x-model="probabilidad" class="<%= inputClase %>">
               <option value="" disabled>Selecciona</option>
               <% Object.entries(probabilidades).forEach(([valor, etiqueta]) => { %>
@@ -69,7 +69,7 @@
             </select>
           </div>
           <div>
-            <label for="impacto" class="block text-sm font-medium text-slate-700">Impacto</label>
+            <label for="impacto" class="label">Impacto</label>
             <select id="impacto" name="impacto" required x-model="impacto" class="<%= inputClase %>">
               <option value="" disabled>Selecciona</option>
               <% Object.entries(impactos).forEach(([valor, etiqueta]) => { %>
@@ -80,10 +80,10 @@
         </div>
 
         <div>
-          <span class="block text-sm font-medium text-slate-700">Nivel de riesgo (calculado)</span>
+          <span class="label">Nivel de riesgo (calculado)</span>
           <div class="mt-1 flex items-center gap-3 rounded-lg bg-slate-50 border border-slate-200 px-3 py-2">
             <template x-if="probabilidad && impacto">
-              <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset"
+              <span class="badge"
                     :class="clases[matriz[probabilidad][impacto]]"
                     x-text="etiquetas[matriz[probabilidad][impacto]]"></span>
             </template>
@@ -119,18 +119,18 @@
         </details>
       </fieldset>
 
-      <fieldset class="bg-white rounded-2xl shadow p-6 space-y-4">
-        <legend class="float-left w-full mb-2 text-lg font-semibold text-slate-800">Tratamiento del riesgo</legend>
+      <fieldset class="card p-6 space-y-4">
+        <legend class="float-left w-full mb-4 text-base font-semibold text-slate-900">Tratamiento del riesgo</legend>
         <div class="clear-both">
-          <label for="medidas_mitigadoras" class="block text-sm font-medium text-slate-700">Medidas mitigadoras</label>
+          <label for="medidas_mitigadoras" class="label">Medidas mitigadoras</label>
           <textarea id="medidas_mitigadoras" name="medidas_mitigadoras" rows="3" class="<%= inputClase %>"
                     placeholder="Ej.: Control de acceso por roles, registro de accesos, cifrado…"><%= riesgo.medidas_mitigadoras || '' %></textarea>
         </div>
       </fieldset>
 
       <div class="flex justify-end gap-3">
-        <a href="<%= volver %>" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-700 hover:bg-slate-50">Cancelar</a>
-        <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 transition">
+        <a href="<%= volver %>" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary">
           <%= riesgo.id ? 'Guardar cambios' : 'Crear riesgo' %>
         </button>
       </div>

@@ -1,13 +1,30 @@
+<%
+  // Icono según el tipo de error (la vista se usa para 403, 404 y 500)
+  const t = (title || '').toLowerCase();
+  const iconoError = t.includes('denegado') ? 'lock' : t.includes('error') ? 'server-crash' : 'search-x';
+%>
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <%- include('partials/head') %>
 </head>
-<body class="min-h-screen bg-slate-100 flex items-center justify-center px-4">
-  <main class="max-w-md bg-white rounded-2xl shadow-lg p-8 text-center">
-    <h1 class="text-2xl font-bold text-red-600"><%= title %></h1>
-    <p class="mt-4 text-slate-600"><%= mensaje %></p>
-    <a href="/" class="mt-6 inline-block text-indigo-600 hover:underline">Volver al inicio</a>
+<body class="flex min-h-screen flex-col bg-fondo">
+  <header class="contenedor flex h-16 items-center">
+    <a href="/" class="flex items-center gap-2.5">
+      <%- include('partials/logo', { tamano: 'h-8 w-8' }) %>
+      <span class="text-[15px] font-semibold tracking-tight text-slate-900"><%= producto.nombre %></span>
+    </a>
+  </header>
+  <main class="flex flex-1 items-center justify-center px-4 pb-16">
+    <div class="card w-full max-w-md p-8 text-center sm:p-10">
+      <span class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-500"><%- icono(iconoError, 'h-6 w-6') %></span>
+      <h1 class="mt-5 text-xl font-semibold tracking-tight text-slate-900"><%= title %></h1>
+      <p class="mt-2 text-sm text-slate-500"><%= mensaje %></p>
+      <div class="mt-7 flex flex-wrap justify-center gap-3">
+        <a href="javascript:history.back()" class="btn btn-secondary"><%- icono('arrow-left', 'h-4 w-4') %>Volver</a>
+        <a href="/" class="btn btn-primary"><%- icono('house', 'h-4 w-4') %>Ir al inicio</a>
+      </div>
+    </div>
   </main>
 </body>
 </html>

@@ -1,5 +1,5 @@
 <%
-  const selectClase = 'mt-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500';
+  const selectClase = 'input w-auto';
   const conAlertaRoja = procesos.filter((p) => p.alertas.some((a) => a.nivel === 'rojo')).length;
 %>
 <!DOCTYPE html>
@@ -7,24 +7,25 @@
 <head>
   <%- include('../partials/head') %>
 </head>
-<body class="min-h-screen bg-slate-100">
+<body class="min-h-screen bg-fondo">
   <%- include('../partials/nav') %>
 
-  <main class="max-w-7xl mx-auto px-4 py-8">
+  <main class="contenedor py-8 sm:py-10">
+    <%- include('../partials/migas', { migas: [{ texto: 'ENS' }, { texto: 'BIA y Continuidad' }] }) %>
     <%- include('../partials/flash') %>
 
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-slate-800">BIA y Continuidad</h1>
-        <p class="text-sm text-slate-500">Análisis de impacto en el negocio: criticidad de los procesos, RTO/RPO y pruebas del plan de continuidad</p>
+        <h1 class="titulo-pagina">BIA y Continuidad</h1>
+        <p class="subtitulo-pagina">Análisis de impacto en el negocio: criticidad de los procesos, RTO/RPO y pruebas del plan de continuidad</p>
       </div>
       <% if (user.rol === 'ADMIN') { %>
-        <a href="/bia/nuevo" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">+ Nuevo proceso</a>
+        <a href="/bia/nuevo" class="btn btn-primary"><%- icono('plus', 'h-4 w-4') %>Nuevo proceso</a>
       <% } %>
     </div>
 
     <% if (conAlertaRoja) { %>
-      <div class="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+      <div class="mt-6 aviso alerta-error" role="alert"><%- icono('triangle-alert') %>
         <strong><%= conAlertaRoja %> proceso(s)</strong> de criticidad alta o crítica siguen pendientes de análisis.
       </div>
     <% } %>
@@ -34,7 +35,7 @@
     <form action="/bia" method="GET" class="mt-6 flex flex-wrap items-end gap-3">
       <% if (filtro) { %><input type="hidden" name="filtro" value="<%= filtro %>"><% } %>
       <div>
-        <label for="criticidad" class="block text-sm font-medium text-slate-700">Criticidad</label>
+        <label for="criticidad" class="label">Criticidad</label>
         <select id="criticidad" name="criticidad" onchange="this.form.submit()" class="<%= selectClase %>">
           <option value="">Todas</option>
           <% Object.entries(CRITICIDADES).forEach(([v, etiqueta]) => { %>
@@ -43,7 +44,7 @@
         </select>
       </div>
       <div>
-        <label for="estado" class="block text-sm font-medium text-slate-700">Estado de revisión</label>
+        <label for="estado" class="label">Estado de revisión</label>
         <select id="estado" name="estado" onchange="this.form.submit()" class="<%= selectClase %>">
           <option value="">Todos</option>
           <% Object.entries(ESTADOS_REVISION_BIA).forEach(([v, etiqueta]) => { %>
@@ -51,28 +52,28 @@
           <% }) %>
         </select>
       </div>
-      <noscript><button type="submit" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">Filtrar</button></noscript>
+      <noscript><button type="submit" class="btn btn-secondary">Filtrar</button></noscript>
       <% if (criticidad || estado || filtro) { %><a href="/bia" class="py-2 text-sm text-indigo-600 hover:underline">Quitar filtros</a><% } %>
     </form>
 
-    <div class="mt-4 bg-white rounded-2xl shadow overflow-x-auto">
+    <div class="mt-4 tabla-contenedor">
       <% if (procesos.length === 0) { %>
         <p class="p-8 text-center text-slate-500"><%= criticidad || estado || filtro ? 'No hay procesos con esos filtros.' : 'No se ha registrado ningún proceso de negocio.' %></p>
       <% } else { %>
-        <table class="w-full text-sm">
-          <thead class="bg-slate-50 text-left text-slate-600">
+        <table class="tabla">
+          <thead>
             <tr>
-              <th class="px-4 py-3 font-medium">Proceso</th>
-              <th class="px-4 py-3 font-medium">Departamento</th>
-              <th class="px-4 py-3 font-medium">Criticidad</th>
-              <th class="px-4 py-3 font-medium">RTO</th>
-              <th class="px-4 py-3 font-medium">RPO</th>
-              <th class="px-4 py-3 font-medium">Estado de revisión</th>
-              <th class="px-4 py-3 font-medium">Alertas</th>
-              <th class="px-4 py-3 font-medium text-right">Acciones</th>
+              <th>Proceso</th>
+              <th>Departamento</th>
+              <th>Criticidad</th>
+              <th>RTO</th>
+              <th>RPO</th>
+              <th>Estado de revisión</th>
+              <th>Alertas</th>
+              <th class="text-right">Acciones</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-100">
+          <tbody>
             <% procesos.forEach((p) => { %>
               <tr class="hover:bg-slate-50">
                 <td class="px-4 py-3">
@@ -81,25 +82,25 @@
                 </td>
                 <td class="px-4 py-3 text-slate-600"><%= p.departamento_responsable %></td>
                 <td class="px-4 py-3">
-                  <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset <%= criticidadClases[p.criticidad] %>"><%= CRITICIDADES[p.criticidad] %></span>
+                  <span class="badge <%= criticidadClases[p.criticidad] %>"><%= CRITICIDADES[p.criticidad] %></span>
                 </td>
                 <td class="px-4 py-3 text-slate-700 whitespace-nowrap"><%= formatoHoras(p.rto_horas) %></td>
                 <td class="px-4 py-3 text-slate-700 whitespace-nowrap"><%= formatoHoras(p.rpo_horas) %></td>
                 <td class="px-4 py-3">
-                  <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset <%= estadoRevisionClases[p.estado_revision] %>"><%= ESTADOS_REVISION_BIA[p.estado_revision] %></span>
+                  <span class="badge <%= estadoRevisionClases[p.estado_revision] %>"><%= ESTADOS_REVISION_BIA[p.estado_revision] %></span>
                   <% if (p.ultimaPrueba) { %><span class="mt-1 block text-xs text-slate-500">Última prueba: <%= fecha(p.ultimaPrueba) %></span><% } %>
                 </td>
                 <td class="px-4 py-3">
                   <div class="flex flex-wrap gap-1">
                     <% p.alertas.forEach((a) => { %>
-                      <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset whitespace-nowrap <%= alertaBiaClases[a.nivel] %>" title="<%= a.detalle %>"><%= a.nivel === 'rojo' ? '⚠ ' : '' %><%= a.texto %></span>
+                      <span class="badge <%= alertaBiaClases[a.nivel] %>" title="<%= a.detalle %>"><%= a.nivel === 'rojo' ? '⚠ ' : '' %><%= a.texto %></span>
                     <% }) %>
                   </div>
                 </td>
                 <td class="px-4 py-3 text-right whitespace-nowrap">
-                  <a href="/bia/<%= p.id %>" class="rounded-lg border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-100">Ver</a>
+                  <a href="/bia/<%= p.id %>" class="btn btn-secondary btn-sm"><%- icono('eye', 'h-3.5 w-3.5') %>Ver</a>
                   <% if (p.editable) { %>
-                    <a href="/bia/<%= p.id %>/editar" class="ml-1 rounded-lg bg-indigo-600 px-3 py-1 text-white hover:bg-indigo-700">Editar</a>
+                    <a href="/bia/<%= p.id %>/editar" class="ml-1 btn btn-primary btn-sm"><%- icono('pencil', 'h-3.5 w-3.5') %>Editar</a>
                   <% } %>
                 </td>
               </tr>

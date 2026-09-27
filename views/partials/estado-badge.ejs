@@ -1,1 +1,3 @@
-<span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold <%= estadoClases[estado] %>"><%= estados[estado] %></span>
+<%# Estado de un control ENS (Implementado, Pendiente, No aplicable) %>
+<% const puntoEstado = { IMPLEMENTADO: 'bg-emerald-500', PENDIENTE: 'bg-amber-500', NO_APLICA: 'bg-slate-400' }; %>
+<span class="badge <%= estadoClases[estado] %>"><span class="punto h-1.5 w-1.5 <%= puntoEstado[estado] %>" aria-hidden="true"></span><%= estados[estado] %></span>

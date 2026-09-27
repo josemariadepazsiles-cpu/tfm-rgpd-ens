@@ -1,29 +1,29 @@
 <%
-  const selectClase = 'mt-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500';
+  const selectClase = 'input w-auto';
   const vencidas = solicitudes.filter((s) => s.urgencia.nivel === 'rojo').length;
-  const filaClase = { rojo: 'bg-red-50/60', amarillo: 'bg-yellow-50/60' };
 %>
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <%- include('../partials/head') %>
 </head>
-<body class="min-h-screen bg-slate-100">
+<body class="min-h-screen bg-fondo">
   <%- include('../partials/nav') %>
 
-  <main class="max-w-7xl mx-auto px-4 py-8">
+  <main class="contenedor py-8 sm:py-10">
+    <%- include('../partials/migas', { migas: [{ texto: 'RGPD' }, { texto: 'Derechos de los Interesados' }] }) %>
     <%- include('../partials/flash') %>
 
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-slate-800">Derechos de los interesados</h1>
-        <p class="text-sm text-slate-500">Solicitudes de acceso, rectificación, supresión, oposición, limitación y portabilidad (arts. 12 a 22 RGPD)</p>
+        <h1 class="titulo-pagina">Derechos de los interesados</h1>
+        <p class="subtitulo-pagina">Solicitudes de acceso, rectificación, supresión, oposición, limitación y portabilidad (arts. 12 a 22 RGPD)</p>
       </div>
-      <a href="/derechos/nueva" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">+ Nueva solicitud</a>
+      <a href="/derechos/nueva" class="btn btn-primary"><%- icono('plus', 'h-4 w-4') %>Nueva solicitud</a>
     </div>
 
     <% if (vencidas && plazo !== 'vencidas') { %>
-      <div class="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+      <div class="mt-6 aviso alerta-error" role="alert"><%- icono('triangle-alert') %>
         <strong><%= vencidas %> solicitud(es)</strong> han superado su fecha límite sin resolverse.
         <a href="/derechos?plazo=vencidas" class="font-medium underline">Ver solo las vencidas</a>
       </div>
@@ -31,7 +31,7 @@
 
     <form action="/derechos" method="GET" class="mt-6 flex flex-wrap items-end gap-3">
       <div>
-        <label for="tipo" class="block text-sm font-medium text-slate-700">Tipo de derecho</label>
+        <label for="tipo" class="label">Tipo de derecho</label>
         <select id="tipo" name="tipo" onchange="this.form.submit()" class="<%= selectClase %>">
           <option value="">Todos</option>
           <% Object.entries(TIPOS_DERECHO).forEach(([v, etiqueta]) => { %>
@@ -40,7 +40,7 @@
         </select>
       </div>
       <div>
-        <label for="estado" class="block text-sm font-medium text-slate-700">Estado</label>
+        <label for="estado" class="label">Estado</label>
         <select id="estado" name="estado" onchange="this.form.submit()" class="<%= selectClase %>">
           <option value="">Todos</option>
           <% Object.entries(ESTADOS_SOLICITUD).forEach(([v, etiqueta]) => { %>
@@ -49,7 +49,7 @@
         </select>
       </div>
       <div>
-        <label for="plazo" class="block text-sm font-medium text-slate-700">Plazo</label>
+        <label for="plazo" class="label">Plazo</label>
         <select id="plazo" name="plazo" onchange="this.form.submit()" class="<%= selectClase %>">
           <option value="">Todos</option>
           <option value="abiertas" <%= plazo === 'abiertas' ? 'selected' : '' %>>Sin resolver</option>
@@ -57,33 +57,33 @@
           <option value="vencidas" <%= plazo === 'vencidas' ? 'selected' : '' %>>Vencidas sin resolver</option>
         </select>
       </div>
-      <noscript><button type="submit" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">Filtrar</button></noscript>
+      <noscript><button type="submit" class="btn btn-secondary">Filtrar</button></noscript>
       <% if (tipo || estado || plazo) { %>
         <a href="/derechos" class="py-2 text-sm text-indigo-600 hover:underline">Quitar filtros</a>
       <% } %>
     </form>
 
-    <div class="mt-4 bg-white rounded-2xl shadow overflow-x-auto">
+    <div class="mt-4 tabla-contenedor">
       <% if (solicitudes.length === 0) { %>
         <p class="p-8 text-center text-slate-500">
           <%= tipo || estado || plazo ? 'No hay solicitudes con esos filtros.' : 'No se ha registrado ninguna solicitud.' %>
         </p>
       <% } else { %>
-        <table class="w-full text-sm">
-          <thead class="bg-slate-50 text-left text-slate-600">
+        <table class="tabla">
+          <thead>
             <tr>
-              <th class="px-4 py-3 font-medium">Solicitante</th>
-              <th class="px-4 py-3 font-medium">Derecho</th>
-              <th class="px-4 py-3 font-medium">Recepción</th>
-              <th class="px-4 py-3 font-medium">Fecha límite</th>
-              <th class="px-4 py-3 font-medium">Estado</th>
-              <th class="px-4 py-3 font-medium">Responsable</th>
-              <th class="px-4 py-3 font-medium text-right">Acciones</th>
+              <th>Solicitante</th>
+              <th>Derecho</th>
+              <th>Recepción</th>
+              <th>Fecha límite</th>
+              <th>Estado</th>
+              <th>Responsable</th>
+              <th class="text-right">Acciones</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-100">
+          <tbody>
             <% solicitudes.forEach((s) => { %>
-              <tr class="hover:bg-slate-50 <%= filaClase[s.urgencia.nivel] || '' %>">
+              <tr class="hover:bg-slate-50">
                 <td class="px-4 py-3">
                   <a href="/derechos/<%= s.id %>" class="font-medium text-slate-800 hover:text-indigo-600 hover:underline"><%= s.nombre_solicitante %></a>
                   <span class="block text-xs text-slate-500"><%= s.email_solicitante %></span>
@@ -104,9 +104,9 @@
                   <% } %>
                 </td>
                 <td class="px-4 py-3 text-right whitespace-nowrap">
-                  <a href="/derechos/<%= s.id %>" class="rounded-lg border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-100">Ver</a>
+                  <a href="/derechos/<%= s.id %>" class="btn btn-secondary btn-sm"><%- icono('eye', 'h-3.5 w-3.5') %>Ver</a>
                   <% if (s.gestionable) { %>
-                    <a href="/derechos/<%= s.id %>/editar" class="ml-1 rounded-lg bg-indigo-600 px-3 py-1 text-white hover:bg-indigo-700">Tramitar</a>
+                    <a href="/derechos/<%= s.id %>/editar" class="ml-1 btn btn-primary btn-sm"><%- icono('pencil', 'h-3.5 w-3.5') %>Tramitar</a>
                   <% } %>
                 </td>
               </tr>

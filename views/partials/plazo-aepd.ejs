@@ -1,18 +1,15 @@
 <%# Situación de la notificación a la AEPD. Recibe `plazo` (resultado de plazoAepd) %>
 <% if (plazo.tipo === 'vencido') { %>
-  <span class="inline-flex items-center gap-1 rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-bold text-white"
+  <span class="badge bg-red-50 font-semibold text-red-700 ring-red-600/40"
         title="Han pasado más de 72 h desde la detección sin notificar a la AEPD (vencía el <%= fechaHora(plazo.limite) %>)">
-    ⚠ ¡Plazo AEPD!
+    <%- icono('triangle-alert', 'h-3 w-3') %>¡Plazo AEPD!
   </span>
 <% } else if (plazo.tipo === 'pendiente') { %>
-  <span class="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800 ring-1 ring-inset ring-amber-600/30"
-        title="Vence el <%= fechaHora(plazo.limite) %>">
-    Pendiente · quedan <%= plazo.horasRestantes %> h
+  <span class="badge bg-amber-50 text-amber-800 ring-amber-600/25" title="Vence el <%= fechaHora(plazo.limite) %>">
+    <%- icono('clock', 'h-3 w-3') %>Pendiente · quedan <%= plazo.horasRestantes %> h
   </span>
 <% } else if (plazo.tipo === 'notificado') { %>
-  <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-800 ring-1 ring-inset ring-green-600/30">
-    Notificada <%= fecha(plazo.fecha) %>
-  </span>
+  <span class="badge bg-green-50 text-green-700 ring-green-600/20"><%- icono('check', 'h-3 w-3') %>Notificada <%= fecha(plazo.fecha) %></span>
 <% } else { %>
   <span class="text-xs text-slate-400">No requiere</span>
 <% } %>

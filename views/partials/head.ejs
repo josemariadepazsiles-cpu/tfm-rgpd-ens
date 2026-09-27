@@ -1,5 +1,41 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title><%= typeof title !== 'undefined' ? title : 'App' %></title>
+<meta name="theme-color" content="#f6f8fc">
+<title><%= typeof title !== 'undefined' ? title + ' · ' + producto.nombre : producto.nombre %></title>
+<link rel="icon" type="image/svg+xml" href="/img/logo.svg">
+<link rel="preload" href="/fuentes/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/css/output.css">
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script>
+  // Pestañas (ver partials/pestanas.ejs): la activa se toma de la URL (#id) y se actualiza al cambiar
+  document.addEventListener('alpine:init', function () {
+    Alpine.data('pestanas', function (inicial, ids) {
+      return {
+        tab: ids.indexOf(location.hash.slice(1)) >= 0 ? location.hash.slice(1) : inicial,
+        ir: function (id) {
+          this.tab = id;
+          history.replaceState(null, '', '#' + id);
+        },
+        mover: function (paso) {
+          var i = (ids.indexOf(this.tab) + paso + ids.length) % ids.length;
+          this.ir(ids[i]);
+          var boton = document.getElementById('tab-' + ids[i]);
+          if (boton) boton.focus();
+        },
+      };
+    });
+  });
+
+  // Tablas en móvil: copia el título de cada columna a sus celdas (data-label) para mostrar
+  // cada fila como una ficha sin scroll horizontal (ver .tabla en input.css)
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('table.tabla').forEach(function (tabla) {
+      var titulos = Array.prototype.map.call(tabla.querySelectorAll('thead th'), function (th) { return th.textContent.trim(); });
+      tabla.querySelectorAll('tbody tr').forEach(function (tr) {
+        Array.prototype.forEach.call(tr.children, function (td, i) {
+          if (!td.hasAttribute('data-label')) td.setAttribute('data-label', titulos[i] || '');
+        });
+      });
+    });
+  });
+</script>

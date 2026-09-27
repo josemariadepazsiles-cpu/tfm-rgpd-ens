@@ -1,0 +1,26 @@
+<%#
+  Fila de métrica de un módulo del panel. Recibe `k` = { titulo, valor, detalle, href, nivel }
+  nivel: 'ok' (✓ verde) · 'atencion' (! ámbar) · 'critico' (● rojo) · 'neutro'.
+  El color solo aparece en el indicador y en el texto de estado; el fondo es siempre blanco.
+%>
+<%
+  const estilos = {
+    ok: { icono: 'circle-check', color: 'text-emerald-600' },
+    atencion: { icono: 'circle-alert', color: 'text-amber-600' },
+    critico: { icono: 'circle-dot', color: 'text-red-600' },
+    neutro: { icono: null, color: 'text-slate-500' },
+  };
+  const e = estilos[k.nivel] || estilos.neutro;
+%>
+<a href="<%= k.href %>" class="group -mx-2 flex items-center justify-between gap-4 rounded-lg px-2 py-2.5 transition duration-150 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-indigo-500">
+  <span class="min-w-0">
+    <span class="block text-sm text-slate-700 group-hover:text-slate-900"><%= k.titulo %></span>
+    <span class="mt-0.5 flex items-center gap-1 text-xs <%= e.color %>">
+      <% if (e.icono) { %><%- icono(e.icono, 'h-3.5 w-3.5') %><% } %><span class="<%= k.nivel === 'neutro' ? 'text-slate-500' : '' %>"><%= k.detalle %></span>
+    </span>
+  </span>
+  <span class="flex items-center gap-2">
+    <span class="text-2xl font-semibold tabular-nums tracking-tight <%= k.nivel === 'critico' ? 'text-red-600' : 'text-slate-900' %>"><%= k.valor %></span>
+    <%- icono('chevron-right', 'h-4 w-4 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-slate-400') %>
+  </span>
+</a>

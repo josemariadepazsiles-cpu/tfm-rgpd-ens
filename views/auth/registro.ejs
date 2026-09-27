@@ -3,62 +3,70 @@
 <head>
   <%- include('../partials/head') %>
 </head>
-<body class="min-h-screen bg-slate-100">
+<body class="min-h-screen bg-fondo">
   <%- include('../partials/nav') %>
 
-  <main class="mx-auto my-10 w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
-    <div class="flex items-center justify-between">
-      <h1 class="text-2xl font-bold text-slate-800">Registrar usuario</h1>
-      <a href="/dashboard" class="text-sm text-indigo-600 hover:underline">Volver</a>
-    </div>
+  <main class="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+    <%- include('../partials/migas', { migas: [{ texto: 'Administración' }, { texto: 'Registrar usuario' }] }) %>
+
+    <h1 class="titulo-pagina">Registrar usuario</h1>
+    <p class="subtitulo-pagina">Da de alta a una persona de la organización y asígnale su rol en la plataforma.</p>
 
     <% if (exito) { %>
-      <div class="mt-6 rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700" role="status">
-        <%= exito %>
+      <div class="alerta alerta-exito mt-6 items-center" role="status">
+        <%- icono('circle-check', 'h-5 w-5') %><span><%= exito %></span>
       </div>
     <% } %>
 
     <% if (errores.length) { %>
-      <ul class="mt-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 list-disc list-inside" role="alert">
+      <ul class="mt-6 list-inside list-disc space-y-0.5 rounded-xl border border-red-200 bg-red-50/60 px-4 py-3 text-sm text-red-800" role="alert">
         <% errores.forEach((e) => { %><li><%= e %></li><% }) %>
       </ul>
     <% } %>
 
-    <form action="/registro" method="POST" class="mt-6 space-y-4">
-      <div>
-        <label for="nombre" class="block text-sm font-medium text-slate-700">Nombre</label>
-        <input id="nombre" name="nombre" type="text" required value="<%= datos.nombre || '' %>"
-               class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+    <form action="/registro" method="POST" class="mt-6 space-y-6">
+      <fieldset class="form-seccion space-y-5">
+        <legend>Datos de la persona</legend>
+        <div class="clear-both grid gap-5 sm:grid-cols-2">
+          <div>
+            <label for="nombre" class="label">Nombre y apellidos</label>
+            <input id="nombre" name="nombre" type="text" required value="<%= datos.nombre || '' %>" class="input">
+          </div>
+          <div>
+            <label for="area" class="label">Área <span class="font-normal text-slate-400">(opcional)</span></label>
+            <input id="area" name="area" type="text" value="<%= datos.area || '' %>" class="input" placeholder="Ej.: Recursos Humanos">
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="form-seccion space-y-5">
+        <legend>Acceso y rol</legend>
+        <div class="clear-both">
+          <label for="email" class="label">Email</label>
+          <input id="email" name="email" type="email" required autocomplete="off" value="<%= datos.email || '' %>" class="input" placeholder="nombre@organizacion.es">
+        </div>
+        <div class="grid gap-5 sm:grid-cols-2">
+          <div>
+            <label for="password" class="label">Contraseña inicial</label>
+            <input id="password" name="password" type="password" required minlength="8" autocomplete="new-password" class="input">
+            <p class="ayuda">Mínimo 8 caracteres.</p>
+          </div>
+          <div>
+            <label for="rol" class="label">Rol</label>
+            <select id="rol" name="rol" required class="input">
+              <% Object.entries(roles).forEach(([valor, etiqueta]) => { %>
+                <option value="<%= valor %>" <%= (datos.rol || 'USUARIO') === valor ? 'selected' : '' %>><%= etiqueta %></option>
+              <% }) %>
+            </select>
+            <p class="ayuda">El Administrador gestiona la estructura de todos los módulos.</p>
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="flex justify-end gap-3">
+        <a href="/dashboard" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary"><%- icono('user-plus', 'h-4 w-4') %>Crear usuario</button>
       </div>
-      <div>
-        <label for="email" class="block text-sm font-medium text-slate-700">Email</label>
-        <input id="email" name="email" type="email" required autocomplete="off" value="<%= datos.email || '' %>"
-               class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-      </div>
-      <div>
-        <label for="password" class="block text-sm font-medium text-slate-700">Contraseña</label>
-        <input id="password" name="password" type="password" required minlength="8" autocomplete="new-password"
-               class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        <p class="mt-1 text-xs text-slate-500">Mínimo 8 caracteres.</p>
-      </div>
-      <div>
-        <label for="rol" class="block text-sm font-medium text-slate-700">Rol</label>
-        <select id="rol" name="rol" required
-                class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          <% Object.entries(roles).forEach(([valor, etiqueta]) => { %>
-            <option value="<%= valor %>" <%= (datos.rol || 'USUARIO') === valor ? 'selected' : '' %>><%= etiqueta %></option>
-          <% }) %>
-        </select>
-      </div>
-      <div>
-        <label for="area" class="block text-sm font-medium text-slate-700">Área</label>
-        <input id="area" name="area" type="text" value="<%= datos.area || '' %>"
-               class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-      </div>
-      <button type="submit"
-              class="w-full rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 transition">
-        Crear usuario
-      </button>
     </form>
   </main>
 </body>

@@ -1,5 +1,5 @@
 <%# Alertas de un proveedor. Recibe `lista` (resultado de alertas()) %>
+<% const iconoAlerta = { rojo: 'file-x', amarillo: 'calendar-clock', naranja: 'globe', naranjaFuerte: 'globe' }; %>
 <% lista.forEach((a) => { %>
-  <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset whitespace-nowrap <%= alertaClases[a.nivel] %>"
-        title="<%= a.detalle %>"><%= a.nivel === 'rojo' || a.nivel === 'naranjaFuerte' ? '⚠ ' : '' %><%= a.texto %></span>
+  <span class="badge <%= alertaClases[a.nivel] %>" title="<%= a.detalle %>"><%- icono(iconoAlerta[a.nivel], 'h-3 w-3') %><%= a.texto %></span>
 <% }) %>

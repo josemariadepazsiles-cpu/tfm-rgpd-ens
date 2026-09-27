@@ -1,0 +1,17 @@
+<%#
+  Sección de una ficha de detalle. Recibe `s` = { titulo, icono?, campos: [{ etiqueta, valor, vacio?, completo? }] }
+  Los campos se muestran en dos columnas; los marcados como `completo` (textos largos) ocupan toda la fila.
+%>
+<section class="card p-5 sm:p-6">
+  <h2 class="flex items-center gap-2 text-base font-semibold text-slate-900">
+    <% if (s.icono) { %><%- icono(s.icono, 'h-4 w-4 text-slate-400') %><% } %><%= s.titulo %>
+  </h2>
+  <dl class="mt-4 grid gap-x-8 gap-y-5 sm:grid-cols-2">
+    <% s.campos.forEach((c) => { const vacio = c.valor === null || c.valor === undefined || c.valor === ''; %>
+      <div class="<%= c.completo ? 'sm:col-span-2' : '' %>">
+        <dt class="text-xs font-medium uppercase tracking-wide text-slate-500"><%= c.etiqueta %></dt>
+        <dd class="mt-1 whitespace-pre-line text-[15px] <%= vacio ? 'italic text-slate-400' : 'text-slate-800' %>"><%= vacio ? (c.vacio || '—') : c.valor %></dd>
+      </div>
+    <% }) %>
+  </dl>
+</section>

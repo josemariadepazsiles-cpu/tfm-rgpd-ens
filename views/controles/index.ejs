@@ -3,28 +3,26 @@
 <head>
   <%- include('../partials/head') %>
 </head>
-<body class="min-h-screen bg-slate-100">
+<body class="min-h-screen bg-fondo">
   <%- include('../partials/nav') %>
 
-  <main class="max-w-4xl mx-auto px-4 py-8">
+  <main class="contenedor py-8 sm:py-10">
+    <%- include('../partials/migas', { migas: [{ texto: 'ENS' }, { texto: 'Sistemas ENS', href: '/sistemas' }, { texto: 'Catálogo de controles' }] }) %>
     <%- include('../partials/flash') %>
-
-    <a href="/sistemas" class="text-sm text-indigo-600 hover:underline">&larr; Volver a sistemas</a>
-
-    <div class="mt-2 flex flex-wrap items-center justify-between gap-4">
+    <div class="flex flex-wrap items-center justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-slate-800">Catálogo de controles ENS</h1>
-        <p class="text-sm text-slate-500">Todos estos controles se evalúan en cada evaluación de cada sistema</p>
+        <h1 class="titulo-pagina">Catálogo de controles ENS</h1>
+        <p class="subtitulo-pagina">Todos estos controles se evalúan en cada evaluación de cada sistema</p>
       </div>
-      <a href="/controles/nuevo" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">+ Nuevo control</a>
+      <a href="/controles/nuevo" class="btn btn-primary"><%- icono('plus', 'h-4 w-4') %>Nuevo control</a>
     </div>
 
     <div class="mt-6 space-y-6">
       <% grupos.forEach((g) => { %>
-        <section class="bg-white rounded-2xl shadow overflow-hidden">
+        <section class="card overflow-hidden">
           <header class="flex items-center justify-between border-b px-6 py-3 <%= categoriaClases[g.categoria].cabecera %>">
-            <h2 class="font-semibold">Categoría <%= categorias[g.categoria] %> (<%= g.controles.length %>)</h2>
-            <a href="/controles/nuevo?categoria=<%= g.categoria %>" class="text-sm hover:underline">+ Añadir</a>
+            <h2 class="flex items-center gap-2.5 font-semibold"><span class="punto <%= categoriaClases[g.categoria].punto %>" aria-hidden="true"></span>Categoría <%= categorias[g.categoria] %> <span class="font-normal text-slate-400">(<%= g.controles.length %>)</span></h2>
+            <a href="/controles/nuevo?categoria=<%= g.categoria %>" class="text-sm hover:underline">Añadir</a>
           </header>
           <ul class="divide-y divide-slate-100">
             <% g.controles.forEach((c) => { %>
@@ -34,10 +32,10 @@
                   <span class="ml-2 text-xs text-slate-400">evaluado en <%= c._count.evaluaciones %> evaluación(es)</span>
                 </div>
                 <div class="flex gap-2 text-sm">
-                  <a href="/controles/<%= c.id %>/editar" class="rounded-lg border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-100">Editar</a>
+                  <a href="/controles/<%= c.id %>/editar" class="btn btn-secondary btn-sm"><%- icono('pencil', 'h-3.5 w-3.5') %>Editar</a>
                   <form action="/controles/<%= c.id %>/eliminar" method="POST" data-nombre="<%= c.nombre %>"
                         onsubmit="return confirm('¿Eliminar «' + this.dataset.nombre + '» del catálogo?')">
-                    <button type="submit" class="rounded-lg border border-red-300 px-3 py-1 text-red-600 hover:bg-red-50">Eliminar</button>
+                    <button type="submit" class="btn btn-danger btn-sm"><%- icono('trash-2', 'h-3.5 w-3.5') %>Eliminar</button>
                   </form>
                 </div>
               </li>

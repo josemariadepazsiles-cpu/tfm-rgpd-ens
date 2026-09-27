@@ -22,6 +22,7 @@ const politicaRoutes = require('./routes/politicas');
 const biaRoutes = require('./routes/bia');
 const { CRITICIDAD_CLASES, ESTADO_REVISION_CLASES, RESULTADO_CLASES, ALERTA_BIA_CLASES } = require('./lib/bia');
 const { ESTADO_POLITICA_CLASES, REVISION_CLASES } = require('./lib/politicas');
+const { icono } = require('./lib/iconos');
 const { ESTADO_DECLARACION_CLASES } = require('./lib/declaraciones');
 const { fecha, fechaHora, aInputFechaHora, aInputFecha } = require('./lib/formato');
 const { ESTADO_PROVEEDOR_CLASES, NIVEL_ENS_CLASES, ALERTA_CLASES } = require('./lib/proveedores');
@@ -63,11 +64,23 @@ app.locals.criticidadClases = CRITICIDAD_CLASES;
 app.locals.estadoRevisionClases = ESTADO_REVISION_CLASES;
 app.locals.resultadoClases = RESULTADO_CLASES;
 app.locals.alertaBiaClases = ALERTA_BIA_CLASES;
+app.locals.icono = icono;
+app.locals.producto = { nombre: 'Compliance AI', lema: 'AI Compliance Platform' };
+// Iniciales para el avatar: "José María de Paz" → "JM" (sin partículas como "de" o "la")
+const PARTICULAS = new Set(['de', 'del', 'la', 'las', 'los', 'y', 'i', 'da', 'do', 'van', 'von']);
+app.locals.iniciales = (nombre = '') =>
+  nombre.split(/\s+/).filter((p) => p && !PARTICULAS.has(p.toLowerCase())).slice(0, 2)
+    .map((p) => p[0].toUpperCase()).join('') || '?';
 
 // Middlewares
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+// Tipografía Inter alojada en el propio servidor (sin Google Fonts: no se envían IPs a terceros)
+app.use('/fuentes', express.static(
+  path.join(path.dirname(require.resolve('@fontsource-variable/inter/package.json')), 'files'),
+  { maxAge: '30d', immutable: true }
+));
 
 if (isProduction) app.set('trust proxy', 1);
 

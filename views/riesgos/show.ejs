@@ -1,63 +1,73 @@
 <%
-  const fecha = (d) => new Date(d).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' });
+  const r = riesgo;
 %>
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <%- include('../partials/head') %>
 </head>
-<body class="min-h-screen bg-slate-100">
+<body class="min-h-screen bg-fondo">
   <%- include('../partials/nav') %>
 
-  <main class="max-w-3xl mx-auto px-4 py-8">
+  <main class="contenedor py-8 sm:py-10">
+    <%- include('../partials/migas', { migas: [{ texto: 'RGPD' }, { texto: 'Riesgos', href: '/riesgos' }, { texto: r.amenaza }] }) %>
     <%- include('../partials/flash') %>
 
-    <a href="/riesgos" class="text-sm text-indigo-600 hover:underline">&larr; Volver al listado</a>
-
-    <div class="mt-2 flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold text-slate-800"><%= riesgo.amenaza %></h1>
-        <p class="mt-1 text-sm text-slate-500">
-          Actividad: <a href="/rat/<%= riesgo.actividad.id %>" class="text-indigo-600 hover:underline"><%= riesgo.actividad.nombre %></a>
-        </p>
+    <div class="flex flex-wrap items-start justify-between gap-4">
+      <div class="min-w-0">
+        <p class="eyebrow">Riesgo</p>
+        <h1 class="mt-1 titulo-pagina"><%= r.amenaza %></h1>
+        <div class="mt-2.5 flex flex-wrap items-center gap-2">
+          <%- include('../partials/nivel-badge', { nivel: r.nivel_riesgo, nivelEtiquetas: niveles }) %>
+          <span class="text-xs text-slate-500">Creado el <%= fechaHora(r.created_at) %> · Última modificación el <%= fechaHora(r.updated_at) %></span>
+        </div>
       </div>
-      <div class="flex gap-2">
-        <a href="/riesgos/<%= riesgo.id %>/editar" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">Editar</a>
+      <div class="flex flex-wrap gap-2">
         <% if (user.rol === 'ADMIN') { %>
-          <form action="/riesgos/<%= riesgo.id %>/eliminar" method="POST"
+          <form action="/riesgos/<%= r.id %>/eliminar" method="POST"
                 onsubmit="return confirm('¿Eliminar este riesgo? Esta acción no se puede deshacer.')">
-            <button type="submit" class="rounded-lg border border-red-300 bg-white px-4 py-2 text-red-600 hover:bg-red-50 transition">Eliminar</button>
+            <button type="submit" class="btn btn-danger"><%- icono('trash-2', 'h-4 w-4') %>Eliminar</button>
           </form>
         <% } %>
+        <a href="/riesgos/<%= r.id %>/editar" class="btn btn-primary"><%- icono('pencil', 'h-4 w-4') %>Editar</a>
       </div>
     </div>
 
-    <section class="mt-6 bg-white rounded-2xl shadow p-6">
-      <h2 class="text-lg font-semibold text-slate-800">Valoración</h2>
-      <dl class="mt-4 grid gap-4 sm:grid-cols-3">
-        <div>
-          <dt class="text-sm font-medium text-slate-500">Probabilidad</dt>
-          <dd class="mt-1 text-slate-800"><%= probabilidades[riesgo.probabilidad] %></dd>
-        </div>
-        <div>
-          <dt class="text-sm font-medium text-slate-500">Impacto</dt>
-          <dd class="mt-1 text-slate-800"><%= impactos[riesgo.impacto] %></dd>
-        </div>
-        <div>
-          <dt class="text-sm font-medium text-slate-500">Nivel de riesgo</dt>
-          <dd class="mt-1"><%- include('../partials/nivel-badge', { nivel: riesgo.nivel_riesgo, nivelEtiquetas: niveles }) %></dd>
-        </div>
-      </dl>
-    </section>
+    <div class="mt-8 grid items-start gap-6 lg:grid-cols-3">
+      <div class="space-y-6 lg:col-span-2">
+        <section class="card p-5 sm:p-6">
+          <h2 class="flex items-center gap-2 text-base font-semibold text-slate-900"><%- icono('gauge', 'h-4 w-4 text-slate-400') %>Valoración</h2>
+          <dl class="mt-4 grid gap-4 sm:grid-cols-3">
+            <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-4">
+              <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Probabilidad</dt>
+              <dd class="mt-1 text-[15px] font-medium text-slate-800"><%= probabilidades[r.probabilidad] %></dd>
+            </div>
+            <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-4">
+              <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Impacto</dt>
+              <dd class="mt-1 text-[15px] font-medium text-slate-800"><%= impactos[r.impacto] %></dd>
+            </div>
+            <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-4">
+              <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Nivel de riesgo</dt>
+              <dd class="mt-1.5"><%- include('../partials/nivel-badge', { nivel: r.nivel_riesgo, nivelEtiquetas: niveles }) %></dd>
+            </div>
+          </dl>
+        </section>
 
-    <section class="mt-6 bg-white rounded-2xl shadow p-6">
-      <h2 class="text-lg font-semibold text-slate-800">Medidas mitigadoras</h2>
-      <p class="mt-3 whitespace-pre-line <%= riesgo.medidas_mitigadoras ? 'text-slate-800' : 'text-slate-400 italic' %>"><%= riesgo.medidas_mitigadoras || 'Sin medidas definidas todavía.' %></p>
-    </section>
+        <section class="card p-5 sm:p-6">
+          <h2 class="flex items-center gap-2 text-base font-semibold text-slate-900"><%- icono('shield-check', 'h-4 w-4 text-slate-400') %>Medidas mitigadoras</h2>
+          <p class="mt-3 whitespace-pre-line text-[15px] <%= r.medidas_mitigadoras ? 'text-slate-800' : 'italic text-slate-400' %>"><%= r.medidas_mitigadoras || 'Sin medidas definidas todavía.' %></p>
+        </section>
+      </div>
 
-    <p class="mt-6 text-xs text-slate-400">
-      Creado el <%= fecha(riesgo.created_at) %> · Última modificación el <%= fecha(riesgo.updated_at) %>
-    </p>
+      <aside class="card p-5">
+        <h2 class="text-sm font-semibold text-slate-900">Actividad de tratamiento</h2>
+        <a href="/rat/<%= r.actividad.id %>" class="mt-3 flex items-center gap-3 rounded-xl border border-slate-100 p-3 transition hover:border-indigo-200 hover:bg-marca-50/50">
+          <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-marca-50 text-indigo-600"><%- icono('clipboard-list', 'h-4 w-4') %></span>
+          <span class="min-w-0 flex-1 truncate text-sm font-medium text-slate-800"><%= r.actividad.nombre %></span>
+          <%- icono('chevron-right', 'h-4 w-4 text-slate-400') %>
+        </a>
+      </aside>
+    </div>
   </main>
 </body>
 </html>

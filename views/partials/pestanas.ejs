@@ -1,0 +1,16 @@
+<%#
+  Barra de pestañas accesible (Alpine). Recibe `pestanas` = [{ id, texto, icono?, contador? }].
+  Debe ir dentro de un elemento con x-data="pestanas('idInicial', ['id1', 'id2', ...])".
+  Los paneles usan: x-show="tab === 'id'" role="tabpanel" id="panel-id" aria-labelledby="tab-id".
+  La pestaña activa se refleja en la URL (#id) para poder enlazarla directamente.
+%>
+<div class="pestanas" role="tablist" @keydown.right.prevent="mover(1)" @keydown.left.prevent="mover(-1)">
+  <% pestanas.forEach((p) => { %>
+    <button type="button" role="tab" id="tab-<%= p.id %>" aria-controls="panel-<%= p.id %>"
+            class="pestana" :aria-selected="tab === '<%= p.id %>'" :tabindex="tab === '<%= p.id %>' ? 0 : -1"
+            @click="ir('<%= p.id %>')">
+      <% if (p.icono) { %><%- icono(p.icono, 'h-4 w-4') %><% } %><%= p.texto %>
+      <% if (p.contador !== undefined) { %><span class="rounded-full bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold text-slate-600"><%= p.contador %></span><% } %>
+    </button>
+  <% }) %>
+</div>

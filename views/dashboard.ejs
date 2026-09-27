@@ -1,281 +1,460 @@
 <%
-  // Nivel de una tarjeta que cuenta problemas: verde si no hay ninguno
-  const nivel = (valor, siHay = 'critico') => (valor > 0 ? siHay : 'ok');
-  // Color de un porcentaje de cumplimiento
-  const colorPct = (pct) => (pct >= 80 ? 'bg-green-500' : pct >= 50 ? 'bg-yellow-400' : 'bg-red-500');
-  const textoPct = (pct) => (pct >= 80 ? 'text-green-700' : pct >= 50 ? 'text-yellow-700' : 'text-red-700');
+  const { actividades: act, incidentes: inc, derechos: der, proveedores: prov, ens, declaraciones: decl, politicas: pol, bia, actividad } = m;
 
-  const { actividades: act, incidentes: inc, derechos: der, proveedores: prov, ens, declaraciones: decl, politicas: pol, bia } = m;
+  // Nivel de una métrica que cuenta problemas: correcto si no hay ninguno
+  const nivel = (valor, siHay = 'critico') => (valor > 0 ? siHay : 'ok');
+  const colorPct = (pct) => (pct >= 80 ? 'bg-emerald-500' : pct >= 50 ? 'bg-amber-500' : 'bg-red-500');
+  const estadoPct = (pct) => (pct >= 80 ? { texto: 'Correcto', clase: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20', punto: 'bg-emerald-500' }
+    : pct >= 50 ? { texto: 'Requiere atención', clase: 'bg-amber-50 text-amber-800 ring-amber-600/20', punto: 'bg-amber-500' }
+    : { texto: 'Crítico', clase: 'bg-red-50 text-red-700 ring-red-600/20', punto: 'bg-red-500' });
+
   const declPendientes = decl.sinDeclaracion.length + decl.caducadas.length;
   const ensSinEvaluar = ens.sistemas.filter((s) => !s.global).length;
   const ensBajos = ens.sistemas.filter((s) => s.global && s.global.porcentaje < 50).length;
+  const accionesPendientes = recomendaciones.filter((r) => r.nivel !== 'info');
+  const accionesCriticas = recomendaciones.filter((r) => r.nivel === 'critico').length;
 
-  const secciones = {
+  // Métricas de cada módulo (misma información que antes, sin tarjetas de color completo)
+  const modulos = {
     rat: [
       { titulo: 'Actividades de tratamiento', valor: act.actividades, detalle: user.rol === 'ADMIN' ? 'Registradas en el RAT' : 'De las que eres responsable', href: '/rat', nivel: 'neutro' },
-      { titulo: 'Riesgos de nivel alto', valor: act.riesgosAltos, detalle: `De ${act.riesgos} riesgos evaluados`, href: '/riesgos?nivel=ALTO', nivel: nivel(act.riesgosAltos, 'atencion') },
+      { titulo: 'Riesgos de nivel alto', valor: act.riesgosAltos, detalle: act.riesgosAltos ? `De ${act.riesgos} riesgos evaluados` : 'Sin riesgos altos detectados', href: '/riesgos?nivel=ALTO', nivel: nivel(act.riesgosAltos, 'atencion') },
     ],
     incidentes: [
-      { titulo: 'Incidentes activos', valor: inc.activos, detalle: 'Sin cerrar', href: '/incidentes?alerta=activos', nivel: nivel(inc.activos, 'atencion') },
-      { titulo: 'Notificación AEPD pendiente', valor: inc.aepdPendientes, detalle: 'Requieren notificar (art. 33)', href: '/incidentes?alerta=aepd_pendiente', nivel: nivel(inc.aepdPendientes, 'atencion') },
-      { titulo: 'AEPD fuera de plazo (72 h)', valor: inc.aepdVencidos, detalle: 'Plazo legal superado', href: '/incidentes?alerta=aepd_vencido', nivel: nivel(inc.aepdVencidos) },
+      { titulo: 'Incidentes activos', valor: inc.activos, detalle: inc.activos ? 'Sin cerrar' : 'Ningún incidente abierto', href: '/incidentes?alerta=activos', nivel: nivel(inc.activos, 'atencion') },
+      { titulo: 'Notificación AEPD pendiente', valor: inc.aepdPendientes, detalle: inc.aepdPendientes ? 'Requieren notificar (art. 33)' : 'Nada pendiente de notificar', href: '/incidentes?alerta=aepd_pendiente', nivel: nivel(inc.aepdPendientes, 'atencion') },
+      { titulo: 'AEPD fuera de plazo (72 h)', valor: inc.aepdVencidos, detalle: inc.aepdVencidos ? 'Plazo legal superado' : 'Todas en plazo', href: '/incidentes?alerta=aepd_vencido', nivel: nivel(inc.aepdVencidos) },
     ],
     derechos: [
       { titulo: 'Solicitudes abiertas', valor: der.abiertas, detalle: 'Sin resolver', href: '/derechos?plazo=abiertas', nivel: 'neutro' },
-      { titulo: 'Plazo vencido', valor: der.vencidas, detalle: 'Sin resolver fuera de plazo', href: '/derechos?plazo=vencidas', nivel: nivel(der.vencidas) },
+      { titulo: 'Plazo vencido', valor: der.vencidas, detalle: der.vencidas ? 'Sin resolver fuera de plazo' : 'Todas dentro de plazo', href: '/derechos?plazo=vencidas', nivel: nivel(der.vencidas) },
     ],
     proveedores: [
       { titulo: 'Proveedores activos', valor: prov.activos, detalle: 'Relación vigente', href: '/proveedores?estado=ACTIVO', nivel: 'neutro' },
-      { titulo: 'Sin contrato de encargado', valor: prov.sinContrato, detalle: 'Art. 28.3 · sin contar bajas', href: '/proveedores?alerta=sin_contrato', nivel: nivel(prov.sinContrato) },
-      { titulo: 'Transferencia sin garantías', valor: prov.sinGarantias, detalle: 'Fuera del EEE sin mecanismo', href: '/proveedores?alerta=sin_garantias', nivel: nivel(prov.sinGarantias) },
-    ],
-    ens: [
-      { titulo: 'Cumplimiento global', valor: ens.global.evaluados ? ens.global.porcentaje + ' %' : '—', detalle: `${ens.global.implementados}/${ens.global.aplicables} controles aplicables`, href: '/sistemas', nivel: !ens.global.evaluados ? 'neutro' : ens.global.porcentaje >= 80 ? 'ok' : ens.global.porcentaje >= 50 ? 'atencion' : 'critico' },
-      { titulo: 'Sistemas por debajo del 50 %', valor: ensBajos, detalle: `${ensSinEvaluar} sin evaluar`, href: '/sistemas', nivel: nivel(ensBajos, 'atencion') },
+      { titulo: 'Sin contrato de encargado', valor: prov.sinContrato, detalle: prov.sinContrato ? 'Art. 28.3 · sin contar bajas' : 'Todos con contrato firmado', href: '/proveedores?alerta=sin_contrato', nivel: nivel(prov.sinContrato) },
+      { titulo: 'Transferencia sin garantías', valor: prov.sinGarantias, detalle: prov.sinGarantias ? 'Fuera del EEE sin mecanismo' : 'Transferencias con garantías', href: '/proveedores?alerta=sin_garantias', nivel: nivel(prov.sinGarantias) },
     ],
     declaraciones: [
-      { titulo: 'Sin declaración vigente', valor: decl.sinDeclaracion.length, detalle: 'Sistemas sin declaración emitida', href: '/declaraciones', nivel: nivel(decl.sinDeclaracion.length, 'atencion') },
-      { titulo: 'Emitida hace más de 12 meses', valor: decl.caducadas.length, detalle: 'Conviene renovarla', href: '/declaraciones', nivel: nivel(decl.caducadas.length, 'atencion') },
+      { titulo: 'Sin declaración vigente', valor: decl.sinDeclaracion.length, detalle: decl.sinDeclaracion.length ? 'Sistemas sin declaración emitida' : 'Todos con declaración', href: '/declaraciones', nivel: nivel(decl.sinDeclaracion.length, 'atencion') },
+      { titulo: 'Emitida hace más de 12 meses', valor: decl.caducadas.length, detalle: decl.caducadas.length ? 'Conviene renovarla' : 'Ninguna caducada', href: '/declaraciones', nivel: nivel(decl.caducadas.length, 'atencion') },
     ],
     politicas: [
-      { titulo: 'Revisión vencida', valor: pol.revisionVencidas, detalle: 'Documentos a revisar ya', href: '/politicas?filtro=revision', nivel: nivel(pol.revisionVencidas) },
-      { titulo: 'Revisión en 30 días', valor: pol.revisionProximas, detalle: 'Próximas revisiones', href: '/politicas?filtro=revision', nivel: nivel(pol.revisionProximas, 'atencion') },
+      { titulo: 'Revisión vencida', valor: pol.revisionVencidas, detalle: pol.revisionVencidas ? 'Documentos a revisar ya' : 'Revisiones al día', href: '/politicas?filtro=revision', nivel: nivel(pol.revisionVencidas) },
+      { titulo: 'Revisión en 30 días', valor: pol.revisionProximas, detalle: pol.revisionProximas ? 'Próximas revisiones' : 'Ninguna próxima', href: '/politicas?filtro=revision', nivel: nivel(pol.revisionProximas, 'atencion') },
       { titulo: 'Pendientes de tu aceptación', valor: pol.misPendientes.length, detalle: pol.misPendientes.length ? 'Léelas y acéptalas' : 'Estás al día', href: '/politicas?filtro=pendientes', nivel: nivel(pol.misPendientes.length, 'atencion') },
     ],
     bia: [
-      { titulo: 'Sin plan de contingencia', valor: bia.sinPlan, detalle: `De ${bia.altos} procesos críticos/altos`, href: '/bia?filtro=sin_plan', nivel: nivel(bia.sinPlan) },
-      { titulo: 'Sin prueba en 12 meses', valor: bia.sinPrueba, detalle: 'Procesos críticos/altos', href: '/bia?filtro=sin_prueba', nivel: nivel(bia.sinPrueba, 'atencion') },
+      { titulo: 'Sin plan de contingencia', valor: bia.sinPlan, detalle: bia.sinPlan ? `De ${bia.altos} procesos críticos/altos` : 'Procesos críticos cubiertos', href: '/bia?filtro=sin_plan', nivel: nivel(bia.sinPlan) },
+      { titulo: 'Sin prueba en 12 meses', valor: bia.sinPrueba, detalle: bia.sinPrueba ? 'Procesos críticos/altos' : 'Pruebas al día', href: '/bia?filtro=sin_prueba', nivel: nivel(bia.sinPrueba, 'atencion') },
+    ],
+    ens: [
+      { titulo: 'Sistemas por debajo del 50 %', valor: ensBajos, detalle: ensSinEvaluar ? `${ensSinEvaluar} sin evaluar` : 'Todos evaluados', href: '/sistemas', nivel: nivel(ensBajos, 'atencion') },
     ],
   };
-  const todas = Object.values(secciones).flat();
+  const todas = Object.values(modulos).flat();
   const criticos = todas.filter((k) => k.nivel === 'critico').length;
   const atencion = todas.filter((k) => k.nivel === 'atencion').length;
+  const alDia = todas.filter((k) => k.nivel === 'ok').length;
 
   const total12m = inc.abiertos12m + inc.cerrados12m;
   const pctCerrados = total12m ? Math.round((inc.cerrados12m / total12m) * 100) : 0;
+  const pctEns = ens.global.porcentaje;
+  const estadoEns = ens.global.evaluados ? estadoPct(pctEns) : { texto: 'Sin evaluar', clase: 'bg-slate-50 text-slate-600 ring-slate-500/20', punto: 'bg-slate-400' };
+  const maxRiesgo = Math.max(act.riesgosAltos, act.riesgosMedios, act.riesgosBajos, 1);
+  const maxGravedad = Math.max(...Object.values(inc.activosPorGravedad), 1);
+
+  const encabezadoModulo = (icono_, titulo, descripcion, href) => ({ icono: icono_, titulo, descripcion, href });
 %>
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <%- include('partials/head') %>
 </head>
-<body class="min-h-screen bg-slate-100">
+<body class="min-h-screen bg-fondo">
   <%- include('partials/nav') %>
 
-  <main class="max-w-7xl mx-auto px-4 py-8 space-y-8">
-    <%# Cabecera y semáforo general %>
-    <div class="flex flex-wrap items-end justify-between gap-4">
+  <main class="contenedor space-y-10 py-8 sm:py-10">
+
+    <%# ================= Cabecera ================= %>
+    <div class="flex flex-wrap items-end justify-between gap-5">
       <div>
-        <h1 class="text-2xl font-bold text-slate-800">Panel de control</h1>
-        <p class="text-sm text-slate-500">Hola, <%= user.nombre %> (<%= roles[user.rol] %>) · <%= fechaHora(new Date()) %></p>
+        <p class="eyebrow">Panel de control</p>
+        <h1 class="mt-1.5 titulo-pagina">Hola, <%= nombrePila %></h1>
+        <p class="subtitulo-pagina">Resumen del estado de cumplimiento y seguridad de tu organización.</p>
       </div>
-      <div class="flex flex-wrap gap-2 text-sm" aria-label="Resumen de alertas">
-        <span class="inline-flex items-center gap-2 rounded-full bg-red-100 px-3 py-1 font-medium text-red-800">
-          <span class="h-2.5 w-2.5 rounded-full bg-red-500" aria-hidden="true"></span><%= criticos %> críticos
-        </span>
-        <span class="inline-flex items-center gap-2 rounded-full bg-yellow-100 px-3 py-1 font-medium text-yellow-800">
-          <span class="h-2.5 w-2.5 rounded-full bg-yellow-400" aria-hidden="true"></span><%= atencion %> requieren atención
-        </span>
-        <span class="inline-flex items-center gap-2 rounded-full bg-green-100 px-3 py-1 font-medium text-green-800">
-          <span class="h-2.5 w-2.5 rounded-full bg-green-500" aria-hidden="true"></span><%= todas.filter((k) => k.nivel === 'ok').length %> al día
-        </span>
+      <div class="flex flex-col items-start gap-2 sm:items-end">
+        <div class="flex flex-wrap gap-2 text-xs" aria-label="Resumen de indicadores">
+          <span class="badge bg-white text-slate-700 ring-slate-200"><span class="punto bg-red-500"></span><%= criticos %> críticos</span>
+          <span class="badge bg-white text-slate-700 ring-slate-200"><span class="punto bg-amber-500"></span><%= atencion %> requieren atención</span>
+          <span class="badge bg-white text-slate-700 ring-slate-200"><span class="punto bg-emerald-500"></span><%= alDia %> al día</span>
+        </div>
+        <p class="flex items-center gap-1.5 text-xs text-slate-400"><%- icono('refresh-cw', 'h-3 w-3') %>Actualizado el <%= fechaHora(m.generado) %></p>
       </div>
     </div>
 
     <%# Aviso personal: políticas pendientes de aceptar %>
     <% if (pol.misPendientes.length) { %>
-      <section class="rounded-2xl border-2 border-indigo-300 bg-indigo-50 p-5" role="status">
-        <h2 class="font-semibold text-indigo-900">Tienes <%= pol.misPendientes.length %> documento(s) pendientes de leer y aceptar</h2>
-        <ul class="mt-3 flex flex-wrap gap-2">
-          <% pol.misPendientes.forEach((p) => { %>
-            <li><a href="/politicas/<%= p.id %>" class="inline-flex rounded-lg bg-white px-3 py-1.5 text-sm text-indigo-700 shadow-sm hover:bg-indigo-100"><%= p.titulo %> · v<%= p.version %> &rarr;</a></li>
-          <% }) %>
-        </ul>
-      </section>
+      <div class="alerta alerta-info items-center justify-between" role="status">
+        <span class="flex items-center gap-3">
+          <%- icono('signature', 'h-5 w-5') %>
+          <span>Tienes <strong><%= pol.misPendientes.length %> documento(s)</strong> pendientes de leer y aceptar:
+            <% pol.misPendientes.forEach((p, i) => { %><%= i ? ', ' : ' ' %><a href="/politicas/<%= p.id %>" class="font-medium underline-offset-2 hover:underline"><%= p.titulo %> (v<%= p.version %>)</a><% }) %>.
+          </span>
+        </span>
+        <a href="/politicas?filtro=pendientes" class="btn btn-primary btn-sm">Leer y aceptar</a>
+      </div>
     <% } %>
 
-    <%# Resumen ejecutivo: cumplimiento ENS global y ratio de incidentes %>
-    <section class="grid gap-6 lg:grid-cols-2">
-      <a href="/sistemas" class="block rounded-2xl bg-white p-6 shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        <div class="flex items-baseline justify-between gap-3">
-          <h2 class="font-semibold text-slate-800">Cumplimiento ENS de la organización</h2>
-          <span class="text-3xl font-bold <%= ens.global.evaluados ? textoPct(ens.global.porcentaje) : 'text-slate-400' %>"><%= ens.global.evaluados ? ens.global.porcentaje + ' %' : '—' %></span>
-        </div>
-        <div class="mt-4 h-4 rounded-full bg-slate-200 overflow-hidden" role="progressbar" aria-valuenow="<%= ens.global.porcentaje %>" aria-valuemin="0" aria-valuemax="100" aria-label="Cumplimiento ENS global">
-          <div class="h-full <%= colorPct(ens.global.porcentaje) %>" style="width: <%= ens.global.porcentaje %>%"></div>
-        </div>
-        <p class="mt-2 text-xs text-slate-500">
-          <%= ens.global.implementados %> de <%= ens.global.aplicables %> controles aplicables implementados en la última evaluación de <%= ens.global.evaluados %> sistema(s)<%= ensSinEvaluar ? ' · ' + ensSinEvaluar + ' sin evaluar' : '' %>.
-          Verde ≥ 80 % · amarillo ≥ 50 % · rojo &lt; 50 %.
-        </p>
-      </a>
-
-      <a href="/incidentes" class="block rounded-2xl bg-white p-6 shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        <div class="flex items-baseline justify-between gap-3">
-          <h2 class="font-semibold text-slate-800">Incidentes de los últimos 12 meses</h2>
-          <span class="text-3xl font-bold text-slate-800"><%= total12m %></span>
-        </div>
-        <% if (total12m) { %>
-          <div class="mt-4 flex h-4 rounded-full overflow-hidden bg-slate-200" role="img" aria-label="<%= inc.cerrados12m %> cerrados y <%= inc.abiertos12m %> abiertos">
-            <div class="h-full bg-green-500" style="width: <%= pctCerrados %>%"></div>
-            <div class="h-full <%= inc.abiertos12m ? 'bg-yellow-400' : '' %>" style="width: <%= 100 - pctCerrados %>%"></div>
+    <%# ================= 1. Resumen ejecutivo ================= %>
+    <section aria-labelledby="t-resumen" class="space-y-4">
+      <h2 id="t-resumen" class="titulo-seccion">Resumen ejecutivo</h2>
+      <div class="grid gap-4 lg:grid-cols-12">
+        <a href="/sistemas" class="card group p-5 transition duration-150 hover:border-indigo-200 hover:shadow-sm lg:col-span-5">
+          <div class="flex items-start justify-between gap-3">
+            <p class="flex items-center gap-2 text-sm font-medium text-slate-600">
+              <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-marca-50 text-indigo-600"><%- icono('shield-check', 'h-4 w-4') %></span>Cumplimiento ENS
+            </p>
+            <span class="badge <%= estadoEns.clase %>"><span class="punto h-1.5 w-1.5 <%= estadoEns.punto %>"></span><%= estadoEns.texto %></span>
           </div>
-          <div class="mt-2 flex flex-wrap gap-4 text-xs text-slate-600">
-            <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-sm bg-green-500" aria-hidden="true"></span>Cerrados: <strong><%= inc.cerrados12m %></strong> (<%= pctCerrados %> %)</span>
-            <span class="inline-flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded-sm bg-yellow-400" aria-hidden="true"></span>Abiertos: <strong><%= inc.abiertos12m %></strong> (<%= 100 - pctCerrados %> %)</span>
+          <p class="mt-4 text-4xl font-semibold tabular-nums tracking-tight text-slate-900"><%= ens.global.evaluados ? pctEns : '—' %><span class="text-2xl text-slate-400">%</span></p>
+          <div class="progreso mt-3 h-2.5" role="progressbar" aria-valuenow="<%= pctEns %>" aria-valuemin="0" aria-valuemax="100" aria-label="Cumplimiento ENS global">
+            <span class="<%= colorPct(pctEns) %>" style="width: <%= pctEns %>%"></span>
           </div>
-        <% } else { %>
-          <p class="mt-4 text-sm text-slate-500">No se ha detectado ningún incidente en los últimos 12 meses.</p>
-        <% } %>
-      </a>
-    </section>
+          <p class="mt-2.5 text-xs text-slate-500">
+            <strong class="font-semibold text-slate-700"><%= ens.global.implementados %> de <%= ens.global.aplicables %></strong> controles aplicables implementados ·
+            última evaluación de <%= ens.global.evaluados %> sistema(s)<%= ensSinEvaluar ? ' · ' + ensSinEvaluar + ' sin evaluar' : '' %>
+          </p>
+        </a>
 
-    <%# ===================== RGPD ===================== %>
-    <section>
-      <h2 class="text-lg font-bold uppercase tracking-wide text-indigo-700">RGPD</h2>
-      <div class="mt-4 grid gap-6 lg:grid-cols-2">
-
-        <div class="rounded-2xl bg-white p-5 shadow">
-          <div class="flex items-center justify-between"><h3 class="font-semibold text-slate-800">Actividades y riesgos</h3><a href="/rat" class="text-sm text-indigo-600 hover:underline">Ir al RAT</a></div>
-          <div class="mt-4 grid gap-3 sm:grid-cols-2"><% secciones.rat.forEach((k) => { %><%- include('partials/kpi', { k }) %><% }) %></div>
-        </div>
-
-        <div class="rounded-2xl bg-white p-5 shadow">
-          <div class="flex items-center justify-between"><h3 class="font-semibold text-slate-800">Incidentes / Brechas</h3><a href="/incidentes" class="text-sm text-indigo-600 hover:underline">Ir al módulo</a></div>
-          <div class="mt-4 grid gap-3 sm:grid-cols-3"><% secciones.incidentes.forEach((k) => { %><%- include('partials/kpi', { k }) %><% }) %></div>
-          <% if (inc.urgentes.length) { %>
-            <h4 class="mt-4 text-xs font-semibold uppercase text-red-700">Urgente: notificar a la AEPD</h4>
-            <ul class="mt-1 divide-y divide-slate-100 text-sm">
-              <% inc.urgentes.forEach((i) => { %>
-                <li class="flex justify-between gap-3 py-1.5">
-                  <a href="/incidentes/<%= i.id %>" class="text-slate-800 hover:text-indigo-600 hover:underline line-clamp-1"><%= i.titulo %></a>
-                  <span class="whitespace-nowrap text-xs text-red-700">Detectado <%= fecha(i.fecha_deteccion) %></span>
-                </li>
-              <% }) %>
-            </ul>
-          <% } %>
-        </div>
-
-        <div class="rounded-2xl bg-white p-5 shadow">
-          <div class="flex items-center justify-between"><h3 class="font-semibold text-slate-800">Derechos de los interesados</h3><a href="/derechos" class="text-sm text-indigo-600 hover:underline">Ir al módulo</a></div>
-          <div class="mt-4 grid gap-3 sm:grid-cols-3">
-            <% secciones.derechos.forEach((k) => { %><%- include('partials/kpi', { k }) %><% }) %>
-            <% const p = der.proxima; %>
-            <a href="<%= p ? '/derechos/' + p.id : '/derechos?plazo=proximas' %>" class="group block rounded-xl border p-4 transition hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 <%= p && p.urgencia.nivel === 'amarillo' ? 'border-yellow-300 bg-yellow-50' : 'border-slate-200 bg-white' %>">
-              <p class="text-sm font-medium text-slate-600">Próxima en vencer</p>
-              <% if (p) { %>
-                <p class="mt-1 font-semibold text-slate-800 line-clamp-1"><%= TIPOS_DERECHO[p.tipo_derecho] %> · <%= p.nombre_solicitante %></p>
-                <p class="mt-1 text-xs <%= p.urgencia.nivel === 'amarillo' ? 'font-semibold text-yellow-700' : 'text-slate-500' %>">
-                  <%= fecha(p.fecha_limite) %> · <%= p.urgencia.dias === 0 ? 'vence hoy' : 'quedan ' + p.urgencia.dias + ' días' %> &rarr;
-                </p>
-              <% } else { %>
-                <p class="mt-1 text-sm text-slate-500">Ninguna pendiente en plazo</p>
-              <% } %>
+        <div class="grid gap-4 sm:grid-cols-3 lg:col-span-7">
+          <% [
+            { titulo: 'Riesgos altos', valor: act.riesgosAltos, icono: 'gauge', href: '/riesgos?nivel=ALTO', estado: act.riesgosAltos ? { t: act.altosSinMedidas ? `${act.altosSinMedidas} sin medidas mitigadoras` : 'Con medidas definidas', n: act.altosSinMedidas ? 'critico' : 'atencion' } : { t: 'Sin riesgos altos', n: 'ok' } },
+            { titulo: 'Incidentes activos', valor: inc.activos, icono: 'siren', href: '/incidentes?alerta=activos', estado: inc.aepdVencidos ? { t: `${inc.aepdVencidos} fuera de plazo AEPD`, n: 'critico' } : inc.activos ? { t: 'En gestión', n: 'atencion' } : { t: 'Ninguno abierto', n: 'ok' } },
+            { titulo: 'Acciones pendientes', valor: accionesPendientes.length, icono: 'list-todo', href: '#acciones', estado: accionesCriticas ? { t: `${accionesCriticas} críticas`, n: 'critico' } : accionesPendientes.length ? { t: 'Requieren atención', n: 'atencion' } : { t: 'Todo al día', n: 'ok' } },
+          ].forEach((k) => { const c = { ok: 'text-emerald-600', atencion: 'text-amber-600', critico: 'text-red-600' }[k.estado.n]; const ic = { ok: 'circle-check', atencion: 'circle-alert', critico: 'circle-dot' }[k.estado.n]; %>
+            <a href="<%= k.href %>" class="card group flex flex-col justify-between p-5 transition duration-150 hover:border-indigo-200 hover:shadow-sm">
+              <p class="flex items-center gap-2 text-sm font-medium text-slate-600">
+                <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600"><%- icono(k.icono, 'h-4 w-4') %></span><%= k.titulo %>
+              </p>
+              <p class="mt-4 text-3xl font-semibold tabular-nums tracking-tight text-slate-900"><%= k.valor %></p>
+              <p class="mt-1 flex items-center gap-1 text-xs <%= c %>"><%- icono(ic, 'h-3.5 w-3.5') %><%= k.estado.t %></p>
             </a>
+          <% }) %>
+        </div>
+      </div>
+
+      <%# Asistente de cumplimiento (recomendaciones generadas a partir de los datos) %>
+      <div class="card relative overflow-hidden border-indigo-100">
+        <div class="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-indigo-500 to-violet-500" aria-hidden="true"></div>
+        <div class="flex flex-wrap items-start justify-between gap-4 p-5 pl-6">
+          <div class="flex items-start gap-3">
+            <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-50 to-violet-100 text-violet-600"><%- icono('sparkles', 'h-5 w-5') %></span>
+            <div>
+              <h3 class="font-semibold text-slate-900">Asistente de cumplimiento</h3>
+              <p class="text-sm text-slate-500">
+                <% if (accionesPendientes.length) { %>
+                  He revisado el estado de tus datos: hay <strong class="text-slate-700"><%= accionesPendientes.length %> acción(es) recomendada(s)</strong><%= accionesCriticas ? ', ' + accionesCriticas + ' de ellas críticas' : '' %>.
+                <% } else { %>
+                  Tus datos no muestran acciones urgentes. Buen trabajo.
+                <% } %>
+              </p>
+            </div>
           </div>
-          <% if (der.urgentes.length) { %>
-            <h4 class="mt-4 text-xs font-semibold uppercase text-red-700">Urgente: fuera de plazo</h4>
-            <ul class="mt-1 divide-y divide-slate-100 text-sm">
-              <% der.urgentes.forEach((s) => { %>
-                <li class="flex justify-between gap-3 py-1.5">
-                  <a href="/derechos/<%= s.id %>" class="text-slate-800 hover:text-indigo-600 hover:underline"><%= TIPOS_DERECHO[s.tipo_derecho] %> · <%= s.nombre_solicitante %></a>
-                  <span class="whitespace-nowrap text-xs text-red-700">Vencida hace <%= s.urgencia.diasVencida %> día(s)</span>
-                </li>
-              <% }) %>
-            </ul>
+          <% if (recomendaciones.length) { %>
+            <a href="#acciones" class="btn btn-secondary btn-sm"><%- icono('list-todo', 'h-3.5 w-3.5') %>Ver todas (<%= recomendaciones.length %>)</a>
           <% } %>
         </div>
-
-        <div class="rounded-2xl bg-white p-5 shadow">
-          <div class="flex items-center justify-between"><h3 class="font-semibold text-slate-800">Proveedores (encargados del tratamiento)</h3><a href="/proveedores" class="text-sm text-indigo-600 hover:underline">Ir al módulo</a></div>
-          <div class="mt-4 grid gap-3 sm:grid-cols-3"><% secciones.proveedores.forEach((k) => { %><%- include('partials/kpi', { k }) %><% }) %></div>
-        </div>
+        <% if (recomendaciones.length) { %>
+          <ul class="grid gap-px border-t border-slate-100 bg-slate-100 sm:grid-cols-3">
+            <% recomendaciones.slice(0, 3).forEach((r) => { const e = nivelEstilo[r.nivel]; %>
+              <li class="bg-white">
+                <a href="<%= r.href %>" class="group flex h-full flex-col gap-2 p-5 pl-6 transition hover:bg-slate-50/70">
+                  <span class="flex items-center gap-1.5 text-xs font-medium <%= e.texto %>"><span class="punto h-1.5 w-1.5 <%= e.punto %>"></span><%= e.etiqueta %></span>
+                  <span class="text-sm font-medium text-slate-900"><%= r.titulo %></span>
+                  <span class="mt-auto inline-flex items-center gap-1 text-xs font-medium text-indigo-600"><%= r.accion %><%- icono('arrow-right', 'h-3.5 w-3.5 transition group-hover:translate-x-0.5') %></span>
+                </a>
+              </li>
+            <% }) %>
+          </ul>
+        <% } %>
       </div>
     </section>
 
-    <%# ===================== ENS ===================== %>
-    <section>
-      <h2 class="text-lg font-bold uppercase tracking-wide text-indigo-700">ENS</h2>
-      <div class="mt-4 grid gap-6 lg:grid-cols-2">
-
-        <div class="rounded-2xl bg-white p-5 shadow lg:col-span-2">
-          <div class="flex items-center justify-between"><h3 class="font-semibold text-slate-800">Cumplimiento por sistema</h3><a href="/sistemas" class="text-sm text-indigo-600 hover:underline">Ir a sistemas</a></div>
-          <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><% secciones.ens.forEach((k) => { %><%- include('partials/kpi', { k }) %><% }) %></div>
-          <% if (ens.sistemas.length === 0) { %>
-            <p class="mt-4 text-sm text-slate-500">Todavía no hay sistemas registrados.</p>
-          <% } else { %>
-            <ul class="mt-4 divide-y divide-slate-100">
-              <% ens.sistemas.forEach((s) => { const pct = s.global ? s.global.porcentaje : 0; %>
-                <li>
-                  <a href="<%= s.ultima ? '/evaluaciones/' + s.ultima.id : '/sistemas/' + s.id %>" class="grid grid-cols-12 items-center gap-3 rounded-lg px-2 py-2 hover:bg-slate-50">
-                    <span class="col-span-12 sm:col-span-4 font-medium text-slate-800"><%= s.nombre %></span>
-                    <span class="col-span-4 sm:col-span-2">
-                      <% if (s.categoria_general) { %>
-                        <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset <%= categoriaClases[s.categoria_general].badge %>"><%= CATEGORIAS_SISTEMA[s.categoria_general] %></span>
-                      <% } else { %><span class="text-xs text-slate-400 italic">Sin categoría</span><% } %>
+    <%# ================= 2. Estado RGPD ================= %>
+    <section aria-labelledby="t-rgpd" class="space-y-4">
+      <div class="flex items-center gap-2">
+        <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-marca-50 text-indigo-600"><%- icono('scale', 'h-4 w-4') %></span>
+        <h2 id="t-rgpd" class="titulo-seccion">Estado RGPD</h2>
+      </div>
+      <div class="grid gap-4 md:grid-cols-2">
+        <% [
+          { ...encabezadoModulo('clipboard-list', 'Actividades y riesgos', 'Registro de actividades y evaluación de riesgos', '/rat'), metricas: modulos.rat },
+          { ...encabezadoModulo('siren', 'Incidentes / Brechas', 'Gestión de brechas y notificación a la AEPD', '/incidentes'), metricas: modulos.incidentes, urgentes: inc.urgentes.map((i) => ({ texto: i.titulo, href: '/incidentes/' + i.id, detalle: 'Detectado ' + fecha(i.fecha_deteccion) })), tituloUrgentes: 'Notificar a la AEPD' },
+          { ...encabezadoModulo('users', 'Derechos de los interesados', 'Solicitudes ARCO-POL y sus plazos', '/derechos'), metricas: modulos.derechos, urgentes: der.urgentes.map((s) => ({ texto: TIPOS_DERECHO[s.tipo_derecho] + ' · ' + s.nombre_solicitante, href: '/derechos/' + s.id, detalle: 'Vencida hace ' + s.urgencia.diasVencida + ' día(s)' })), tituloUrgentes: 'Fuera de plazo', proxima: der.proxima },
+          { ...encabezadoModulo('building-2', 'Proveedores', 'Encargados del tratamiento (art. 28)', '/proveedores'), metricas: modulos.proveedores },
+        ].forEach((mod) => { %>
+          <div class="card p-5">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-start gap-3">
+                <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-600"><%- icono(mod.icono, 'h-4 w-4') %></span>
+                <div>
+                  <h3 class="font-semibold text-slate-900"><%= mod.titulo %></h3>
+                  <p class="text-xs text-slate-500"><%= mod.descripcion %></p>
+                </div>
+              </div>
+              <a href="<%= mod.href %>" class="enlace inline-flex items-center gap-1 text-xs">Ver módulo<%- icono('arrow-right', 'h-3.5 w-3.5') %></a>
+            </div>
+            <div class="mt-3 divide-y divide-slate-100">
+              <% mod.metricas.forEach((k) => { %><%- include('partials/metrica', { k }) %><% }) %>
+              <% if (mod.proxima !== undefined) { const p = mod.proxima; %>
+                <a href="<%= p ? '/derechos/' + p.id : '/derechos?plazo=proximas' %>" class="group -mx-2 flex items-center justify-between gap-4 rounded-lg px-2 py-2.5 transition hover:bg-slate-50">
+                  <span class="min-w-0">
+                    <span class="block text-sm text-slate-700">Próxima en vencer</span>
+                    <span class="mt-0.5 block truncate text-xs <%= p && p.urgencia.nivel === 'amarillo' ? 'text-amber-700' : 'text-slate-500' %>">
+                      <%= p ? TIPOS_DERECHO[p.tipo_derecho] + ' · ' + p.nombre_solicitante + ' · ' + fecha(p.fecha_limite) : 'Ninguna pendiente en plazo' %>
                     </span>
-                    <% if (s.global) { %>
-                      <span class="col-span-6 sm:col-span-5 h-3 rounded-full bg-slate-200 overflow-hidden" role="progressbar" aria-valuenow="<%= pct %>" aria-valuemin="0" aria-valuemax="100" aria-label="Cumplimiento <%= s.nombre %>">
-                        <span class="block h-full <%= colorPct(pct) %>" style="width: <%= pct %>%"></span>
-                      </span>
-                      <span class="col-span-2 sm:col-span-1 text-right text-sm font-semibold <%= textoPct(pct) %>"><%= pct %> %</span>
-                    <% } else { %>
-                      <span class="col-span-8 sm:col-span-6 text-sm text-slate-400 italic">Sin evaluaciones</span>
-                    <% } %>
-                  </a>
-                </li>
-              <% }) %>
-            </ul>
-          <% } %>
-        </div>
-
-        <div class="rounded-2xl bg-white p-5 shadow">
-          <div class="flex items-center justify-between"><h3 class="font-semibold text-slate-800">Declaraciones de Conformidad</h3><a href="/declaraciones" class="text-sm text-indigo-600 hover:underline">Ir al módulo</a></div>
-          <div class="mt-4 grid gap-3 sm:grid-cols-2"><% secciones.declaraciones.forEach((k) => { %><%- include('partials/kpi', { k }) %><% }) %></div>
-          <% if (declPendientes) { %>
-            <ul class="mt-4 divide-y divide-slate-100 text-sm">
-              <% decl.sinDeclaracion.forEach((s) => { %>
-                <li class="flex justify-between gap-3 py-1.5">
-                  <a href="/declaraciones?sistema=<%= s.id %>" class="text-slate-800 hover:text-indigo-600 hover:underline"><%= s.nombre %></a>
-                  <span class="text-xs text-yellow-700">Sin declaración emitida</span>
-                </li>
-              <% }) %>
-              <% decl.caducadas.forEach((s) => { %>
-                <li class="flex justify-between gap-3 py-1.5">
-                  <a href="/declaraciones?sistema=<%= s.id %>" class="text-slate-800 hover:text-indigo-600 hover:underline"><%= s.nombre %></a>
-                  <span class="text-xs text-yellow-700">Emitida el <%= fecha(s.emitida) %></span>
-                </li>
-              <% }) %>
-            </ul>
-          <% } else if (decl.totalSistemas) { %>
-            <p class="mt-3 text-sm text-green-700">Todos los sistemas tienen una declaración emitida en los últimos 12 meses.</p>
-          <% } %>
-        </div>
-
-        <div class="rounded-2xl bg-white p-5 shadow">
-          <div class="flex items-center justify-between"><h3 class="font-semibold text-slate-800">Políticas y documentación</h3><a href="/politicas" class="text-sm text-indigo-600 hover:underline">Ir al módulo</a></div>
-          <div class="mt-4 grid gap-3 sm:grid-cols-3"><% secciones.politicas.forEach((k) => { %><%- include('partials/kpi', { k }) %><% }) %></div>
-        </div>
-
-        <div class="rounded-2xl bg-white p-5 shadow lg:col-span-2">
-          <div class="flex items-center justify-between"><h3 class="font-semibold text-slate-800">BIA y continuidad</h3><a href="/bia" class="text-sm text-indigo-600 hover:underline">Ir al módulo</a></div>
-          <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <% secciones.bia.forEach((k) => { %><%- include('partials/kpi', { k }) %><% }) %>
-            <% if (bia.urgentes.length) { %>
-              <div class="sm:col-span-2 rounded-xl border border-red-200 p-4">
-                <h4 class="text-xs font-semibold uppercase text-red-700">Críticos/altos pendientes de análisis</h4>
-                <ul class="mt-1 divide-y divide-slate-100 text-sm">
-                  <% bia.urgentes.forEach((b) => { %>
-                    <li class="flex justify-between gap-3 py-1.5">
-                      <a href="/bia/<%= b.id %>" class="text-slate-800 hover:text-indigo-600 hover:underline"><%= b.nombre %></a>
-                      <span class="text-xs text-slate-500"><%= CRITICIDADES[b.criticidad] %></span>
+                  </span>
+                  <span class="flex items-center gap-2">
+                    <% if (p) { %><span class="text-sm font-semibold text-slate-900"><%= p.urgencia.dias === 0 ? 'Hoy' : p.urgencia.dias + ' días' %></span><% } %>
+                    <%- icono('chevron-right', 'h-4 w-4 text-slate-300') %>
+                  </span>
+                </a>
+              <% } %>
+            </div>
+            <% if (mod.urgentes && mod.urgentes.length) { %>
+              <div class="mt-3 rounded-xl border border-red-100 bg-red-50/40 p-3">
+                <p class="flex items-center gap-1.5 text-xs font-semibold text-red-700"><%- icono('triangle-alert', 'h-3.5 w-3.5') %>Urgente · <%= mod.tituloUrgentes %></p>
+                <ul class="mt-1.5 space-y-1 text-sm">
+                  <% mod.urgentes.forEach((u) => { %>
+                    <li class="flex items-center justify-between gap-3">
+                      <a href="<%= u.href %>" class="truncate text-slate-800 hover:text-indigo-600 hover:underline"><%= u.texto %></a>
+                      <span class="shrink-0 text-xs text-red-700"><%= u.detalle %></span>
                     </li>
                   <% }) %>
                 </ul>
               </div>
             <% } %>
           </div>
+        <% }) %>
+      </div>
+    </section>
+
+    <%# ================= 3. Estado ENS ================= %>
+    <section aria-labelledby="t-ens" class="space-y-4">
+      <div class="flex items-center gap-2">
+        <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-marca-50 text-indigo-600"><%- icono('shield-check', 'h-4 w-4') %></span>
+        <h2 id="t-ens" class="titulo-seccion">Estado ENS</h2>
+      </div>
+      <div class="grid items-start gap-4 lg:grid-cols-3">
+        <div class="card p-5 lg:col-span-2">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-start gap-3">
+              <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-600"><%- icono('server', 'h-4 w-4') %></span>
+              <div>
+                <h3 class="font-semibold text-slate-900">Cumplimiento por sistema</h3>
+                <p class="text-xs text-slate-500">Última evaluación de cada sistema · verde ≥ 80 %, ámbar ≥ 50 %, rojo &lt; 50 %</p>
+              </div>
+            </div>
+            <a href="/sistemas" class="enlace inline-flex items-center gap-1 text-xs">Ver sistemas<%- icono('arrow-right', 'h-3.5 w-3.5') %></a>
+          </div>
+          <% if (ens.sistemas.length === 0) { %>
+            <div class="vacio"><%- icono('server', 'h-6 w-6 text-slate-300') %>Todavía no hay sistemas registrados.</div>
+          <% } else { %>
+            <ul class="mt-3 divide-y divide-slate-100">
+              <% ens.sistemas.forEach((s) => { const pct = s.global ? s.global.porcentaje : 0; %>
+                <li>
+                  <a href="<%= s.ultima ? '/evaluaciones/' + s.ultima.id : '/sistemas/' + s.id %>" class="-mx-2 grid grid-cols-12 items-center gap-3 rounded-lg px-2 py-2.5 transition hover:bg-slate-50">
+                    <span class="col-span-12 truncate text-sm font-medium text-slate-800 sm:col-span-4"><%= s.nombre %></span>
+                    <span class="col-span-4 sm:col-span-2">
+                      <% if (s.categoria_general) { %>
+                        <span class="badge <%= categoriaClases[s.categoria_general].badge %>"><%= CATEGORIAS_SISTEMA[s.categoria_general] %></span>
+                      <% } else { %><span class="text-xs italic text-slate-400">Sin categoría</span><% } %>
+                    </span>
+                    <% if (s.global) { %>
+                      <span class="progreso col-span-6 sm:col-span-5" role="progressbar" aria-valuenow="<%= pct %>" aria-valuemin="0" aria-valuemax="100" aria-label="Cumplimiento <%= s.nombre %>">
+                        <span class="<%= colorPct(pct) %>" style="width: <%= pct %>%"></span>
+                      </span>
+                      <span class="col-span-2 text-right text-sm font-semibold tabular-nums text-slate-800 sm:col-span-1"><%= pct %> %</span>
+                    <% } else { %>
+                      <span class="col-span-8 text-sm italic text-slate-400 sm:col-span-6">Sin evaluaciones</span>
+                    <% } %>
+                  </a>
+                </li>
+              <% }) %>
+            </ul>
+            <div class="mt-2 border-t border-slate-100 pt-2">
+              <% modulos.ens.forEach((k) => { %><%- include('partials/metrica', { k }) %><% }) %>
+            </div>
+          <% } %>
         </div>
+
+        <div class="space-y-4">
+          <% [
+            { ...encabezadoModulo('file-badge', 'Declaraciones', 'Conformidad por sistema', '/declaraciones'), metricas: modulos.declaraciones,
+              urgentes: [...decl.sinDeclaracion.map((s) => ({ texto: s.nombre, href: '/declaraciones?sistema=' + s.id, detalle: 'Sin emitir' })), ...decl.caducadas.map((s) => ({ texto: s.nombre, href: '/declaraciones?sistema=' + s.id, detalle: 'Emitida el ' + fecha(s.emitida) }))] },
+            { ...encabezadoModulo('book-open-check', 'Políticas', 'Documentación y aceptaciones', '/politicas'), metricas: modulos.politicas },
+          ].forEach((mod) => { %>
+            <div class="card p-5">
+              <div class="flex items-center justify-between gap-3">
+                <h3 class="flex items-center gap-2 font-semibold text-slate-900"><%- icono(mod.icono, 'h-4 w-4 text-slate-500') %><%= mod.titulo %></h3>
+                <a href="<%= mod.href %>" class="enlace text-xs">Ver módulo</a>
+              </div>
+              <div class="mt-2 divide-y divide-slate-100"><% mod.metricas.forEach((k) => { %><%- include('partials/metrica', { k }) %><% }) %></div>
+              <% if (mod.urgentes && mod.urgentes.length) { %>
+                <ul class="mt-2 space-y-1 border-t border-slate-100 pt-2 text-xs">
+                  <% mod.urgentes.forEach((u) => { %>
+                    <li class="flex justify-between gap-3"><a href="<%= u.href %>" class="truncate text-slate-700 hover:text-indigo-600 hover:underline"><%= u.texto %></a><span class="shrink-0 text-amber-700"><%= u.detalle %></span></li>
+                  <% }) %>
+                </ul>
+              <% } %>
+            </div>
+          <% }) %>
+        </div>
+
+        <div class="card p-5 lg:col-span-3">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-start gap-3">
+              <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-600"><%- icono('life-buoy', 'h-4 w-4') %></span>
+              <div>
+                <h3 class="font-semibold text-slate-900">BIA y continuidad</h3>
+                <p class="text-xs text-slate-500">Procesos de negocio de criticidad alta o crítica</p>
+              </div>
+            </div>
+            <a href="/bia" class="enlace inline-flex items-center gap-1 text-xs">Ver módulo<%- icono('arrow-right', 'h-3.5 w-3.5') %></a>
+          </div>
+          <div class="mt-2 grid gap-x-8 md:grid-cols-3">
+            <% modulos.bia.forEach((k) => { %><div class="border-b border-slate-100 md:border-b-0"><%- include('partials/metrica', { k }) %></div><% }) %>
+            <div class="py-2.5">
+              <% if (bia.urgentes.length) { %>
+                <p class="flex items-center gap-1.5 text-xs font-semibold text-red-700"><%- icono('triangle-alert', 'h-3.5 w-3.5') %>Pendientes de análisis</p>
+                <ul class="mt-1 space-y-0.5 text-sm">
+                  <% bia.urgentes.forEach((b) => { %>
+                    <li class="flex justify-between gap-3"><a href="/bia/<%= b.id %>" class="truncate text-slate-800 hover:text-indigo-600 hover:underline"><%= b.nombre %></a><span class="text-xs text-slate-500"><%= CRITICIDADES[b.criticidad] %></span></li>
+                  <% }) %>
+                </ul>
+              <% } else { %>
+                <p class="flex items-center gap-1.5 text-xs text-emerald-600"><%- icono('circle-check', 'h-3.5 w-3.5') %>Todos los procesos críticos están analizados</p>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <%# ================= 4. Riesgos e incidencias ================= %>
+    <section aria-labelledby="t-riesgos" class="space-y-4">
+      <h2 id="t-riesgos" class="titulo-seccion">Riesgos e incidencias</h2>
+      <div class="grid gap-4 lg:grid-cols-2">
+        <a href="/riesgos" class="card group p-5 transition hover:border-indigo-200">
+          <div class="flex items-center justify-between">
+            <h3 class="flex items-center gap-2 font-semibold text-slate-900"><%- icono('gauge', 'h-4 w-4 text-slate-500') %>Riesgos por nivel</h3>
+            <span class="text-xs text-slate-500"><%= act.riesgos %> evaluados</span>
+          </div>
+          <div class="mt-4 space-y-3">
+            <% [['Alto', act.riesgosAltos, 'bg-red-500'], ['Medio', act.riesgosMedios, 'bg-amber-500'], ['Bajo', act.riesgosBajos, 'bg-emerald-500']].forEach(([t, v, c]) => { %>
+              <div class="grid grid-cols-[5rem_1fr_2.5rem] items-center gap-3 text-sm">
+                <span class="flex items-center gap-2 text-slate-600"><span class="punto <%= c %>"></span><%= t %></span>
+                <span class="progreso h-2"><span class="<%= c %>" style="width: <%= Math.round((v / maxRiesgo) * 100) %>%"></span></span>
+                <span class="text-right font-semibold tabular-nums text-slate-800"><%= v %></span>
+              </div>
+            <% }) %>
+          </div>
+          <% if (act.altosSinMedidas) { %><p class="mt-4 flex items-center gap-1.5 text-xs text-red-600"><%- icono('circle-dot', 'h-3.5 w-3.5') %><%= act.altosSinMedidas %> riesgo(s) alto(s) sin medidas mitigadoras</p><% } %>
+        </a>
+
+        <a href="/incidentes" class="card group p-5 transition hover:border-indigo-200">
+          <div class="flex items-center justify-between">
+            <h3 class="flex items-center gap-2 font-semibold text-slate-900"><%- icono('siren', 'h-4 w-4 text-slate-500') %>Incidentes de los últimos 12 meses</h3>
+            <span class="text-xs text-slate-500"><%= total12m %> detectados</span>
+          </div>
+          <% if (total12m) { %>
+            <div class="mt-4 flex h-2.5 overflow-hidden rounded-full bg-slate-100" role="img" aria-label="<%= inc.cerrados12m %> cerrados y <%= inc.abiertos12m %> abiertos">
+              <div class="h-full bg-emerald-500" style="width: <%= pctCerrados %>%"></div>
+              <div class="h-full <%= inc.abiertos12m ? 'bg-amber-500' : '' %>" style="width: <%= 100 - pctCerrados %>%"></div>
+            </div>
+            <div class="mt-2 flex flex-wrap gap-4 text-xs text-slate-600">
+              <span class="flex items-center gap-1.5"><span class="punto bg-emerald-500"></span>Cerrados: <strong><%= inc.cerrados12m %></strong> (<%= pctCerrados %> %)</span>
+              <span class="flex items-center gap-1.5"><span class="punto bg-amber-500"></span>Abiertos: <strong><%= inc.abiertos12m %></strong> (<%= 100 - pctCerrados %> %)</span>
+            </div>
+          <% } else { %>
+            <p class="mt-4 flex items-center gap-1.5 text-sm text-emerald-600"><%- icono('circle-check', 'h-4 w-4') %>Ningún incidente detectado en los últimos 12 meses.</p>
+          <% } %>
+          <p class="mt-5 text-xs font-medium uppercase tracking-wide text-slate-400">Activos por gravedad</p>
+          <div class="mt-2 grid grid-cols-4 gap-2 text-center">
+            <% [['CRITICA', 'bg-red-500'], ['ALTA', 'bg-orange-500'], ['MEDIA', 'bg-yellow-500'], ['BAJA', 'bg-emerald-500']].forEach(([g, c]) => { %>
+              <div class="rounded-lg border border-slate-100 py-2">
+                <p class="text-lg font-semibold tabular-nums text-slate-900"><%= inc.activosPorGravedad[g] %></p>
+                <p class="flex items-center justify-center gap-1 text-[11px] text-slate-500"><span class="punto h-1.5 w-1.5 <%= c %>"></span><%= GRAVEDADES[g] %></p>
+              </div>
+            <% }) %>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <%# ================= 5. Acciones pendientes ================= %>
+    <section id="acciones" aria-labelledby="t-acciones" class="scroll-mt-24 space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <h2 id="t-acciones" class="titulo-seccion">Acciones pendientes</h2>
+        <span class="flex items-center gap-1.5 text-xs text-slate-500"><%- icono('sparkles', 'h-3.5 w-3.5 text-violet-500') %>Priorizadas por el asistente a partir de tus datos</span>
+      </div>
+      <div class="card">
+        <% if (recomendaciones.length === 0) { %>
+          <div class="vacio">
+            <span class="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600"><%- icono('circle-check', 'h-5 w-5') %></span>
+            <p class="font-medium text-slate-700">No hay acciones pendientes</p>
+            <p>Todos los indicadores están al día.</p>
+          </div>
+        <% } else { %>
+          <ul class="divide-y divide-slate-100">
+            <% recomendaciones.forEach((r) => { const e = nivelEstilo[r.nivel]; %>
+              <li class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                <div class="flex items-start gap-3">
+                  <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-500 ring-1 ring-slate-100"><%- icono(r.icono, 'h-4 w-4') %></span>
+                  <div>
+                    <p class="text-sm font-medium text-slate-900"><%= r.titulo %></p>
+                    <p class="mt-0.5 text-xs text-slate-500"><%= r.motivo %></p>
+                  </div>
+                </div>
+                <div class="flex shrink-0 items-center gap-3 pl-11 sm:pl-0">
+                  <span class="flex items-center gap-1.5 text-xs font-medium <%= e.texto %>"><span class="punto h-1.5 w-1.5 <%= e.punto %>"></span><%= e.etiqueta %></span>
+                  <a href="<%= r.href %>" class="btn btn-secondary btn-sm"><%= r.accion %><%- icono('arrow-right', 'h-3.5 w-3.5') %></a>
+                </div>
+              </li>
+            <% }) %>
+          </ul>
+        <% } %>
+      </div>
+    </section>
+
+    <%# ================= 6. Actividad reciente ================= %>
+    <section aria-labelledby="t-actividad" class="space-y-4">
+      <h2 id="t-actividad" class="titulo-seccion">Actividad reciente</h2>
+      <div class="card p-5">
+        <% if (actividad.length === 0) { %>
+          <div class="vacio"><%- icono('history', 'h-6 w-6 text-slate-300') %>Todavía no hay actividad registrada.</div>
+        <% } else { %>
+          <ol class="relative space-y-5 before:absolute before:inset-y-2 before:left-4 before:w-px before:bg-slate-200">
+            <% actividad.forEach((ev) => { %>
+              <li class="relative flex gap-4">
+                <span class="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-slate-500 ring-1 ring-slate-200"><%- icono(ev.icono, 'h-4 w-4') %></span>
+                <div class="min-w-0 flex-1 pt-0.5">
+                  <p class="text-sm text-slate-700">
+                    <a href="<%= ev.href %>" class="font-medium text-slate-900 hover:text-indigo-600 hover:underline"><%= ev.texto %></a>
+                    <% if (ev.tipo === 'estado') { const et = etiquetasEstado[ev.catalogo]; %>
+                      <span class="text-slate-500">· <%= et[ev.anterior] %> → <strong class="font-medium text-slate-700"><%= et[ev.nuevo] %></strong></span>
+                    <% } else if (ev.resultado) { %>
+                      <span class="text-slate-500">· <%= RESULTADOS_PRUEBA[ev.resultado] %></span>
+                    <% } %>
+                  </p>
+                  <p class="mt-0.5 text-xs text-slate-500">
+                    <span class="font-medium text-slate-600"><%= ev.modulo %></span><%= ev.contexto && ev.modulo === 'ENS' ? ' · ' + ev.contexto : '' %> · <%= fechaHora(ev.fecha) %><%= ev.usuario ? ' · ' + ev.usuario : '' %>
+                  </p>
+                </div>
+              </li>
+            <% }) %>
+          </ol>
+        <% } %>
       </div>
     </section>
   </main>

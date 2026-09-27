@@ -1,5 +1,5 @@
 <%
-  const selectClase = 'mt-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500';
+  const selectClase = 'input w-auto';
   const esAdmin = user.rol === 'ADMIN';
   const pendientes = politicas.filter((p) => p.pendienteAceptar).length;
 %>
@@ -8,26 +8,27 @@
 <head>
   <%- include('../partials/head') %>
 </head>
-<body class="min-h-screen bg-slate-100">
+<body class="min-h-screen bg-fondo">
   <%- include('../partials/nav') %>
 
-  <main class="max-w-7xl mx-auto px-4 py-8">
+  <main class="contenedor py-8 sm:py-10">
+    <%- include('../partials/migas', { migas: [{ texto: 'ENS' }, { texto: 'Políticas y Documentación' }] }) %>
     <%- include('../partials/flash') %>
 
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-slate-800">Políticas y Documentación</h1>
-        <p class="text-sm text-slate-500">
+        <h1 class="titulo-pagina">Políticas y Documentación</h1>
+        <p class="subtitulo-pagina">
           Política de Seguridad de la Información, procedimientos, instrucciones técnicas y normativas internas<%= esAdmin ? '' : ' vigentes' %>
         </p>
       </div>
       <% if (esAdmin) { %>
-        <a href="/politicas/nueva" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">+ Nuevo documento</a>
+        <a href="/politicas/nueva" class="btn btn-primary"><%- icono('plus', 'h-4 w-4') %>Nuevo documento</a>
       <% } %>
     </div>
 
     <% if (pendientes) { %>
-      <div class="mt-6 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-800" role="status">
+      <div class="mt-6 aviso alerta-info" role="status"><%- icono('info') %>
         Tienes <strong><%= pendientes %> documento(s)</strong> pendientes de leer y aceptar.
       </div>
     <% } %>
@@ -37,7 +38,7 @@
     <form action="/politicas" method="GET" class="mt-6 flex flex-wrap items-end gap-3">
       <% if (filtro) { %><input type="hidden" name="filtro" value="<%= filtro %>"><% } %>
       <div>
-        <label for="tipo" class="block text-sm font-medium text-slate-700">Tipo de documento</label>
+        <label for="tipo" class="label">Tipo de documento</label>
         <select id="tipo" name="tipo" onchange="this.form.submit()" class="<%= selectClase %>">
           <option value="">Todos</option>
           <% Object.entries(TIPOS_POLITICA).forEach(([v, etiqueta]) => { %>
@@ -47,7 +48,7 @@
       </div>
       <% if (esAdmin) { %>
         <div>
-          <label for="estado" class="block text-sm font-medium text-slate-700">Estado</label>
+          <label for="estado" class="label">Estado</label>
           <select id="estado" name="estado" onchange="this.form.submit()" class="<%= selectClase %>">
             <option value="">Todos</option>
             <% Object.entries(ESTADOS_POLITICA).forEach(([v, etiqueta]) => { %>
@@ -56,41 +57,41 @@
           </select>
         </div>
       <% } %>
-      <noscript><button type="submit" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">Filtrar</button></noscript>
+      <noscript><button type="submit" class="btn btn-secondary">Filtrar</button></noscript>
       <% if (tipo || estado || filtro) { %><a href="/politicas" class="py-2 text-sm text-indigo-600 hover:underline">Quitar filtros</a><% } %>
     </form>
 
-    <div class="mt-4 bg-white rounded-2xl shadow overflow-x-auto">
+    <div class="mt-4 tabla-contenedor">
       <% if (politicas.length === 0) { %>
         <p class="p-8 text-center text-slate-500"><%= tipo || estado || filtro ? 'No hay documentos con esos filtros.' : 'No hay documentos publicados.' %></p>
       <% } else { %>
-        <table class="w-full text-sm">
-          <thead class="bg-slate-50 text-left text-slate-600">
+        <table class="tabla">
+          <thead>
             <tr>
-              <th class="px-4 py-3 font-medium">Documento</th>
-              <th class="px-4 py-3 font-medium">Tipo</th>
-              <th class="px-4 py-3 font-medium">Versión vigente</th>
-              <th class="px-4 py-3 font-medium">Estado</th>
-              <th class="px-4 py-3 font-medium">Próxima revisión</th>
-              <th class="px-4 py-3 font-medium">Aceptación</th>
-              <th class="px-4 py-3 font-medium text-right">Acciones</th>
+              <th>Documento</th>
+              <th>Tipo</th>
+              <th>Versión vigente</th>
+              <th>Estado</th>
+              <th>Próxima revisión</th>
+              <th>Aceptación</th>
+              <th class="text-right">Acciones</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-100">
+          <tbody>
             <% politicas.forEach((p) => { %>
               <tr class="hover:bg-slate-50 <%= p.estado === 'OBSOLETA' ? 'opacity-60' : '' %>">
                 <td class="px-4 py-3 max-w-sm">
                   <a href="/politicas/<%= p.id %>" class="font-medium text-slate-800 hover:text-indigo-600 hover:underline"><%= p.titulo %></a>
                 </td>
                 <td class="px-4 py-3 text-slate-600"><%= TIPOS_POLITICA[p.tipo_documento] %></td>
-                <td class="px-4 py-3 font-mono text-slate-700"><%= p.version %></td>
+                <td class="px-4 py-3 tabular-nums text-slate-700"><%= p.version %></td>
                 <td class="px-4 py-3">
-                  <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset whitespace-nowrap <%= estadoPoliticaClases[p.estado] %>"><%= ESTADOS_POLITICA[p.estado] %></span>
+                  <span class="badge <%= estadoPoliticaClases[p.estado] %>"><%= ESTADOS_POLITICA[p.estado] %></span>
                 </td>
                 <td class="px-4 py-3 whitespace-nowrap">
                   <span class="text-slate-600"><%= p.fecha_proxima_revision ? fecha(p.fecha_proxima_revision) : '—' %></span>
                   <% if (p.alerta) { %>
-                    <span class="mt-1 block w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset <%= revisionClases[p.alerta.nivel] %>"><%= p.alerta.nivel === 'vencida' ? '⚠ ' : '' %><%= p.alerta.texto %></span>
+                    <span class="badge mt-1 <%= revisionClases[p.alerta.nivel] %>"><%= p.alerta.nivel === 'vencida' ? '⚠ ' : '' %><%= p.alerta.texto %></span>
                   <% } %>
                 </td>
                 <td class="px-4 py-3 whitespace-nowrap">
@@ -105,9 +106,9 @@
                   <% } %>
                 </td>
                 <td class="px-4 py-3 text-right whitespace-nowrap">
-                  <a href="/politicas/<%= p.id %>" class="rounded-lg border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-100">Ver</a>
+                  <a href="/politicas/<%= p.id %>" class="btn btn-secondary btn-sm"><%- icono('eye', 'h-3.5 w-3.5') %>Ver</a>
                   <% if (esAdmin) { %>
-                    <a href="/politicas/<%= p.id %>/editar" class="ml-1 rounded-lg bg-indigo-600 px-3 py-1 text-white hover:bg-indigo-700">Editar</a>
+                    <a href="/politicas/<%= p.id %>/editar" class="ml-1 btn btn-primary btn-sm"><%- icono('pencil', 'h-3.5 w-3.5') %>Editar</a>
                   <% } %>
                 </td>
               </tr>

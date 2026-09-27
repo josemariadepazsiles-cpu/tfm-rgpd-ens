@@ -1,0 +1,19 @@
+<%#
+  Ruta de navegación (breadcrumb). Recibe `migas` = [{ texto, href? }, ...]; el último es la página actual.
+  Ejemplo: include('../partials/migas', { migas: [{ texto: 'RGPD' }, { texto: 'Incidentes', href: '/incidentes' }, { texto: 'Detalle' }] })
+%>
+<nav aria-label="Ruta de navegación" class="mb-4">
+  <ol class="flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
+    <li><a href="/dashboard" class="inline-flex items-center gap-1 transition hover:text-indigo-600"><%- icono('house', 'h-3.5 w-3.5') %><span class="sr-only sm:not-sr-only">Inicio</span></a></li>
+    <% migas.forEach((m, i) => { const ultima = i === migas.length - 1; %>
+      <li class="flex items-center gap-1.5">
+        <%- icono('chevron-right', 'h-3 w-3 text-slate-300') %>
+        <% if (m.href && !ultima) { %>
+          <a href="<%= m.href %>" class="max-w-[16rem] truncate transition hover:text-indigo-600"><%= m.texto %></a>
+        <% } else { %>
+          <span class="max-w-[20rem] truncate <%= ultima ? 'font-medium text-slate-700' : '' %>" <%- ultima ? 'aria-current="page"' : '' %>><%= m.texto %></span>
+        <% } %>
+      </li>
+    <% }) %>
+  </ol>
+</nav>

@@ -7,20 +7,20 @@
 <head>
   <%- include('../partials/head') %>
 </head>
-<body class="min-h-screen bg-slate-100">
+<body class="min-h-screen bg-fondo">
   <%- include('../partials/nav') %>
 
-  <main class="max-w-6xl mx-auto px-4 py-8">
+  <main class="contenedor py-8 sm:py-10">
+    <%- include('../partials/migas', { migas: [{ texto: 'ENS' }, { texto: 'Declaraciones de Conformidad', href: '/declaraciones' }, { texto: d.sistema_nombre + ' · v' + d.version }] }) %>
     <%- include('../partials/flash') %>
 
-    <a href="/declaraciones?sistema=<%= d.sistema_id %>" class="text-sm text-indigo-600 hover:underline">&larr; Declaraciones de <%= d.sistema_nombre %></a>
 
-    <div class="mt-2 flex flex-wrap items-start justify-between gap-4">
+    <div class="flex flex-wrap items-start justify-between gap-4">
       <div>
         <p class="text-sm font-medium uppercase tracking-wide text-indigo-600">Declaración de Conformidad ENS</p>
-        <h1 class="text-2xl font-bold text-slate-800"><%= d.sistema_nombre %> · versión <%= d.version %></h1>
+        <h1 class="titulo-pagina"><%= d.sistema_nombre %> · versión <%= d.version %></h1>
         <div class="mt-2 flex flex-wrap items-center gap-2">
-          <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset <%= estadoDeclaracionClases[d.estado] %>"><%= ESTADOS_DECLARACION[d.estado] %></span>
+          <span class="badge <%= estadoDeclaracionClases[d.estado] %>"><%= ESTADOS_DECLARACION[d.estado] %></span>
           <% if (otrasVersiones.length > 1) { %>
             <span class="text-xs text-slate-500">Otras versiones:
               <% otrasVersiones.filter((v) => v.id !== d.id).forEach((v, i) => { %><%= i ? ', ' : '' %><a href="/declaraciones/<%= v.id %>" class="text-indigo-600 hover:underline">v<%= v.version %></a><% }) %>
@@ -29,12 +29,12 @@
         </div>
       </div>
       <div class="flex flex-wrap gap-2">
-        <a href="/declaraciones/<%= d.id %>/pdf?ver=1" target="_blank" rel="noopener" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-700 hover:bg-slate-50 transition">Ver PDF</a>
-        <a href="/declaraciones/<%= d.id %>/pdf" class="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 transition">Exportar a PDF</a>
+        <a href="/declaraciones/<%= d.id %>/pdf?ver=1" target="_blank" rel="noopener" class="btn btn-secondary"><%- icono('file-text', 'h-4 w-4') %>Ver PDF</a>
+        <a href="/declaraciones/<%= d.id %>/pdf" class="btn btn-primary"><%- icono('download', 'h-4 w-4') %>Exportar a PDF</a>
         <% if (user.rol === 'ADMIN' && d.estado === 'BORRADOR') { %>
           <form action="/declaraciones/<%= d.id %>/emitir" method="POST"
                 onsubmit="return confirm('¿Emitir la declaración versión <%= d.version %>? Una vez emitida no se podrá modificar.')">
-            <button type="submit" class="rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700 transition">Marcar como Emitida</button>
+            <button type="submit" class="btn btn-success"><%- icono('badge-check', 'h-4 w-4') %>Marcar como Emitida</button>
           </form>
         <% } %>
       </div>
@@ -45,12 +45,12 @@
         Esta versión ha sido sustituida por una posterior. Se conserva como registro histórico.
       </div>
     <% } else if (d.estado === 'BORRADOR') { %>
-      <div class="mt-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+      <div class="mt-6 aviso alerta-aviso"><%- icono('circle-alert') %>
         Borrador: revisa los datos y las observaciones antes de emitirla. El PDF lleva la marca de agua «BORRADOR».
       </div>
     <% } %>
 
-    <section class="mt-6 bg-white rounded-2xl shadow p-6">
+    <section class="mt-6 card p-6">
       <div class="grid gap-6 md:grid-cols-3">
         <dl class="md:col-span-2 grid gap-4 sm:grid-cols-2">
           <div>
@@ -59,7 +59,7 @@
           </div>
           <div>
             <dt class="text-sm font-medium text-slate-500">Categoría ENS</dt>
-            <dd class="mt-1"><span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset <%= categoriaClases[d.categoria_ens].badge %>"><%= CATEGORIAS_SISTEMA[d.categoria_ens] %></span></dd>
+            <dd class="mt-1"><span class="badge <%= categoriaClases[d.categoria_ens].badge %>"><%= CATEGORIAS_SISTEMA[d.categoria_ens] %></span></dd>
           </div>
           <div>
             <dt class="text-sm font-medium text-slate-500">Evaluación de origen</dt>
@@ -85,7 +85,7 @@
             <div class="h-full <%= pct >= 80 ? 'bg-green-500' : pct >= 50 ? 'bg-amber-500' : 'bg-red-500' %>" style="width: <%= pct %>%"></div>
           </div>
           <dl class="mt-4 grid grid-cols-4 gap-2 text-xs">
-            <div><dt class="text-slate-500">Total</dt><dd class="text-lg font-semibold text-slate-800"><%= d.numero_controles_total %></dd></div>
+            <div><dt class="text-slate-500">Total</dt><dd class="titulo-seccion"><%= d.numero_controles_total %></dd></div>
             <div><dt class="text-slate-500">Implem.</dt><dd class="text-lg font-semibold text-green-700"><%= d.numero_controles_implementados %></dd></div>
             <div><dt class="text-slate-500">Pend.</dt><dd class="text-lg font-semibold text-amber-700"><%= d.numero_controles_pendientes %></dd></div>
             <div><dt class="text-slate-500">No aplic.</dt><dd class="text-lg font-semibold text-slate-600"><%= d.numero_controles_no_aplica %></dd></div>
@@ -95,26 +95,26 @@
       </div>
     </section>
 
-    <h2 class="mt-8 text-lg font-semibold text-slate-800">Estado de los controles en el momento de la generación</h2>
+    <h2 class="mt-8 titulo-seccion">Estado de los controles en el momento de la generación</h2>
     <div class="mt-4 space-y-6">
       <% grupos.filter((g) => g.controles.length).forEach((g) => { const clases = categoriaClases[g.categoria]; %>
-        <section class="bg-white rounded-2xl shadow overflow-hidden">
+        <section class="card overflow-hidden">
           <header class="flex flex-wrap items-center justify-between gap-3 border-b px-6 py-3 <%= clases.cabecera %>">
-            <h3 class="font-semibold">Categoría <%= CATEGORIAS_SISTEMA[g.categoria] %></h3>
+            <h3 class="flex items-center gap-2.5 font-semibold"><span class="punto <%= categoriaClases[g.categoria].punto %>" aria-hidden="true"></span>Categoría <%= CATEGORIAS_SISTEMA[g.categoria] %></h3>
             <span class="text-sm"><strong><%= g.implementados %>/<%= g.aplicables %></strong> implementados</span>
           </header>
           <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead class="bg-slate-50 text-left text-slate-600">
+            <table class="tabla">
+              <thead>
                 <tr>
-                  <th class="px-4 py-2 font-medium">Control</th>
-                  <th class="px-4 py-2 font-medium">Estado</th>
-                  <th class="px-4 py-2 font-medium">Responsable</th>
-                  <th class="px-4 py-2 font-medium">Último cambio</th>
-                  <th class="px-4 py-2 font-medium">Evidencia</th>
+                  <th>Control</th>
+                  <th>Estado</th>
+                  <th>Responsable</th>
+                  <th>Último cambio</th>
+                  <th>Evidencia</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-100">
+              <tbody>
                 <% g.controles.forEach((c) => { %>
                   <tr>
                     <td class="px-4 py-2 font-medium text-slate-800"><%= c.control_nombre %></td>
@@ -131,14 +131,14 @@
       <% }) %>
     </div>
 
-    <section class="mt-6 bg-white rounded-2xl shadow p-6">
-      <h2 class="text-lg font-semibold text-slate-800">Observaciones</h2>
+    <section class="mt-6 card p-6">
+      <h2 class="titulo-seccion">Observaciones</h2>
       <% if (user.rol === 'ADMIN' && d.estado === 'BORRADOR') { %>
         <form action="/declaraciones/<%= d.id %>" method="POST" class="mt-3 space-y-3">
-          <textarea name="observaciones" rows="4" class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          <textarea name="observaciones" rows="4" class="input"
                     placeholder="Contexto, salvedades o compromisos de implantación de los controles pendientes…"><%= d.observaciones || '' %></textarea>
           <div class="flex justify-end">
-            <button type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition">Guardar observaciones</button>
+            <button type="submit" class="btn btn-primary">Guardar observaciones</button>
           </div>
         </form>
       <% } else { %>

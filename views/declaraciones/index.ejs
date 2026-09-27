@@ -3,15 +3,16 @@
 <head>
   <%- include('../partials/head') %>
 </head>
-<body class="min-h-screen bg-slate-100">
+<body class="min-h-screen bg-fondo">
   <%- include('../partials/nav') %>
 
-  <main class="max-w-6xl mx-auto px-4 py-8">
+  <main class="contenedor py-8 sm:py-10">
+    <%- include('../partials/migas', { migas: [{ texto: 'ENS' }, { texto: 'Declaraciones de Conformidad' }] }) %>
     <%- include('../partials/flash') %>
 
     <div>
-      <h1 class="text-2xl font-bold text-slate-800">Declaraciones de Conformidad ENS</h1>
-      <p class="text-sm text-slate-500">
+      <h1 class="titulo-pagina">Declaraciones de Conformidad ENS</h1>
+      <p class="subtitulo-pagina">
         Informes formales de adecuación generados a partir del checklist de cada sistema.
         <% if (user.rol === 'ADMIN') { %>Para generar una nueva, abre la evaluación del sistema y pulsa «Generar Declaración de Conformidad».<% } %>
       </p>
@@ -19,36 +20,36 @@
 
     <form action="/declaraciones" method="GET" class="mt-6 flex flex-wrap items-end gap-3">
       <div>
-        <label for="sistema" class="block text-sm font-medium text-slate-700">Sistema</label>
+        <label for="sistema" class="label">Sistema</label>
         <select id="sistema" name="sistema" onchange="this.form.submit()"
-                class="mt-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                class="input w-auto">
           <option value="">Todos los sistemas</option>
           <% sistemas.forEach((s) => { %>
             <option value="<%= s.id %>" <%= filtro === s.id ? 'selected' : '' %>><%= s.nombre %></option>
           <% }) %>
         </select>
       </div>
-      <noscript><button type="submit" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">Filtrar</button></noscript>
+      <noscript><button type="submit" class="btn btn-secondary">Filtrar</button></noscript>
       <% if (filtro) { %><a href="/declaraciones" class="py-2 text-sm text-indigo-600 hover:underline">Quitar filtro</a><% } %>
     </form>
 
-    <div class="mt-4 bg-white rounded-2xl shadow overflow-x-auto">
+    <div class="mt-4 tabla-contenedor">
       <% if (declaraciones.length === 0) { %>
         <p class="p-8 text-center text-slate-500">Todavía no se ha generado ninguna declaración<%= filtro ? ' para este sistema' : '' %>.</p>
       <% } else { %>
-        <table class="w-full text-sm">
-          <thead class="bg-slate-50 text-left text-slate-600">
+        <table class="tabla">
+          <thead>
             <tr>
-              <th class="px-4 py-3 font-medium">Sistema</th>
-              <th class="px-4 py-3 font-medium">Categoría ENS</th>
-              <th class="px-4 py-3 font-medium">Versión</th>
-              <th class="px-4 py-3 font-medium">Implementación</th>
-              <th class="px-4 py-3 font-medium">Generada</th>
-              <th class="px-4 py-3 font-medium">Estado</th>
-              <th class="px-4 py-3 font-medium text-right">Acciones</th>
+              <th>Sistema</th>
+              <th>Categoría ENS</th>
+              <th>Versión</th>
+              <th>Implementación</th>
+              <th>Generada</th>
+              <th>Estado</th>
+              <th class="text-right">Acciones</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-100">
+          <tbody>
             <% declaraciones.forEach((d) => { const pct = Number(d.porcentaje_implementacion); %>
               <tr class="hover:bg-slate-50 <%= d.estado === 'SUPERADA' ? 'opacity-60' : '' %>">
                 <td class="px-4 py-3">
@@ -56,9 +57,9 @@
                   <span class="block text-xs text-slate-500"><%= d.evaluacion_nombre %></span>
                 </td>
                 <td class="px-4 py-3">
-                  <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset <%= categoriaClases[d.categoria_ens].badge %>"><%= CATEGORIAS_SISTEMA[d.categoria_ens] %></span>
+                  <span class="badge <%= categoriaClases[d.categoria_ens].badge %>"><%= CATEGORIAS_SISTEMA[d.categoria_ens] %></span>
                 </td>
-                <td class="px-4 py-3 font-mono text-slate-700">v<%= d.version %></td>
+                <td class="px-4 py-3 tabular-nums text-slate-700">v<%= d.version %></td>
                 <td class="px-4 py-3">
                   <div class="flex items-center gap-2">
                     <div class="h-2 w-20 rounded-full bg-slate-200 overflow-hidden">
@@ -69,11 +70,11 @@
                 </td>
                 <td class="px-4 py-3 text-slate-600 whitespace-nowrap"><%= fechaHora(d.fecha_generacion) %></td>
                 <td class="px-4 py-3">
-                  <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset whitespace-nowrap <%= estadoDeclaracionClases[d.estado] %>"><%= ESTADOS_DECLARACION[d.estado] %></span>
+                  <span class="badge <%= estadoDeclaracionClases[d.estado] %>"><%= ESTADOS_DECLARACION[d.estado] %></span>
                 </td>
                 <td class="px-4 py-3 text-right whitespace-nowrap">
-                  <a href="/declaraciones/<%= d.id %>" class="rounded-lg border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-100">Ver</a>
-                  <a href="/declaraciones/<%= d.id %>/pdf" class="ml-1 rounded-lg border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-100">PDF</a>
+                  <a href="/declaraciones/<%= d.id %>" class="btn btn-secondary btn-sm"><%- icono('eye', 'h-3.5 w-3.5') %>Ver</a>
+                  <a href="/declaraciones/<%= d.id %>/pdf" class="ml-1 btn btn-secondary btn-sm"><%- icono('download', 'h-3.5 w-3.5') %>PDF</a>
                 </td>
               </tr>
             <% }) %>

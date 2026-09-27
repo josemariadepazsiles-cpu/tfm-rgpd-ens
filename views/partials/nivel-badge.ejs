@@ -1,1 +1,2 @@
-<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset <%= nivelClases[nivel] %>"><%= nivelEtiquetas[nivel] %></span>
+<% const puntoNivel = { BAJO: 'bg-green-500', MEDIO: 'bg-amber-500', ALTO: 'bg-red-500' }; %>
+<span class="badge <%= nivelClases[nivel] %>"><span class="punto h-1.5 w-1.5 <%= puntoNivel[nivel] %>" aria-hidden="true"></span><%= nivelEtiquetas[nivel] %></span>
