@@ -1,0 +1,2 @@
+<%# Celda «Sistema» de los listados: enlace a la ficha del sistema o «—» si es transversal. Recibe `s` (sistema o null). %>
+<% if (s) { %><a href="/sistemas/<%= s.id %>" class="inline-flex items-center gap-1.5 text-slate-700 hover:text-indigo-600 hover:underline"><%- icono('server', 'h-3.5 w-3.5 text-slate-400') %><%= s.nombre %></a><% } else { %><span class="text-slate-400" title="Sin sistema asociado (transversal)">—</span><% } %>

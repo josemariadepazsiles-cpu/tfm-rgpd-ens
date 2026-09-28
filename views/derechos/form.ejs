@@ -105,6 +105,7 @@
             <p class="mt-1 text-slate-600"><%= solicitud.responsable ? solicitud.responsable.nombre : 'Lo asignará un administrador' %></p>
           <% } %>
         </div>
+        <%- include('../partials/campo-sistema', { sistemas, valor: solicitud.sistema_id, ayuda: 'Sistema en el que se ejerce el derecho. Déjalo sin asignar si la solicitud es genérica.' }) %>
       </fieldset>
 
       <% if (solicitud.id) { %>

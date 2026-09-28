@@ -22,13 +22,13 @@
       id: 'ens',
       texto: 'ENS',
       icono: 'shield-check',
-      rutas: ['/sistemas', '/evaluaciones', '/controles', '/declaraciones', '/politicas', '/bia'],
+      rutas: ['/evaluaciones', '/controles', '/declaraciones', '/politicas', '/bia'],
       enlaces: [
-        { href: '/sistemas', texto: 'Sistemas ENS', detalle: 'Evaluaciones y checklist por sistema', icono: 'server' },
+        { href: '/sistemas', texto: 'Checklist ENS', detalle: 'Evaluaciones de controles de cada sistema', icono: 'list-checks' },
         { href: '/declaraciones', texto: 'Declaraciones de Conformidad', detalle: 'Informes formales de adecuación', icono: 'file-badge' },
         { href: '/politicas', texto: 'Políticas y Documentación', detalle: 'PSI, procedimientos y aceptaciones', icono: 'book-open-check' },
         { href: '/bia', texto: 'BIA y Continuidad', detalle: 'Impacto en el negocio, RTO y RPO', icono: 'life-buoy' },
-        ...(esAdmin ? [{ href: '/controles', texto: 'Catálogo de controles', detalle: 'Controles evaluados en cada sistema', icono: 'list-checks' }] : []),
+        ...(esAdmin ? [{ href: '/controles', texto: 'Catálogo de controles', detalle: 'Controles evaluados en cada sistema', icono: 'list-todo' }] : []),
       ],
     },
   ];
@@ -72,6 +72,10 @@
       <div class="hidden md:flex items-center gap-1">
         <a href="/dashboard" class="<%= claseBoton(activo('/dashboard')) %>" <%- activo('/dashboard') ? 'aria-current="page"' : '' %>>
           <%- icono('layout-dashboard', 'h-4 w-4') %>Inicio
+        </a>
+        <%# Los sistemas de información son el eje de RGPD y ENS %>
+        <a href="/sistemas" class="<%= claseBoton(activo('/sistemas')) %>" <%- activo('/sistemas') ? 'aria-current="page"' : '' %>>
+          <%- icono('server', 'h-4 w-4') %>Sistemas
         </a>
 
         <% menus.forEach((m) => { %>
@@ -147,6 +151,7 @@
   <%# Móvil: los desplegables se muestran como secciones %>
   <div id="menu-movil" class="md:hidden space-y-4 border-t border-slate-100 py-4" x-show="abierto" x-cloak>
     <a href="/dashboard" class="<%= claseMovil(activo('/dashboard')) %>" <%- activo('/dashboard') ? 'aria-current="page"' : '' %>><%- icono('layout-dashboard', 'h-4 w-4') %>Inicio</a>
+    <a href="/sistemas" class="<%= claseMovil(activo('/sistemas')) %>" <%- activo('/sistemas') ? 'aria-current="page"' : '' %>><%- icono('server', 'h-4 w-4') %>Sistemas de información</a>
 
     <% menus.forEach((m) => { %>
       <div>

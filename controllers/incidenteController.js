@@ -5,6 +5,7 @@ const {
   TIPOS, GRAVEDADES, ESTADOS_INCIDENTE, PLAZO_AEPD_HORAS, ESTADOS_ACTIVOS,
   plazoAepd, puedeGestionar, guardarIncidente, whereAepdPendiente,
 } = require('../lib/incidentes');
+const { listaSistemas, sistemaSelect, leerSistemaId, validarSistema, filtroSistema } = require('../lib/sistemas');
 
 // Cualquier usuario autenticado puede ver y reportar incidentes. Editarlos y cambiar su
 // estado es solo para el Administrador o el responsable asignado; asignar el responsable,
@@ -58,6 +59,7 @@ const leerFormulario = async (req, actual) => {
     medidas_adoptadas: texto(body.medidas_adoptadas) || null,
     requiere_notificacion_aepd: body.requiere_notificacion_aepd === 'on',
     requiere_notificacion_afectados: body.requiere_notificacion_afectados === 'on',
+    sistema_id: leerSistemaId(body.sistema_id),
   };
   datos.fecha_notificacion_aepd = datos.requiere_notificacion_aepd
     ? fechaCampo('fecha_notificacion_aepd', 'La fecha de notificación a la AEPD', false)
@@ -75,6 +77,8 @@ const leerFormulario = async (req, actual) => {
   if (!datos.categorias_datos_afectados) errores.push('Las categorías de datos afectados son obligatorias.');
   if (!esOpcion(TIPOS, datos.tipo)) errores.push('El tipo no es válido.');
   if (!esOpcion(GRAVEDADES, datos.gravedad)) errores.push('La gravedad no es válida.');
+  const errorSistema = await validarSistema(datos.sistema_id);
+  if (errorSistema) errores.push(errorSistema);
   if (actual && !esOpcion(ESTADOS_INCIDENTE, datos.estado)) errores.push('El estado no es válido.');
   if (datos.numero_afectados_estimado !== null &&
       (!Number.isInteger(datos.numero_afectados_estimado) || datos.numero_afectados_estimado < 0)) {
@@ -109,11 +113,13 @@ const renderFormulario = async (req, res, { incidente, errores = [], status = 20
   const usuarios = esAdmin(req.user)
     ? await prisma.usuario.findMany({ select: { id: true, nombre: true, area: true }, orderBy: { nombre: 'asc' } })
     : [];
+  const sistemas = await listaSistemas();
   res.status(status).render('incidentes/form', {
     title: incidente.id ? 'Editar incidente' : 'Reportar incidente',
     incidente,
     errores,
     usuarios,
+    sistemas,
     plazoHoras: PLAZO_AEPD_HORAS,
     ...opciones,
   });
@@ -130,13 +136,19 @@ const list = async (req, res) => {
   const estado = esOpcion(ESTADOS_INCIDENTE, req.query.estado) ? req.query.estado : '';
   const gravedad = esOpcion(GRAVEDADES, req.query.gravedad) ? req.query.gravedad : '';
   const alerta = esOpcion(ALERTAS, req.query.alerta) ? req.query.alerta : '';
+  const filtro = filtroSistema(req.query.sistema);
   const ahora = new Date();
 
-  const incidentes = await prisma.incidente.findMany({
-    where: { ...(estado && { estado }), ...(gravedad && { gravedad }), ...(alerta && ALERTAS[alerta].where(ahora)) },
-    include: { responsable: usuarioSelect },
-    orderBy: [{ fecha_deteccion: 'desc' }, { id: 'desc' }],
-  });
+  const [incidentes, sistemas] = await Promise.all([
+    prisma.incidente.findMany({
+      where: {
+        ...(estado && { estado }), ...(gravedad && { gravedad }), ...(alerta && ALERTAS[alerta].where(ahora)), ...filtro.where,
+      },
+      include: { responsable: usuarioSelect, sistema: sistemaSelect },
+      orderBy: [{ fecha_deteccion: 'desc' }, { id: 'desc' }],
+    }),
+    listaSistemas(),
+  ]);
 
   res.render('incidentes/index', {
     title: 'Incidentes / Brechas',
@@ -144,7 +156,9 @@ const list = async (req, res) => {
     estado,
     gravedad,
     alerta,
-    filtroAlerta: alerta ? { texto: ALERTAS[alerta].texto, quitar: '/incidentes' } : null,
+    sistemas,
+    sistema: filtro.sistema,
+    filtroAlerta: alerta ? { texto: ALERTAS[alerta].texto, quitar: '/incidentes' + (filtro.sistema ? '?sistema=' + filtro.sistema : '') } : null,
     ...opciones,
   });
 };
@@ -153,6 +167,7 @@ const show = async (req, res) => {
   const incidente = await buscar(req, {
     responsable: usuarioSelect,
     creado_por: usuarioSelect,
+    sistema: sistemaSelect,
     _count: { select: { historial: true } },
   });
   if (!incidente) return noEncontrado(res);
@@ -167,7 +182,9 @@ const show = async (req, res) => {
   });
 };
 
-const newForm = (req, res) => renderFormulario(req, res, { incidente: { fecha_deteccion: new Date() } });
+// Admite ?sistema=ID para llegar desde la ficha de un sistema con él preseleccionado
+const newForm = (req, res) =>
+  renderFormulario(req, res, { incidente: { fecha_deteccion: new Date(), sistema_id: leerSistemaId(req.query.sistema) || null } });
 
 const create = async (req, res) => {
   const { datos, errores } = await leerFormulario(req, null);

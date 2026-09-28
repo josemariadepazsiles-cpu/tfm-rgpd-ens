@@ -1,3 +1,32 @@
+<%
+  const esAdminUsuario = user.rol === 'ADMIN';
+  const pestanas = [
+    { id: 'resumen', texto: 'Resumen', icono: 'layout-dashboard' },
+    { id: 'ens', texto: 'Checklist ENS', icono: 'list-checks', contador: evaluaciones.length },
+    { id: 'rat', texto: 'Actividades RAT', icono: 'clipboard-list', contador: actividades.length },
+    { id: 'riesgos', texto: 'Riesgos', icono: 'gauge', contador: riesgos.length },
+    { id: 'incidentes', texto: 'Incidentes', icono: 'siren', contador: incidentes.length },
+    { id: 'derechos', texto: 'Derechos', icono: 'users', contador: solicitudes.length },
+    { id: 'bia', texto: 'Continuidad (BIA)', icono: 'life-buoy', contador: procesos.length },
+  ];
+  const ens = resumen.ens;
+  const tono = (n, nivel) => (n ? nivel : 'ok');
+  const kpis = [
+    { titulo: 'Riesgos altos', valor: resumen.riesgosAltos, detalle: resumen.riesgosMedios + ' medios · ' + resumen.riesgosBajos + ' bajos', icono: 'gauge', tab: 'riesgos', nivel: tono(resumen.riesgosAltos, 'critico') },
+    { titulo: 'Incidentes activos', valor: resumen.incidentesActivos, detalle: resumen.aepdVencidos ? resumen.aepdVencidos + ' con plazo AEPD vencido' : incidentes.length + ' registrados en total', icono: 'siren', tab: 'incidentes', nivel: resumen.aepdVencidos ? 'critico' : tono(resumen.incidentesActivos, 'atencion') },
+    { titulo: 'Solicitudes abiertas', valor: resumen.solicitudesAbiertas, detalle: resumen.solicitudesVencidas ? resumen.solicitudesVencidas + ' vencidas sin resolver' : solicitudes.length + ' registradas en total', icono: 'users', tab: 'derechos', nivel: resumen.solicitudesVencidas ? 'critico' : tono(resumen.solicitudesAbiertas, 'atencion') },
+    { titulo: 'Actividades RAT', valor: resumen.actividades, detalle: 'tratamientos que usan el sistema', icono: 'clipboard-list', tab: 'rat', nivel: 'info' },
+  ];
+  const punto = { ok: 'bg-green-500', atencion: 'bg-amber-500', critico: 'bg-red-500', info: 'bg-indigo-400' };
+  const nuevo = (ruta, texto) => ({ ruta: ruta + (ruta.includes('?') ? '&' : '?') + 'sistema=' + sistema.id, texto });
+  const accesos = [
+    { ...nuevo('/rat/nueva', 'Actividad RAT'), icono: 'clipboard-list' },
+    { ...nuevo('/riesgos/nuevo', 'Riesgo'), icono: 'gauge' },
+    { ...nuevo('/incidentes/nuevo', 'Incidente'), icono: 'siren' },
+    { ...nuevo('/derechos/nueva', 'Solicitud de derecho'), icono: 'users' },
+  ];
+  const vacio = (textoVacio, icon) => '<div class="vacio">' + icono(icon, 'h-6 w-6 text-slate-300') + textoVacio + '</div>';
+%>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -7,92 +36,291 @@
   <%- include('../partials/nav') %>
 
   <main class="contenedor py-8 sm:py-10">
-    <%- include('../partials/migas', { migas: [{ texto: 'ENS' }, { texto: 'Sistemas ENS', href: '/sistemas' }, { texto: sistema.nombre }] }) %>
+    <%- include('../partials/migas', { migas: [{ texto: 'Sistemas de información', href: '/sistemas' }, { texto: sistema.nombre }] }) %>
     <%- include('../partials/flash') %>
+
     <div class="flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <div class="flex flex-wrap items-center gap-3">
-          <h1 class="titulo-pagina"><%= sistema.nombre %></h1>
+      <div class="min-w-0">
+        <p class="eyebrow">Ficha del sistema<%= sistema.tipo_sistema ? ' · ' + sistema.tipo_sistema : '' %></p>
+        <h1 class="mt-1 titulo-pagina"><%= sistema.nombre %></h1>
+        <div class="mt-2.5 flex flex-wrap items-center gap-2">
           <% if (sistema.categoria_general) { %>
-            <span class="text-sm text-slate-500">Categoría general:</span>
+            <span class="text-xs text-slate-500">Categoría ENS</span>
             <%- include('../partials/categoria-badge', { categoria: sistema.categoria_general }) %>
+          <% } else { %>
+            <span class="badge bg-slate-50 text-slate-600 ring-slate-500/20">Categoría ENS sin definir</span>
           <% } %>
+          <span class="text-xs text-slate-500">Creado el <%= fechaHora(sistema.created_at) %><%= sistema.creado_por ? ' por ' + sistema.creado_por.nombre : '' %></span>
         </div>
-        <% if (sistema.descripcion) { %><p class="mt-1 text-slate-600 whitespace-pre-line"><%= sistema.descripcion %></p><% } %>
-        <p class="ayuda">
-          Creado el <%= fechaHora(sistema.created_at) %><%= sistema.creado_por ? ' por ' + sistema.creado_por.nombre : '' %>
-        </p>
+        <% if (sistema.descripcion) { %><p class="mt-3 max-w-3xl whitespace-pre-line text-slate-600"><%= sistema.descripcion %></p><% } %>
       </div>
       <div class="flex flex-wrap gap-2">
         <a href="/sistemas/<%= sistema.id %>/historial" class="btn btn-secondary"><%- icono('history', 'h-4 w-4') %>Ver histórico</a>
-        <a href="/declaraciones?sistema=<%= sistema.id %>" class="btn btn-secondary"><%- icono('file-badge', 'h-4 w-4') %>Declaraciones</a>
-        <% if (user.rol === 'ADMIN') { %>
+        <a href="/declaraciones?sistema=<%= sistema.id %>" class="btn btn-secondary"><%- icono('file-badge', 'h-4 w-4') %>Declaraciones (<%= declaraciones %>)</a>
+        <% if (esAdminUsuario) { %>
           <a href="/sistemas/<%= sistema.id %>/editar" class="btn btn-secondary"><%- icono('pencil', 'h-4 w-4') %>Editar</a>
           <form action="/sistemas/<%= sistema.id %>/eliminar" method="POST" data-nombre="<%= sistema.nombre %>"
-                onsubmit="return confirm('¿Eliminar el sistema «' + this.dataset.nombre + '»? Se borrarán sus <%= evaluaciones.length %> evaluaciones y todo su histórico. Esta acción no se puede deshacer.')">
+                onsubmit="return confirm('¿Eliminar el sistema «' + this.dataset.nombre + '»? Se borrarán sus <%= evaluaciones.length %> evaluaciones y todo su histórico. Las actividades, riesgos, incidentes, solicitudes y procesos asociados no se borran: quedarán sin sistema (transversales). Esta acción no se puede deshacer.')">
             <button type="submit" class="btn btn-danger"><%- icono('trash-2', 'h-4 w-4') %>Eliminar</button>
           </form>
         <% } %>
       </div>
     </div>
 
-    <% if (user.rol === 'ADMIN') { %>
-      <form action="/sistemas/<%= sistema.id %>/evaluaciones" method="POST"
-            class="mt-6 card p-6 flex flex-wrap items-end gap-4">
-        <div class="flex-1 min-w-56">
-          <label for="nombre" class="label">Nueva evaluación</label>
-          <input id="nombre" name="nombre" type="text" required value="<%= nombreSugerido %>"
-                 class="input">
+    <div class="mt-8" x-data='pestanas("resumen", <%= JSON.stringify(pestanas.map((t) => t.id)) %>)'>
+      <%- include('../partials/pestanas', { pestanas }) %>
+
+      <%# ---------------- Resumen ---------------- %>
+      <div x-show="tab === 'resumen'" role="tabpanel" id="panel-resumen" aria-labelledby="tab-resumen" class="mt-6 space-y-6">
+        <div class="grid gap-4 lg:grid-cols-3">
+          <section class="card p-5 sm:p-6">
+            <div class="flex items-center justify-between gap-3">
+              <h2 class="flex items-center gap-2 text-sm font-semibold text-slate-900"><%- icono('shield-check', 'h-4 w-4 text-slate-400') %>Cumplimiento ENS</h2>
+              <button type="button" class="enlace text-sm" @click="ir('ens')">Ver checklist</button>
+            </div>
+            <% if (ens) { %>
+              <p class="mt-4 text-4xl font-semibold tracking-tight text-slate-900 tabular-nums"><%= ens.porcentaje %><span class="text-2xl text-slate-400"> %</span></p>
+              <p class="mt-1 text-sm text-slate-500"><%= ens.implementados %> de <%= ens.aplicables %> controles aplicables implementados</p>
+              <div class="mt-4 progreso"><span style="width: <%= ens.porcentaje %>%" class="<%= ens.porcentaje >= 80 ? 'bg-green-500' : ens.porcentaje >= 50 ? 'bg-amber-500' : 'bg-red-500' %>"></span></div>
+              <p class="mt-3 text-xs text-slate-500">Según la última evaluación: <a href="/evaluaciones/<%= evaluaciones[0].id %>" class="enlace"><%= evaluaciones[0].nombre %></a></p>
+            <% } else { %>
+              <p class="mt-4 text-2xl font-semibold text-slate-400">Sin evaluar</p>
+              <p class="mt-1 text-sm text-slate-500">Este sistema todavía no tiene ninguna evaluación ENS.</p>
+            <% } %>
+          </section>
+
+          <section class="card p-5 sm:p-6 lg:col-span-2">
+            <h2 class="flex items-center gap-2 text-sm font-semibold text-slate-900"><%- icono('scale', 'h-4 w-4 text-slate-400') %>Estado RGPD del sistema</h2>
+            <div class="mt-4 grid gap-3 sm:grid-cols-2">
+              <% kpis.forEach((k) => { %>
+                <button type="button" @click="ir('<%= k.tab %>')"
+                        class="group flex items-start gap-3 rounded-xl border border-slate-100 p-4 text-left transition hover:border-indigo-200 hover:bg-marca-50/40">
+                  <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-slate-50 text-slate-500 group-hover:bg-white"><%- icono(k.icono, 'h-4 w-4') %></span>
+                  <span class="min-w-0">
+                    <span class="flex items-center gap-2 text-sm text-slate-500"><span class="punto <%= punto[k.nivel] %>"></span><%= k.titulo %></span>
+                    <span class="mt-0.5 block text-2xl font-semibold tracking-tight text-slate-900 tabular-nums"><%= k.valor %></span>
+                    <span class="block text-xs text-slate-500"><%= k.detalle %></span>
+                  </span>
+                </button>
+              <% }) %>
+            </div>
+            <% if (ambitoRestringido) { %>
+              <p class="mt-3 text-xs text-slate-500">Las actividades RAT y los riesgos incluyen solo aquellos de los que eres responsable.</p>
+            <% } %>
+          </section>
         </div>
-        <% if (evaluaciones.length) { %>
-          <label class="inline-flex items-center gap-2 pb-2 text-sm text-slate-700">
-            <input type="checkbox" name="copiar" checked class="check">
-            Partir de los estados de «<%= evaluaciones[0].nombre %>»
-          </label>
+
+        <section class="card p-5 sm:p-6">
+          <h2 class="flex items-center gap-2 text-sm font-semibold text-slate-900"><%- icono('plus', 'h-4 w-4 text-slate-400') %>Registrar información de este sistema</h2>
+          <p class="mt-1 text-sm text-slate-500">El formulario se abre con «<%= sistema.nombre %>» ya seleccionado como sistema asociado.</p>
+          <div class="mt-4 flex flex-wrap gap-2">
+            <% accesos.forEach((a) => { %>
+              <a href="<%= a.ruta %>" class="btn btn-secondary btn-sm"><%- icono(a.icono, 'h-3.5 w-3.5') %><%= a.texto %></a>
+            <% }) %>
+          </div>
+        </section>
+      </div>
+
+      <%# ---------------- Checklist ENS (evaluaciones) ---------------- %>
+      <div x-show="tab === 'ens'" x-cloak role="tabpanel" id="panel-ens" aria-labelledby="tab-ens" class="mt-6">
+        <% if (esAdminUsuario) { %>
+          <form action="/sistemas/<%= sistema.id %>/evaluaciones" method="POST"
+                class="card p-6 flex flex-wrap items-end gap-4">
+            <div class="flex-1 min-w-56">
+              <label for="nombre" class="label">Nueva evaluación</label>
+              <input id="nombre" name="nombre" type="text" required value="<%= nombreSugerido %>"
+                     class="input">
+            </div>
+            <% if (evaluaciones.length) { %>
+              <label class="inline-flex items-center gap-2 pb-2 text-sm text-slate-700">
+                <input type="checkbox" name="copiar" checked class="check">
+                Partir de los estados de «<%= evaluaciones[0].nombre %>»
+              </label>
+            <% } %>
+            <button type="submit" class="btn btn-primary"><%- icono('plus', 'h-4 w-4') %>Crear evaluación
+            </button>
+          </form>
         <% } %>
-        <button type="submit" class="btn btn-primary"><%- icono('plus', 'h-4 w-4') %>Crear evaluación
-        </button>
-      </form>
-    <% } %>
 
-    <h2 class="mt-8 titulo-seccion">Evaluaciones (<%= evaluaciones.length %>)</h2>
+        <h2 class="<%= esAdminUsuario ? 'mt-8' : '' %> titulo-seccion">Evaluaciones (<%= evaluaciones.length %>)</h2>
 
-    <% if (evaluaciones.length === 0) { %>
-      <p class="mt-4 card p-6 text-sm text-slate-500">
-        Este sistema todavía no tiene evaluaciones.<%= user.rol === 'ADMIN' ? ' Crea la primera con el formulario de arriba.' : '' %>
-      </p>
-    <% } %>
+        <% if (evaluaciones.length === 0) { %>
+          <p class="mt-4 card p-6 text-sm text-slate-500">
+            Este sistema todavía no tiene evaluaciones.<%= esAdminUsuario ? ' Crea la primera con el formulario de arriba.' : '' %>
+          </p>
+        <% } %>
 
-    <div class="mt-4 space-y-4">
-      <% evaluaciones.forEach((e, i) => { %>
-        <article class="card p-6">
-          <div class="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h3 class="font-semibold text-slate-800">
-                <a href="/evaluaciones/<%= e.id %>" class="hover:text-indigo-600 hover:underline"><%= e.nombre %></a>
-                <% if (i === 0) { %><span class="ml-2 rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700">Última</span><% } %>
-              </h3>
-              <p class="text-xs text-slate-500">
-                Creada el <%= fechaHora(e.created_at) %><%= e.creado_por ? ' por ' + e.creado_por.nombre : '' %>
-              </p>
-              <div class="mt-2"><%- include('../partials/barra-global', { global: e.global }) %></div>
-            </div>
-            <div class="flex flex-wrap gap-2 text-sm">
-              <a href="/evaluaciones/<%= e.id %>" class="btn btn-primary btn-sm"><%- icono('arrow-right', 'h-3.5 w-3.5') %>Abrir</a>
-              <a href="/sistemas/<%= sistema.id %>/historial?evaluacion=<%= e.id %>" class="btn btn-secondary btn-sm"><%- icono('history', 'h-3.5 w-3.5') %>Histórico</a>
-              <% if (user.rol === 'ADMIN') { %>
-                <form action="/evaluaciones/<%= e.id %>/eliminar" method="POST" data-nombre="<%= e.nombre %>"
-                      onsubmit="return confirm('¿Eliminar la evaluación «' + this.dataset.nombre + '» y su histórico? Esta acción no se puede deshacer.')">
-                  <button type="submit" class="btn btn-danger btn-sm"><%- icono('trash-2', 'h-3.5 w-3.5') %>Eliminar</button>
-                </form>
-              <% } %>
-            </div>
+        <div class="mt-4 space-y-4">
+          <% evaluaciones.forEach((e, i) => { %>
+            <article class="card p-6">
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h3 class="font-semibold text-slate-800">
+                    <a href="/evaluaciones/<%= e.id %>" class="hover:text-indigo-600 hover:underline"><%= e.nombre %></a>
+                    <% if (i === 0) { %><span class="ml-2 rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700">Última</span><% } %>
+                  </h3>
+                  <p class="text-xs text-slate-500">
+                    Creada el <%= fechaHora(e.created_at) %><%= e.creado_por ? ' por ' + e.creado_por.nombre : '' %>
+                  </p>
+                  <div class="mt-2"><%- include('../partials/barra-global', { global: e.global }) %></div>
+                </div>
+                <div class="flex flex-wrap gap-2 text-sm">
+                  <a href="/evaluaciones/<%= e.id %>" class="btn btn-primary btn-sm"><%- icono('arrow-right', 'h-3.5 w-3.5') %>Abrir</a>
+                  <a href="/sistemas/<%= sistema.id %>/historial?evaluacion=<%= e.id %>" class="btn btn-secondary btn-sm"><%- icono('history', 'h-3.5 w-3.5') %>Histórico</a>
+                  <% if (esAdminUsuario) { %>
+                    <form action="/evaluaciones/<%= e.id %>/eliminar" method="POST" data-nombre="<%= e.nombre %>"
+                          onsubmit="return confirm('¿Eliminar la evaluación «' + this.dataset.nombre + '» y su histórico? Esta acción no se puede deshacer.')">
+                      <button type="submit" class="btn btn-danger btn-sm"><%- icono('trash-2', 'h-3.5 w-3.5') %>Eliminar</button>
+                    </form>
+                  <% } %>
+                </div>
+              </div>
+              <div class="mt-4">
+                <%- include('../partials/resumen-ens', { resumen: e.resumen, compacto: true }) %>
+              </div>
+            </article>
+          <% }) %>
+        </div>
+      </div>
+
+      <%# ---------------- Actividades RAT ---------------- %>
+      <div x-show="tab === 'rat'" x-cloak role="tabpanel" id="panel-rat" aria-labelledby="tab-rat" class="mt-6 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <p class="text-sm text-slate-500">Tratamientos de datos personales que se realizan en este sistema.</p>
+          <div class="flex gap-2">
+            <a href="/rat?sistema=<%= sistema.id %>" class="btn btn-ghost btn-sm">Ver en el RAT<%- icono('arrow-right', 'h-3.5 w-3.5') %></a>
+            <a href="<%= accesos[0].ruta %>" class="btn btn-primary btn-sm"><%- icono('plus', 'h-3.5 w-3.5') %>Nueva actividad</a>
           </div>
-          <div class="mt-4">
-            <%- include('../partials/resumen-ens', { resumen: e.resumen, compacto: true }) %>
+        </div>
+        <div class="tabla-contenedor">
+          <% if (!actividades.length) { %><%- vacio('No hay actividades de tratamiento asociadas a este sistema.', 'clipboard-list') %><% } else { %>
+            <table class="tabla">
+              <thead><tr><th>Actividad</th><th>Base legal</th><th>Responsable</th><th>Riesgos</th></tr></thead>
+              <tbody>
+                <% actividades.forEach((a) => { %>
+                  <tr>
+                    <td><a href="/rat/<%= a.id %>" class="font-medium text-slate-800 hover:text-indigo-600 hover:underline"><%= a.nombre %></a></td>
+                    <td class="text-slate-600"><%= basesLegales[a.base_legal] %></td>
+                    <td class="text-slate-600"><%= a.responsable.nombre %></td>
+                    <td class="text-slate-600 tabular-nums"><%= a._count.riesgos %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          <% } %>
+        </div>
+      </div>
+
+      <%# ---------------- Riesgos ---------------- %>
+      <div x-show="tab === 'riesgos'" x-cloak role="tabpanel" id="panel-riesgos" aria-labelledby="tab-riesgos" class="mt-6 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <p class="text-sm text-slate-500">Riesgos evaluados sobre este sistema.</p>
+          <div class="flex gap-2">
+            <a href="/riesgos?sistema=<%= sistema.id %>" class="btn btn-ghost btn-sm">Ver en Riesgos<%- icono('arrow-right', 'h-3.5 w-3.5') %></a>
+            <a href="<%= accesos[1].ruta %>" class="btn btn-primary btn-sm"><%- icono('plus', 'h-3.5 w-3.5') %>Nuevo riesgo</a>
           </div>
-        </article>
-      <% }) %>
+        </div>
+        <div class="tabla-contenedor">
+          <% if (!riesgos.length) { %><%- vacio('No hay riesgos asociados a este sistema.', 'gauge') %><% } else { %>
+            <table class="tabla">
+              <thead><tr><th>Amenaza</th><th>Actividad</th><th>Probabilidad</th><th>Impacto</th><th>Nivel</th></tr></thead>
+              <tbody>
+                <% riesgos.forEach((r) => { %>
+                  <tr>
+                    <td class="max-w-xs"><a href="/riesgos/<%= r.id %>" class="font-medium text-slate-800 hover:text-indigo-600 hover:underline"><%= r.amenaza %></a></td>
+                    <td><a href="/rat/<%= r.actividad.id %>" class="text-slate-600 hover:text-indigo-600 hover:underline"><%= r.actividad.nombre %></a></td>
+                    <td class="text-slate-600"><%= probabilidades[r.probabilidad] %></td>
+                    <td class="text-slate-600"><%= impactos[r.impacto] %></td>
+                    <td><%- include('../partials/nivel-badge', { nivel: r.nivel_riesgo, nivelEtiquetas: niveles }) %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          <% } %>
+        </div>
+      </div>
+
+      <%# ---------------- Incidentes ---------------- %>
+      <div x-show="tab === 'incidentes'" x-cloak role="tabpanel" id="panel-incidentes" aria-labelledby="tab-incidentes" class="mt-6 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <p class="text-sm text-slate-500">Incidentes de seguridad y brechas que han afectado a este sistema.</p>
+          <div class="flex gap-2">
+            <a href="/incidentes?sistema=<%= sistema.id %>" class="btn btn-ghost btn-sm">Ver en Incidentes<%- icono('arrow-right', 'h-3.5 w-3.5') %></a>
+            <a href="<%= accesos[2].ruta %>" class="btn btn-primary btn-sm"><%- icono('plus', 'h-3.5 w-3.5') %>Reportar incidente</a>
+          </div>
+        </div>
+        <div class="tabla-contenedor">
+          <% if (!incidentes.length) { %><%- vacio('No hay incidentes asociados a este sistema.', 'siren') %><% } else { %>
+            <table class="tabla">
+              <thead><tr><th>Incidente</th><th>Gravedad</th><th>Estado</th><th>Detección</th><th>Notificación AEPD</th></tr></thead>
+              <tbody>
+                <% incidentes.forEach((i) => { %>
+                  <tr>
+                    <td class="max-w-xs"><a href="/incidentes/<%= i.id %>" class="font-medium text-slate-800 hover:text-indigo-600 hover:underline"><%= i.titulo %></a></td>
+                    <td><%- include('../partials/incidente-badges', { gravedadBadge: i.gravedad }) %></td>
+                    <td><%- include('../partials/incidente-badges', { estadoBadge: i.estado }) %></td>
+                    <td class="whitespace-nowrap text-slate-600 tabular-nums"><%= fechaHora(i.fecha_deteccion) %></td>
+                    <td class="whitespace-nowrap"><%- include('../partials/plazo-aepd', { plazo: i.plazo }) %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          <% } %>
+        </div>
+      </div>
+
+      <%# ---------------- Derechos ---------------- %>
+      <div x-show="tab === 'derechos'" x-cloak role="tabpanel" id="panel-derechos" aria-labelledby="tab-derechos" class="mt-6 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <p class="text-sm text-slate-500">Solicitudes de ejercicio de derechos sobre datos tratados en este sistema.</p>
+          <div class="flex gap-2">
+            <a href="/derechos?sistema=<%= sistema.id %>" class="btn btn-ghost btn-sm">Ver en Derechos<%- icono('arrow-right', 'h-3.5 w-3.5') %></a>
+            <a href="<%= accesos[3].ruta %>" class="btn btn-primary btn-sm"><%- icono('plus', 'h-3.5 w-3.5') %>Nueva solicitud</a>
+          </div>
+        </div>
+        <div class="tabla-contenedor">
+          <% if (!solicitudes.length) { %><%- vacio('No hay solicitudes de derechos asociadas a este sistema.', 'users') %><% } else { %>
+            <table class="tabla">
+              <thead><tr><th>Solicitante</th><th>Derecho</th><th>Fecha límite</th><th>Estado</th></tr></thead>
+              <tbody>
+                <% solicitudes.forEach((s) => { %>
+                  <tr>
+                    <td><a href="/derechos/<%= s.id %>" class="font-medium text-slate-800 hover:text-indigo-600 hover:underline"><%= s.nombre_solicitante %></a></td>
+                    <td class="text-slate-600"><%= TIPOS_DERECHO[s.tipo_derecho] %></td>
+                    <td class="whitespace-nowrap text-slate-600 tabular-nums"><%= fecha(s.fecha_limite) %></td>
+                    <td><span class="inline-flex flex-wrap gap-1.5"><%- include('../partials/estado-solicitud', { estadoSolicitud: s.estado }) %><%- include('../partials/urgencia-derecho', { u: s.urgencia }) %></span></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          <% } %>
+        </div>
+      </div>
+
+      <%# ---------------- Continuidad (BIA) ---------------- %>
+      <div x-show="tab === 'bia'" x-cloak role="tabpanel" id="panel-bia" aria-labelledby="tab-bia" class="mt-6 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <p class="text-sm text-slate-500">Procesos de negocio que dependen de este sistema (Análisis de Impacto en el Negocio).</p>
+          <a href="/bia" class="btn btn-ghost btn-sm">Ver BIA<%- icono('arrow-right', 'h-3.5 w-3.5') %></a>
+        </div>
+        <div class="tabla-contenedor">
+          <% if (!procesos.length) { %><%- vacio('Ningún proceso de negocio depende de este sistema.', 'life-buoy') %><% } else { %>
+            <table class="tabla">
+              <thead><tr><th>Proceso</th><th>Criticidad</th><th>RTO</th><th>Estado de revisión</th></tr></thead>
+              <tbody>
+                <% procesos.forEach((p) => { %>
+                  <tr>
+                    <td><a href="/bia/<%= p.id %>" class="font-medium text-slate-800 hover:text-indigo-600 hover:underline"><%= p.nombre %></a></td>
+                    <td><span class="badge <%= criticidadClases[p.criticidad] %>"><%= CRITICIDADES[p.criticidad] %></span></td>
+                    <td class="text-slate-600 tabular-nums"><%= Number(p.rto_horas).toLocaleString('es-ES') %> h</td>
+                    <td><span class="badge <%= estadoRevisionClases[p.estado_revision] %>"><%= ESTADOS_REVISION_BIA[p.estado_revision] %></span></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          <% } %>
+        </div>
+      </div>
     </div>
   </main>
 </body>

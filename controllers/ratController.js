@@ -2,6 +2,7 @@ const prisma = require('../lib/prisma');
 const { BASES_LEGALES } = require('../config/baseLegal');
 const { NIVELES } = require('../lib/riesgo');
 const { esAdmin, ambitoActividad: ambito } = require('../lib/permisos');
+const { listaSistemas, sistemaSelect, leerSistemaId, validarSistema, filtroSistema } = require('../lib/sistemas');
 
 const responsableSelect = { select: { id: true, nombre: true, email: true, area: true } };
 
@@ -17,7 +18,7 @@ const buscarVisible = (req, include = {}) => {
   if (!Number.isInteger(id) || id <= 0) return null;
   return prisma.actividadRat.findFirst({
     where: { id, ...ambito(req.user) },
-    include: { responsable: responsableSelect, ...include },
+    include: { responsable: responsableSelect, sistema: sistemaSelect, ...include },
   });
 };
 
@@ -37,6 +38,7 @@ const leerFormulario = (body) => {
     plazo_conservacion: texto(body.plazo_conservacion),
     medidas_seguridad: texto(body.medidas_seguridad),
     usuario_id: Number(body.usuario_id),
+    sistema_id: leerSistemaId(body.sistema_id),
   };
 };
 
@@ -61,6 +63,8 @@ const validar = async (datos, user) => {
   if (datos.transferencia_intl && !datos.pais_transferencia) {
     errores.push('Indica el país de destino de la transferencia internacional.');
   }
+  const errorSistema = await validarSistema(datos.sistema_id);
+  if (errorSistema) errores.push(errorSistema);
   if (esAdmin(user)) {
     const existe =
       Number.isInteger(datos.usuario_id) &&
@@ -71,6 +75,7 @@ const validar = async (datos, user) => {
 };
 
 const renderFormulario = async (req, res, { actividad, errores = [], status = 200 }) => {
+  const sistemas = await listaSistemas();
   const responsables = esAdmin(req.user)
     ? await prisma.usuario.findMany({
         select: { id: true, nombre: true, area: true },
@@ -82,12 +87,14 @@ const renderFormulario = async (req, res, { actividad, errores = [], status = 20
     actividad,
     errores,
     responsables,
+    sistemas,
     basesLegales: BASES_LEGALES,
   });
 };
 
 const list = async (req, res) => {
-  const where = ambito(req.user);
+  const filtro = filtroSistema(req.query.sistema);
+  const where = { ...ambito(req.user), ...filtro.where };
   const area = esAdmin(req.user) ? texto(req.query.area) : '';
   let areas = [];
 
@@ -102,17 +109,19 @@ const list = async (req, res) => {
     areas = filas.map((f) => f.area);
   }
 
-  const actividades = await prisma.actividadRat.findMany({
+  const [actividades, sistemas] = await Promise.all([prisma.actividadRat.findMany({
     where,
-    include: { responsable: responsableSelect },
+    include: { responsable: responsableSelect, sistema: sistemaSelect },
     orderBy: { nombre: 'asc' },
-  });
+  }), listaSistemas()]);
 
   res.render('rat/index', {
     title: 'Actividades RAT',
     actividades,
     areas,
     area,
+    sistemas,
+    sistema: filtro.sistema,
     basesLegales: BASES_LEGALES,
   });
 };
@@ -132,7 +141,8 @@ const show = async (req, res) => {
 
 const newForm = (req, res) =>
   renderFormulario(req, res, {
-    actividad: { transferencia_intl: false, usuario_id: req.user.id },
+    // Admite ?sistema=ID para llegar desde la ficha de un sistema con él preseleccionado
+    actividad: { transferencia_intl: false, usuario_id: req.user.id, sistema_id: leerSistemaId(req.query.sistema) || null },
   });
 
 const create = async (req, res) => {

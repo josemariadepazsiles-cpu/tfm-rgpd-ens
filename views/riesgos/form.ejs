@@ -42,10 +42,12 @@
         <legend class="float-left w-full mb-4 text-base font-semibold text-slate-900">Riesgo</legend>
         <div class="clear-both">
           <label for="actividad_id" class="label">Actividad de tratamiento</label>
-          <select id="actividad_id" name="actividad_id" required class="<%= inputClase %>">
+          <%# Al elegir actividad, si aún no hay sistema asociado se propone el de la actividad %>
+          <select id="actividad_id" name="actividad_id" required class="<%= inputClase %>"
+                  onchange="var s = document.getElementById('sistema_id'), o = this.options[this.selectedIndex]; if (s && !s.value && o.dataset.sistema) s.value = o.dataset.sistema;">
             <option value="" disabled <%= riesgo.actividad_id ? '' : 'selected' %>>Selecciona una actividad</option>
             <% actividades.forEach((a) => { %>
-              <option value="<%= a.id %>" <%= riesgo.actividad_id === a.id ? 'selected' : '' %>><%= a.nombre %></option>
+              <option value="<%= a.id %>" data-sistema="<%= a.sistema_id || '' %>" <%= riesgo.actividad_id === a.id ? 'selected' : '' %>><%= a.nombre %></option>
             <% }) %>
           </select>
         </div>
@@ -54,6 +56,7 @@
           <textarea id="amenaza" name="amenaza" rows="2" required class="<%= inputClase %>"
                     placeholder="Ej.: Acceso no autorizado a los datos de nóminas"><%= riesgo.amenaza || '' %></textarea>
         </div>
+        <%- include('../partials/campo-sistema', { sistemas, valor: riesgo.sistema_id, ayuda: 'Por defecto, el de la actividad de tratamiento. Déjalo sin asignar si el riesgo es transversal.' }) %>
       </fieldset>
 
       <fieldset class="card p-6 space-y-4">

@@ -1,11 +1,18 @@
 const prisma = require('../lib/prisma');
-const { idValido } = require('../lib/permisos');
+const { idValido, esAdmin, ambitoActividad, ambitoRiesgo, esAdminOResponsable } = require('../lib/permisos');
+const { resumenRgpdPorSistema } = require('../lib/sistemas');
+const { NIVELES, PROBABILIDADES, IMPACTOS } = require('../lib/riesgo');
+const { TIPOS, GRAVEDADES, ESTADOS_INCIDENTE, ESTADOS_ACTIVOS, plazoAepd } = require('../lib/incidentes');
+const { TIPOS_DERECHO, ESTADOS_SOLICITUD, estaResuelta, urgencia } = require('../lib/derechos');
+const { CRITICIDADES, ESTADOS_REVISION_BIA } = require('../lib/bia');
+const { BASES_LEGALES } = require('../config/baseLegal');
 const { resumenEvaluaciones } = require('../lib/evaluaciones');
 const { CATEGORIAS, ESTADOS, esCategoria, resumenGlobal } = require('../lib/ens');
 const { nombreEvaluacionSugerido } = require('../lib/formato');
 
 // Los sistemas y sus evaluaciones son compartidos por toda la organización:
 // cualquier usuario los consulta; solo el Administrador los crea, edita o elimina.
+// El sistema es el eje de RGPD y ENS: su ficha reúne toda la información asociada a él.
 
 const HISTORIAL_POR_PAGINA = 50;
 
@@ -25,6 +32,7 @@ const texto = (valor) => (typeof valor === 'string' ? valor.trim() : '');
 const leerFormulario = (body) => ({
   nombre: texto(body.nombre),
   descripcion: texto(body.descripcion) || null,
+  tipo_sistema: texto(body.tipo_sistema) || null,
   categoria_general: body.categoria_general || null,
 });
 
@@ -58,7 +66,7 @@ const guardar = async (res, sistema, operacion) => {
 };
 
 const list = async (req, res) => {
-  const [sistemas, totalControles] = await Promise.all([
+  const [sistemas, totalControles, rgpd] = await Promise.all([
     prisma.sistema.findMany({
       orderBy: { nombre: 'asc' },
       include: {
@@ -67,16 +75,18 @@ const list = async (req, res) => {
       },
     }),
     prisma.controlEns.count(),
+    resumenRgpdPorSistema(req.user),
   ]);
   const resumenes = await resumenEvaluaciones(sistemas.flatMap((s) => s.evaluaciones.map((e) => e.id)));
 
   res.render('sistemas/index', {
-    title: 'Sistemas ENS',
+    title: 'Sistemas de información',
     totalControles,
     sistemas: sistemas.map((s) => {
       const ultima = s.evaluaciones[0] || null;
-      return { ...s, ultima, global: ultima ? resumenGlobal(resumenes.get(ultima.id)) : null };
+      return { ...s, ultima, global: ultima ? resumenGlobal(resumenes.get(ultima.id)) : null, rgpd: rgpd.de(s.id) };
     }),
+    transversal: rgpd.de(null),
     categorias: CATEGORIAS,
   });
 };
@@ -91,15 +101,86 @@ const show = async (req, res) => {
   });
   if (!sistema) return noEncontrado(res);
 
-  const resumenes = await resumenEvaluaciones(sistema.evaluaciones.map((e) => e.id));
+  // Información RGPD y de continuidad asociada al sistema. RAT y riesgos respetan la
+  // visibilidad del módulo (un Usuario solo ve los suyos); el resto es visible para todos.
+  const sid = sistema.id;
+  const usuario = { select: { id: true, nombre: true } };
+  const [resumenes, actividades, riesgos, incidentes, solicitudes, procesos, declaraciones] = await Promise.all([
+    resumenEvaluaciones(sistema.evaluaciones.map((e) => e.id)),
+    prisma.actividadRat.findMany({
+      where: { sistema_id: sid, ...ambitoActividad(req.user) },
+      include: { responsable: usuario, _count: { select: { riesgos: true } } },
+      orderBy: { nombre: 'asc' },
+    }),
+    prisma.riesgo.findMany({
+      where: { sistema_id: sid, ...ambitoRiesgo(req.user) },
+      include: { actividad: { select: { id: true, nombre: true } } },
+      orderBy: [{ nivel_riesgo: 'desc' }, { amenaza: 'asc' }],
+    }),
+    prisma.incidente.findMany({
+      where: { sistema_id: sid },
+      include: { responsable: usuario },
+      orderBy: [{ fecha_deteccion: 'desc' }, { id: 'desc' }],
+    }),
+    prisma.solicitudDerecho.findMany({
+      where: { sistema_id: sid },
+      include: { responsable: usuario },
+      orderBy: [{ fecha_limite: 'asc' }],
+    }),
+    prisma.procesoNegocio.findMany({
+      where: { sistema_id: sid },
+      select: { id: true, nombre: true, criticidad: true, estado_revision: true, rto_horas: true },
+      orderBy: [{ criticidad: 'desc' }, { nombre: 'asc' }],
+    }),
+    prisma.declaracionConformidad.count({ where: { sistema_id: sid } }),
+  ]);
+
+  const ahora = new Date();
+  const evaluaciones = sistema.evaluaciones.map((e) => {
+    const resumen = resumenes.get(e.id);
+    return { ...e, resumen, global: resumenGlobal(resumen) };
+  });
+  const conUrgencia = solicitudes.map((s) => ({ ...s, urgencia: urgencia(s, ahora) }));
+  // Abiertas primero (por fecha límite), después las resueltas
+  conUrgencia.sort((a, b) => estaResuelta(a.estado) - estaResuelta(b.estado));
+  const incidentesPlazo = incidentes.map((i) => ({ ...i, plazo: plazoAepd(i, ahora) }));
+  const resumen = {
+    ens: evaluaciones.length ? evaluaciones[0].global : null,
+    actividades: actividades.length,
+    riesgosAltos: riesgos.filter((r) => r.nivel_riesgo === 'ALTO').length,
+    riesgosMedios: riesgos.filter((r) => r.nivel_riesgo === 'MEDIO').length,
+    riesgosBajos: riesgos.filter((r) => r.nivel_riesgo === 'BAJO').length,
+    incidentesActivos: incidentes.filter((i) => ESTADOS_ACTIVOS.includes(i.estado)).length,
+    aepdVencidos: incidentesPlazo.filter((i) => i.plazo.tipo === 'vencido').length,
+    solicitudesAbiertas: conUrgencia.filter((s) => !estaResuelta(s.estado)).length,
+    solicitudesVencidas: conUrgencia.filter((s) => s.urgencia.nivel === 'rojo').length,
+    procesosCriticos: procesos.filter((p) => p.criticidad === 'ALTA' || p.criticidad === 'CRITICA').length,
+  };
 
   res.render('sistemas/show', {
     title: sistema.nombre,
     sistema,
-    evaluaciones: sistema.evaluaciones.map((e) => {
-      const resumen = resumenes.get(e.id);
-      return { ...e, resumen, global: resumenGlobal(resumen) };
-    }),
+    evaluaciones,
+    actividades,
+    riesgos,
+    incidentes: incidentesPlazo,
+    solicitudes: conUrgencia,
+    procesos,
+    declaraciones,
+    resumen,
+    // Un Usuario solo ve sus propias actividades y riesgos
+    ambitoRestringido: !esAdmin(req.user),
+    niveles: NIVELES,
+    probabilidades: PROBABILIDADES,
+    impactos: IMPACTOS,
+    basesLegales: BASES_LEGALES,
+    TIPOS,
+    GRAVEDADES,
+    ESTADOS_INCIDENTE,
+    TIPOS_DERECHO,
+    ESTADOS_SOLICITUD,
+    CRITICIDADES,
+    ESTADOS_REVISION_BIA,
     nombreSugerido: nombreEvaluacionSugerido(),
     categorias: CATEGORIAS,
   });

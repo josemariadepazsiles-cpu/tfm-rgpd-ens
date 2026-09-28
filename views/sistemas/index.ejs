@@ -7,13 +7,13 @@
   <%- include('../partials/nav') %>
 
   <main class="contenedor py-8 sm:py-10">
-    <%- include('../partials/migas', { migas: [{ texto: 'ENS' }, { texto: 'Sistemas ENS' }] }) %>
+    <%- include('../partials/migas', { migas: [{ texto: 'Sistemas de información' }] }) %>
     <%- include('../partials/flash') %>
 
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div>
-        <h1 class="titulo-pagina">Sistemas ENS</h1>
-        <p class="subtitulo-pagina">Sistemas de información de la organización y sus evaluaciones del Esquema Nacional de Seguridad</p>
+        <h1 class="titulo-pagina">Sistemas de información</h1>
+        <p class="subtitulo-pagina">Eje del cumplimiento: cada sistema reúne su checklist ENS y la información RGPD asociada</p>
       </div>
       <% if (user.rol === 'ADMIN') { %>
         <div class="flex flex-wrap gap-2">
@@ -27,14 +27,18 @@
       <% if (sistemas.length === 0) { %>
         <p class="p-8 text-center text-slate-500">Todavía no hay sistemas registrados.</p>
       <% } else { %>
+        <%
+          const plural = (n, uno, varios) => n + ' ' + (n === 1 ? uno : varios);
+          const iconoBtn = 'inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:border-indigo-200 hover:text-indigo-600';
+        %>
         <table class="tabla">
           <thead>
             <tr>
               <th>Sistema</th>
-              <th>Categoría general</th>
-              <th>Controles</th>
-              <th>Implementación global</th>
-              <th>Última evaluación</th>
+              <th>Categoría ENS</th>
+              <th>Implementación ENS</th>
+              <th>Riesgos altos</th>
+              <th>Incidentes abiertos</th>
               <th class="text-right">Acciones</th>
             </tr>
           </thead>
@@ -43,46 +47,72 @@
               <tr class="hover:bg-slate-50">
                 <td class="px-4 py-3">
                   <a href="/sistemas/<%= s.id %>" class="font-medium text-slate-800 hover:text-indigo-600 hover:underline"><%= s.nombre %></a>
+                  <% if (s.tipo_sistema) { %><p class="text-xs font-medium text-indigo-600"><%= s.tipo_sistema %></p><% } %>
                   <% if (s.descripcion) { %><p class="text-xs text-slate-500 line-clamp-1 max-w-xs"><%= s.descripcion %></p><% } %>
                 </td>
                 <td class="px-4 py-3"><%- include('../partials/categoria-badge', { categoria: s.categoria_general }) %></td>
-                <td class="px-4 py-3 text-slate-600 whitespace-nowrap">
-                  <% if (s.global) { %>
-                    <%= s.global.aplicables %> aplicables
-                    <% if (s.global.noAplica) { %><span class="block text-xs text-slate-400">de <%= s.global.total %> (<%= s.global.noAplica %> no aplic.)</span><% } %>
-                  <% } else { %>
-                    <%= totalControles %>
-                  <% } %>
-                </td>
                 <td class="px-4 py-3">
                   <% if (s.global) { %>
                     <%- include('../partials/barra-global', { global: s.global }) %>
+                    <p class="mt-1 text-xs text-slate-500">
+                      <%= s.global.aplicables %> controles aplicables<%= s.global.noAplica ? ' de ' + s.global.total + ' (' + s.global.noAplica + ' no aplic.)' : '' %> ·
+                      <a href="/evaluaciones/<%= s.ultima.id %>" class="text-indigo-600 hover:underline"><%= s.ultima.nombre %></a>
+                      <span class="text-slate-400">(<%= plural(s._count.evaluaciones, 'evaluación', 'evaluaciones') %>)</span>
+                    </p>
                   <% } else { %>
                     <span class="text-slate-400 italic">Sin evaluar</span>
+                    <p class="mt-1 text-xs text-slate-400"><%= totalControles %> controles en el catálogo</p>
                   <% } %>
                 </td>
-                <td class="px-4 py-3 text-slate-600">
-                  <% if (s.ultima) { %>
-                    <a href="/evaluaciones/<%= s.ultima.id %>" class="text-indigo-600 hover:underline"><%= s.ultima.nombre %></a>
-                    <span class="block text-xs text-slate-400"><%= s._count.evaluaciones %> evaluación(es)</span>
-                  <% } else { %>
-                    <span class="text-slate-400 italic">Ninguna</span>
-                  <% } %>
+                <td class="px-4 py-3 whitespace-nowrap">
+                  <a href="/riesgos?sistema=<%= s.id %>&nivel=ALTO" class="inline-flex items-center gap-1.5 tabular-nums <%= s.rgpd.riesgosAltos ? 'font-semibold text-red-700' : 'text-slate-500' %> hover:underline">
+                    <span class="punto <%= s.rgpd.riesgosAltos ? 'bg-red-500' : 'bg-green-500' %>"></span><%= s.rgpd.riesgosAltos %>
+                  </a>
+                  <span class="block text-xs text-slate-400">de <%= plural(s.rgpd.riesgos, 'riesgo', 'riesgos') %></span>
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                  <a href="/incidentes?sistema=<%= s.id %>&alerta=activos" class="inline-flex items-center gap-1.5 tabular-nums <%= s.rgpd.incidentesActivos ? 'font-semibold text-amber-700' : 'text-slate-500' %> hover:underline">
+                    <span class="punto <%= s.rgpd.incidentesActivos ? 'bg-amber-500' : 'bg-green-500' %>"></span><%= s.rgpd.incidentesActivos %>
+                  </a>
+                  <span class="block text-xs text-slate-400">de <%= plural(s.rgpd.incidentes, 'incidente', 'incidentes') %></span>
                 </td>
                 <td class="px-4 py-3 text-right whitespace-nowrap">
-                  <% if (s.ultima) { %>
-                    <a href="/evaluaciones/<%= s.ultima.id %>" class="btn btn-primary btn-sm"><%- icono('list-checks', 'h-3.5 w-3.5') %>Checklist</a>
-                  <% } %>
-                  <a href="/sistemas/<%= s.id %>" class="ml-1 btn btn-secondary btn-sm"><%- icono('layers', 'h-3.5 w-3.5') %>Evaluaciones</a>
-                  <a href="/sistemas/<%= s.id %>/historial" class="ml-1 btn btn-secondary btn-sm"><%- icono('history', 'h-3.5 w-3.5') %>Histórico</a>
+                  <span class="inline-flex items-center gap-1">
+                    <a href="/sistemas/<%= s.id %>" class="btn btn-primary btn-sm"><%- icono('layout-dashboard', 'h-3.5 w-3.5') %>Ficha</a>
+                    <% if (s.ultima) { %>
+                      <a href="/evaluaciones/<%= s.ultima.id %>" class="<%= iconoBtn %>" title="Checklist de la última evaluación" aria-label="Checklist de la última evaluación de <%= s.nombre %>"><%- icono('list-checks', 'h-4 w-4') %></a>
+                    <% } %>
+                    <a href="/sistemas/<%= s.id %>#ens" class="<%= iconoBtn %>" title="Evaluaciones" aria-label="Evaluaciones de <%= s.nombre %>"><%- icono('layers', 'h-4 w-4') %></a>
+                    <a href="/sistemas/<%= s.id %>/historial" class="<%= iconoBtn %>" title="Histórico" aria-label="Histórico de <%= s.nombre %>"><%- icono('history', 'h-4 w-4') %></a>
+                  </span>
                 </td>
               </tr>
             <% }) %>
+            <%# Información no asociada a ningún sistema (transversal a la organización) %>
+            <tr class="bg-slate-50/60">
+              <td class="px-4 py-3">
+                <span class="font-medium text-slate-600">Sin sistema · Transversal</span>
+                <p class="text-xs text-slate-500">Afecta a toda la organización</p>
+              </td>
+              <td class="px-4 py-3 text-slate-400">—</td>
+              <td class="px-4 py-3 text-slate-400">—</td>
+              <td class="px-4 py-3 whitespace-nowrap">
+                <a href="/riesgos?sistema=ninguno&nivel=ALTO" class="tabular-nums <%= transversal.riesgosAltos ? 'font-semibold text-red-700' : 'text-slate-500' %> hover:underline"><%= transversal.riesgosAltos %></a>
+                <span class="block text-xs text-slate-400">de <%= plural(transversal.riesgos, 'riesgo', 'riesgos') %></span>
+              </td>
+              <td class="px-4 py-3 whitespace-nowrap">
+                <a href="/incidentes?sistema=ninguno&alerta=activos" class="tabular-nums <%= transversal.incidentesActivos ? 'font-semibold text-amber-700' : 'text-slate-500' %> hover:underline"><%= transversal.incidentesActivos %></a>
+                <span class="block text-xs text-slate-400">de <%= plural(transversal.incidentes, 'incidente', 'incidentes') %></span>
+              </td>
+              <td class="px-4 py-3 text-right whitespace-nowrap">
+                <a href="/rat?sistema=ninguno" class="btn btn-secondary btn-sm"><%- icono('clipboard-list', 'h-3.5 w-3.5') %>RAT transversal</a>
+              </td>
+            </tr>
           </tbody>
         </table>
       <% } %>
     </div>
-    <p class="mt-3 text-xs text-slate-500">La implementación global y los controles aplicables corresponden a la última evaluación de cada sistema; los controles «No aplicable» no cuentan.</p>
+    <p class="mt-3 text-xs text-slate-500">La implementación global y los controles aplicables corresponden a la última evaluación de cada sistema; los controles «No aplicable» no cuentan. Los incidentes abiertos son los no cerrados.<%= user.rol === 'ADMIN' ? '' : ' Los riesgos incluyen solo los de tus actividades.' %></p>
   </main>
 </body>
 </html>

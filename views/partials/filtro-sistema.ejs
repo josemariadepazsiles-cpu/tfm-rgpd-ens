@@ -1,0 +1,27 @@
+<%#
+  Filtro por sistema de los listados (GET ?sistema=). Recibe `sistemas` y `sistema` (valor actual:
+  '' todos, 'ninguno' transversales, id). Con `accion` (ruta del listado) genera su propio formulario,
+  que mantiene los filtros de `conservar` ({ parámetro: valor }); sin `accion` solo pinta el campo,
+  para incluirlo dentro del formulario de filtros que ya tenga el listado.
+%>
+<% const propio = typeof accion !== 'undefined'; %>
+<% if (propio) { %>
+<form action="<%= accion %>" method="GET" class="flex flex-wrap items-end gap-3">
+  <% Object.entries(typeof conservar !== 'undefined' ? conservar : {}).forEach(([k, v]) => { if (v) { %>
+    <input type="hidden" name="<%= k %>" value="<%= v %>">
+  <% } }) %>
+<% } %>
+  <div>
+    <label for="filtro-sistema" class="label">Sistema</label>
+    <select id="filtro-sistema" name="sistema" onchange="this.form.submit()" class="input w-auto min-w-56">
+      <option value="">Todos los sistemas</option>
+      <option value="ninguno" <%= sistema === 'ninguno' ? 'selected' : '' %>>— Sin sistema / Transversal —</option>
+      <% sistemas.forEach((s) => { %>
+        <option value="<%= s.id %>" <%= sistema === String(s.id) ? 'selected' : '' %>><%= s.nombre %></option>
+      <% }) %>
+    </select>
+  </div>
+<% if (propio) { %>
+  <noscript><button type="submit" class="btn btn-secondary">Filtrar</button></noscript>
+</form>
+<% } %>

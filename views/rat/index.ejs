@@ -19,8 +19,11 @@
       </a>
     </div>
 
+    <div class="mt-6 flex flex-wrap items-end gap-3">
+      <%- include('../partials/filtro-sistema', { accion: '/rat', sistemas, sistema, conservar: { area } }) %>
     <% if (user.rol === 'ADMIN') { %>
-      <form action="/rat" method="GET" class="mt-6 flex flex-wrap items-end gap-3">
+      <form action="/rat" method="GET" class="flex flex-wrap items-end gap-3">
+        <% if (sistema) { %><input type="hidden" name="sistema" value="<%= sistema %>"><% } %>
         <div>
           <label for="area" class="label">Filtrar por área</label>
           <select id="area" name="area" onchange="this.form.submit()"
@@ -32,16 +35,17 @@
           </select>
         </div>
         <noscript><button type="submit" class="btn btn-secondary">Filtrar</button></noscript>
-        <% if (area) { %>
-          <a href="/rat" class="py-2 text-sm text-indigo-600 hover:underline">Quitar filtro</a>
-        <% } %>
       </form>
     <% } %>
+      <% if (area || sistema) { %>
+        <a href="/rat" class="py-2.5 text-sm text-indigo-600 hover:underline">Quitar filtros</a>
+      <% } %>
+    </div>
 
     <div class="mt-6 tabla-contenedor">
       <% if (actividades.length === 0) { %>
         <p class="p-8 text-center text-slate-500">
-          No hay actividades de tratamiento<%= area ? ' en el área ' + area : '' %>.
+          No hay actividades de tratamiento<%= area ? ' en el área ' + area : '' %><%= sistema ? ' con el sistema seleccionado' : '' %>.
         </p>
       <% } else { %>
         <table class="tabla">
@@ -50,6 +54,7 @@
               <th>Nombre</th>
               <th>Finalidad</th>
               <th>Base legal</th>
+              <th>Sistema</th>
               <th>Responsable</th>
               <th class="text-right">Acciones</th>
             </tr>
@@ -60,6 +65,7 @@
                 <td class="px-4 py-3 font-medium text-slate-800"><%= a.nombre %></td>
                 <td class="px-4 py-3 text-slate-600 max-w-xs"><p class="line-clamp-2"><%= a.finalidad %></p></td>
                 <td class="px-4 py-3 text-slate-600"><%= basesLegales[a.base_legal] %></td>
+                <td class="px-4 py-3"><%- include('../partials/sistema-celda', { s: a.sistema }) %></td>
                 <td class="px-4 py-3 text-slate-600">
                   <%= a.responsable.nombre %>
                   <% if (a.responsable.area) { %><span class="block text-xs text-slate-400"><%= a.responsable.area %></span><% } %>

@@ -48,7 +48,7 @@ const create = async (req, res) => {
   const nombre = texto(req.body.nombre);
   if (!nombre) {
     req.session.flash = { tipo: 'error', mensaje: 'El nombre de la evaluación es obligatorio.' };
-    return res.redirect(`/sistemas/${sistema.id}`);
+    return res.redirect(`/sistemas/${sistema.id}#ens`);
   }
 
   const anterior =
@@ -258,7 +258,7 @@ const remove = async (req, res) => {
 
   await prisma.evaluacion.delete({ where: { id: evaluacion.id } });
   req.session.flash = { tipo: 'exito', mensaje: `Evaluación "${evaluacion.nombre}" eliminada.` };
-  res.redirect(`/sistemas/${evaluacion.sistema_id}`);
+  res.redirect(`/sistemas/${evaluacion.sistema_id}#ens`);
 };
 
 module.exports = { create, show, cambiarEstado, asignarme, editControlForm, updateControl, remove };

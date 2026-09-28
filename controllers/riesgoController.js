@@ -1,6 +1,7 @@
 const prisma = require('../lib/prisma');
 const { ambitoActividad, ambitoRiesgo } = require('../lib/permisos');
 const { PROBABILIDADES, IMPACTOS, NIVELES, MATRIZ, calcularNivel } = require('../lib/riesgo');
+const { listaSistemas, sistemaSelect, leerSistemaId, validarSistema, filtroSistema } = require('../lib/sistemas');
 
 const actividadSelect = { select: { id: true, nombre: true, usuario_id: true } };
 
@@ -16,7 +17,7 @@ const buscarVisible = (req) => {
   if (!Number.isInteger(id) || id <= 0) return null;
   return prisma.riesgo.findFirst({
     where: { id, ...ambitoRiesgo(req.user) },
-    include: { actividad: actividadSelect },
+    include: { actividad: actividadSelect, sistema: sistemaSelect },
   });
 };
 
@@ -24,7 +25,7 @@ const buscarVisible = (req) => {
 const actividadesVisibles = (user) =>
   prisma.actividadRat.findMany({
     where: ambitoActividad(user),
-    select: { id: true, nombre: true },
+    select: { id: true, nombre: true, sistema_id: true },
     orderBy: { nombre: 'asc' },
   });
 
@@ -36,6 +37,7 @@ const leerFormulario = (body) => ({
   probabilidad: body.probabilidad,
   impacto: body.impacto,
   medidas_mitigadoras: texto(body.medidas_mitigadoras) || null,
+  sistema_id: leerSistemaId(body.sistema_id),
 });
 
 const validar = async (datos, user) => {
@@ -49,6 +51,8 @@ const validar = async (datos, user) => {
   if (!datos.amenaza) errores.push('La amenaza es obligatoria.');
   if (!Object.hasOwn(PROBABILIDADES, datos.probabilidad)) errores.push('La probabilidad no es válida.');
   if (!Object.hasOwn(IMPACTOS, datos.impacto)) errores.push('El impacto no es válido.');
+  const errorSistema = await validarSistema(datos.sistema_id);
+  if (errorSistema) errores.push(errorSistema);
   return errores;
 };
 
@@ -58,6 +62,7 @@ const renderFormulario = async (req, res, { riesgo, errores = [], status = 200 }
     riesgo,
     errores,
     actividades: await actividadesVisibles(req.user),
+    sistemas: await listaSistemas(),
     probabilidades: PROBABILIDADES,
     impactos: IMPACTOS,
     niveles: NIVELES,
@@ -66,18 +71,22 @@ const renderFormulario = async (req, res, { riesgo, errores = [], status = 200 }
 };
 
 const list = async (req, res) => {
-  const scope = ambitoRiesgo(req.user);
+  const filtro = filtroSistema(req.query.sistema);
+  // Los contadores por nivel respetan el sistema elegido
+  const scope = { ...ambitoRiesgo(req.user), ...filtro.where };
   const nivel = Object.hasOwn(NIVELES, req.query.nivel ?? '') ? req.query.nivel : '';
 
-  const [riesgos, conteos] = await Promise.all([
+  const [riesgos, conteos, sistemas] = await Promise.all([
     prisma.riesgo.findMany({
       where: { ...scope, ...(nivel && { nivel_riesgo: nivel }) },
       include: {
         actividad: { select: { id: true, nombre: true, responsable: { select: { nombre: true } } } },
+        sistema: sistemaSelect,
       },
       orderBy: [{ nivel_riesgo: 'desc' }, { amenaza: 'asc' }],
     }),
     prisma.riesgo.groupBy({ by: ['nivel_riesgo'], where: scope, _count: true }),
+    listaSistemas(),
   ]);
 
   const totales = Object.fromEntries(Object.keys(NIVELES).map((n) => [n, 0]));
@@ -87,6 +96,8 @@ const list = async (req, res) => {
     title: 'Riesgos',
     riesgos,
     nivel,
+    sistemas,
+    sistema: filtro.sistema,
     totales,
     total: Object.values(totales).reduce((a, b) => a + b, 0),
     probabilidades: PROBABILIDADES,
@@ -108,8 +119,19 @@ const show = async (req, res) => {
 };
 
 // Admite ?actividad=ID para llegar desde el detalle de una actividad con ella preseleccionada
-const newForm = (req, res) =>
-  renderFormulario(req, res, { riesgo: { actividad_id: Number(req.query.actividad) || null } });
+// (y su sistema como sistema asociado por defecto) o ?sistema=ID desde la ficha de un sistema
+const newForm = async (req, res) => {
+  const actividadId = Number(req.query.actividad) || null;
+  let sistemaId = leerSistemaId(req.query.sistema) || null;
+  if (actividadId && !sistemaId) {
+    const actividad = await prisma.actividadRat.findFirst({
+      where: { id: actividadId, ...ambitoActividad(req.user) },
+      select: { sistema_id: true },
+    });
+    sistemaId = actividad ? actividad.sistema_id : null;
+  }
+  return renderFormulario(req, res, { riesgo: { actividad_id: actividadId, sistema_id: sistemaId } });
+};
 
 const create = async (req, res) => {
   const datos = leerFormulario(req.body);

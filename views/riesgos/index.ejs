@@ -1,4 +1,6 @@
 <%
+  // Construye la query string omitiendo los parámetros vacíos
+  const qs = (p) => { const u = new URLSearchParams(Object.entries(p).filter(([, v]) => v)).toString(); return u ? '?' + u : ''; };
   const filtros = [{ valor: '', texto: 'Todos', total }].concat(
     Object.entries(niveles).map(([valor, texto]) => ({ valor, texto, total: totales[valor] }))
   );
@@ -24,9 +26,13 @@
       </a>
     </div>
 
-    <nav class="mt-6 flex flex-wrap gap-2" aria-label="Filtrar por nivel de riesgo">
+    <div class="mt-6">
+      <%- include('../partials/filtro-sistema', { accion: '/riesgos', sistemas, sistema, conservar: { nivel } }) %>
+    </div>
+
+    <nav class="mt-4 flex flex-wrap gap-2" aria-label="Filtrar por nivel de riesgo">
       <% filtros.forEach((f) => { %>
-        <a href="/riesgos<%= f.valor ? '?nivel=' + f.valor : '' %>"
+        <a href="/riesgos<%= qs({ nivel: f.valor, sistema }) %>"
            class="rounded-full px-3 py-1 text-sm ring-1 ring-inset <%= nivel === f.valor ? (f.valor ? nivelClases[f.valor] + ' font-semibold' : 'bg-indigo-600 text-white ring-indigo-600') : 'bg-white text-slate-600 ring-slate-300 hover:bg-slate-50' %>">
           <%= f.texto %> <span class="opacity-70">(<%= f.total %>)</span>
         </a>
@@ -36,7 +42,7 @@
     <div class="mt-4 tabla-contenedor">
       <% if (riesgos.length === 0) { %>
         <p class="p-8 text-center text-slate-500">
-          No hay riesgos<%= nivel ? ' de nivel ' + niveles[nivel].toLowerCase() : '' %>.
+          No hay riesgos<%= nivel ? ' de nivel ' + niveles[nivel].toLowerCase() : '' %><%= sistema ? ' con el sistema seleccionado' : '' %>.
         </p>
       <% } else { %>
         <table class="tabla">
@@ -44,6 +50,7 @@
             <tr>
               <th>Actividad</th>
               <th>Amenaza</th>
+              <th>Sistema</th>
               <th>Probabilidad</th>
               <th>Impacto</th>
               <th>Nivel de riesgo</th>
@@ -58,6 +65,7 @@
                   <span class="block text-xs text-slate-400"><%= r.actividad.responsable.nombre %></span>
                 </td>
                 <td class="px-4 py-3 text-slate-800 max-w-xs"><p class="line-clamp-2"><%= r.amenaza %></p></td>
+                <td class="px-4 py-3"><%- include('../partials/sistema-celda', { s: r.sistema }) %></td>
                 <td class="px-4 py-3 text-slate-600"><%= probabilidades[r.probabilidad] %></td>
                 <td class="px-4 py-3 text-slate-600"><%= impactos[r.impacto] %></td>
                 <td class="px-4 py-3"><%- include('../partials/nivel-badge', { nivel: r.nivel_riesgo, nivelEtiquetas: niveles }) %></td>

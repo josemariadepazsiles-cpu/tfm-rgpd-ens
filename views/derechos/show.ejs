@@ -5,6 +5,7 @@
     { titulo: 'Solicitud', icono: 'file-text', campos: [
       campo('Derecho ejercido', TIPOS_DERECHO[solicitud.tipo_derecho] + ' (' + ARTICULOS_DERECHO[solicitud.tipo_derecho] + ' RGPD)'),
       campo('Canal de entrada', CANALES[solicitud.canal_entrada]),
+      campo('Sistema asociado', solicitud.sistema ? solicitud.sistema.nombre : null, 'Ninguno · solicitud genérica'),
       campo('Qué solicita', solicitud.descripcion, null, true),
     ] },
     { titulo: 'Solicitante', icono: 'user', campos: [

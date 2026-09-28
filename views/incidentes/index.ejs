@@ -50,8 +50,9 @@
           <% }) %>
         </select>
       </div>
+      <%- include('../partials/filtro-sistema', { sistemas, sistema }) %>
       <noscript><button type="submit" class="btn btn-secondary">Filtrar</button></noscript>
-      <% if (estado || gravedad || alerta) { %>
+      <% if (estado || gravedad || alerta || sistema) { %>
         <a href="/incidentes" class="py-2 text-sm text-indigo-600 hover:underline">Quitar filtros</a>
       <% } %>
     </form>
@@ -59,13 +60,14 @@
     <div class="mt-4 tabla-contenedor">
       <% if (incidentes.length === 0) { %>
         <p class="p-8 text-center text-slate-500">
-          <%= estado || gravedad || alerta ? 'No hay incidentes con esos filtros.' : 'No se ha registrado ningún incidente.' %>
+          <%= estado || gravedad || alerta || sistema ? 'No hay incidentes con esos filtros.' : 'No se ha registrado ningún incidente.' %>
         </p>
       <% } else { %>
         <table class="tabla">
           <thead>
             <tr>
               <th>Incidente</th>
+              <th>Sistema</th>
               <th>Tipo</th>
               <th>Gravedad</th>
               <th>Estado</th>
@@ -81,6 +83,7 @@
                 <td class="px-4 py-3 max-w-xs">
                   <a href="/incidentes/<%= i.id %>" class="font-medium text-slate-800 hover:text-indigo-600 hover:underline line-clamp-2"><%= i.titulo %></a>
                 </td>
+                <td class="px-4 py-3"><%- include('../partials/sistema-celda', { s: i.sistema }) %></td>
                 <td class="px-4 py-3 text-slate-600"><%= TIPOS[i.tipo] %></td>
                 <td class="px-4 py-3"><%- include('../partials/incidente-badges', { gravedadBadge: i.gravedad }) %></td>
                 <td class="px-4 py-3"><%- include('../partials/incidente-badges', { estadoBadge: i.estado }) %></td>

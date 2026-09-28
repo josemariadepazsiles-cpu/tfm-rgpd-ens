@@ -1,0 +1,14 @@
+<%#
+  Desplegable «Sistema asociado» de los formularios RGPD. Recibe `sistemas` y `valor` (sistema_id actual o null).
+  Es opcional: «— Ninguno / Transversal —» deja el registro sin sistema (transversal a la organización).
+%>
+<div>
+  <label for="sistema_id" class="label">Sistema asociado <span class="font-normal text-slate-400">(opcional)</span></label>
+  <select id="sistema_id" name="sistema_id" class="input">
+    <option value="">— Ninguno / Transversal —</option>
+    <% sistemas.forEach((s) => { %>
+      <option value="<%= s.id %>" <%= Number(valor) === s.id ? 'selected' : '' %>><%= s.nombre %><%= s.tipo_sistema ? ' · ' + s.tipo_sistema : '' %></option>
+    <% }) %>
+  </select>
+  <p class="ayuda"><%= typeof ayuda !== 'undefined' ? ayuda : 'Sistema de información al que se refiere. Déjalo sin asignar si afecta a toda la organización.' %></p>
+</div>

@@ -79,6 +79,7 @@
             </select>
           </div>
         </div>
+        <%- include('../partials/campo-sistema', { sistemas, valor: incidente.sistema_id, ayuda: 'Sistema de información afectado. Déjalo sin asignar si el incidente no afecta a un sistema concreto.' }) %>
       </fieldset>
 
       <fieldset class="card p-6 space-y-4">

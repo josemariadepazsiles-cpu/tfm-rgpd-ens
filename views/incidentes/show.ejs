@@ -113,6 +113,10 @@
           <h2 class="text-sm font-semibold text-slate-900">Gestión</h2>
           <dl class="mt-3 space-y-3 text-sm">
             <div class="flex items-center justify-between gap-3">
+              <dt class="text-slate-500">Sistema afectado</dt>
+              <dd class="text-right"><% if (incidente.sistema) { %><a href="/sistemas/<%= incidente.sistema.id %>" class="enlace"><%= incidente.sistema.nombre %></a><% } else { %><span class="italic text-slate-400">Ninguno · transversal</span><% } %></dd>
+            </div>
+            <div class="flex items-center justify-between gap-3">
               <dt class="text-slate-500">Responsable</dt>
               <dd class="text-right font-medium <%= incidente.responsable ? 'text-slate-800' : 'italic text-slate-400' %>"><%= incidente.responsable ? incidente.responsable.nombre : 'Sin asignar' %></dd>
             </div>

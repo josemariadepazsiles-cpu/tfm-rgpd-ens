@@ -4,6 +4,7 @@ const { desdeInputFechaHora, finPlazoMeses, fecha } = require('../lib/formato');
 const {
   TIPOS_DERECHO, ARTICULOS_DERECHO, CANALES, ESTADOS_SOLICITUD, DIAS_AVISO, MESES_AMPLIACION, estaResuelta, calcularFechaLimite, urgencia, guardarSolicitud,
 } = require('../lib/derechos');
+const { listaSistemas, sistemaSelect, leerSistemaId, validarSistema, filtroSistema } = require('../lib/sistemas');
 
 // Cualquier usuario autenticado puede ver y registrar solicitudes. Tramitarlas (editar,
 // cambiar el estado, ampliar el plazo, resolver) es solo para el Administrador o el
@@ -57,6 +58,7 @@ const leerFormulario = async (req, actual) => {
     descripcion: texto(body.descripcion),
     canal_entrada: body.canal_entrada,
     fecha_recepcion: fechaCampo('fecha_recepcion', 'La fecha de recepción', true),
+    sistema_id: leerSistemaId(body.sistema_id),
   };
   if (esAdmin(user)) datos.responsable_id = body.responsable_id ? Number(body.responsable_id) : null;
 
@@ -65,6 +67,8 @@ const leerFormulario = async (req, actual) => {
   if (!esOpcion(TIPOS_DERECHO, datos.tipo_derecho)) errores.push('El tipo de derecho no es válido.');
   if (!datos.descripcion) errores.push('La descripción de lo solicitado es obligatoria.');
   if (!esOpcion(CANALES, datos.canal_entrada)) errores.push('El canal de entrada no es válido.');
+  const errorSistema = await validarSistema(datos.sistema_id);
+  if (errorSistema) errores.push(errorSistema);
 
   if (!actual) {
     // Al registrarla: estado Recibida y plazo general de 1 mes
@@ -119,6 +123,7 @@ const renderFormulario = async (req, res, { solicitud, errores = [], status = 20
   const usuarios = esAdmin(req.user)
     ? await prisma.usuario.findMany({ select: { id: true, nombre: true, area: true }, orderBy: { nombre: 'asc' } })
     : [];
+  const sistemas = await listaSistemas();
   const fechaLimiteInicial = solicitud.fecha_recepcion ? finPlazoMeses(solicitud.fecha_recepcion, 1) : null;
   // Tras un error, `plazo_ampliado` refleja lo enviado; `ampliadoGuardado`, lo que hay en la BD
   const ampliadoGuardado = solicitud.ampliadoGuardado ?? solicitud.plazo_ampliado;
@@ -127,6 +132,7 @@ const renderFormulario = async (req, res, { solicitud, errores = [], status = 20
     solicitud,
     errores,
     usuarios,
+    sistemas,
     ampliadoGuardado,
     puedeAmpliar: !ampliadoGuardado && fechaLimiteInicial && new Date() <= fechaLimiteInicial,
     fechaLimiteInicial,
@@ -139,10 +145,15 @@ const list = async (req, res) => {
   const estado = esOpcion(ESTADOS_SOLICITUD, req.query.estado) ? req.query.estado : '';
   const plazo = ['abiertas', 'vencidas', 'proximas'].includes(req.query.plazo) ? req.query.plazo : '';
 
-  const solicitudes = await prisma.solicitudDerecho.findMany({
-    where: { ...(tipo && { tipo_derecho: tipo }), ...(estado && { estado }) },
-    include: { responsable: usuarioSelect },
-  });
+  const filtro = filtroSistema(req.query.sistema);
+
+  const [solicitudes, sistemas] = await Promise.all([
+    prisma.solicitudDerecho.findMany({
+      where: { ...(tipo && { tipo_derecho: tipo }), ...(estado && { estado }), ...filtro.where },
+      include: { responsable: usuarioSelect, sistema: sistemaSelect },
+    }),
+    listaSistemas(),
+  ]);
   const ahora = new Date();
   const conUrgencia = solicitudes
     .map((s) => ({ ...s, urgencia: urgencia(s, ahora), gestionable: esAdminOResponsable(req.user, s) }))
@@ -166,6 +177,8 @@ const list = async (req, res) => {
     tipo,
     estado,
     plazo,
+    sistemas,
+    sistema: filtro.sistema,
     ...opciones,
   });
 };
@@ -174,6 +187,7 @@ const show = async (req, res) => {
   const solicitud = await buscar(req, {
     responsable: usuarioSelect,
     creado_por: usuarioSelect,
+    sistema: sistemaSelect,
     _count: { select: { historial: true } },
   });
   if (!solicitud) return noEncontrada(res);
@@ -190,7 +204,8 @@ const show = async (req, res) => {
 };
 
 const newForm = (req, res) =>
-  renderFormulario(req, res, { solicitud: { fecha_recepcion: new Date(), canal_entrada: 'EMAIL' } });
+  // Admite ?sistema=ID para llegar desde la ficha de un sistema con él preseleccionado
+  renderFormulario(req, res, { solicitud: { fecha_recepcion: new Date(), canal_entrada: 'EMAIL', sistema_id: leerSistemaId(req.query.sistema) || null } });
 
 const create = async (req, res) => {
   const { datos, errores } = await leerFormulario(req, null);

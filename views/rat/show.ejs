@@ -5,6 +5,7 @@
     { titulo: 'Datos básicos', icono: 'clipboard-list', campos: [
       campo('Finalidad', a.finalidad, null, true),
       campo('Base legal', basesLegales[a.base_legal], null, true),
+      campo('Sistema asociado', a.sistema ? a.sistema.nombre : null, 'Ninguno · transversal'),
     ] },
     { titulo: 'Datos e interesados', icono: 'users', campos: [
       campo('Categorías de datos personales', a.categorias_datos, null, true),

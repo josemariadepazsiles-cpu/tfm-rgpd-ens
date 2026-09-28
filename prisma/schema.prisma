@@ -232,13 +232,16 @@ model ActividadRat {
   plazo_conservacion     String
   medidas_seguridad      String
   usuario_id             Int
+  sistema_id             Int?
   created_at             DateTime  @default(now())
   updated_at             DateTime  @updatedAt
 
   responsable Usuario  @relation(fields: [usuario_id], references: [id], onDelete: Restrict)
   riesgos     Riesgo[]
+  sistema     Sistema? @relation(fields: [sistema_id], references: [id], onDelete: SetNull)
 
   @@index([usuario_id])
+  @@index([sistema_id])
   @@map("actividades_rat")
 }
 
@@ -250,13 +253,16 @@ model Riesgo {
   impacto             Impacto
   nivel_riesgo        NivelRiesgo
   medidas_mitigadoras String?
+  sistema_id          Int?
   created_at          DateTime     @default(now())
   updated_at          DateTime     @updatedAt
 
   actividad ActividadRat @relation(fields: [actividad_id], references: [id], onDelete: Cascade)
+  sistema   Sistema?     @relation(fields: [sistema_id], references: [id], onDelete: SetNull)
 
   @@index([actividad_id])
   @@index([nivel_riesgo])
+  @@index([sistema_id])
   @@map("riesgos")
 }
 
@@ -279,6 +285,8 @@ model Sistema {
   id                Int           @id @default(autoincrement())
   nombre            String        @unique
   descripcion       String?
+  // Clasificación libre: «Aplicación clínica», «Web corporativa», «Sistema de gestión interna»…
+  tipo_sistema      String?
   // Categoría ENS del sistema (informativa; todas las evaluaciones incluyen todo el catálogo)
   categoria_general CategoriaEns?
   creado_por_id     Int?
@@ -289,6 +297,11 @@ model Sistema {
   evaluaciones  Evaluacion[]
   declaraciones DeclaracionConformidad[]
   procesos      ProcesoNegocio[]
+  // Información RGPD asociada (opcional: lo que no tiene sistema es transversal)
+  actividades   ActividadRat[]
+  riesgos       Riesgo[]
+  incidentes    Incidente[]
+  solicitudes   SolicitudDerecho[]
 
   @@map("sistemas")
 }
@@ -364,16 +377,19 @@ model Incidente {
   fecha_notificacion_afectados    DateTime?
   responsable_id                  Int?
   creado_por_id                   Int?
+  sistema_id                      Int?
   created_at                      DateTime          @default(now())
   updated_at                      DateTime          @updatedAt
 
   responsable Usuario?             @relation("IncidenteResponsable", fields: [responsable_id], references: [id], onDelete: SetNull)
   creado_por  Usuario?             @relation("IncidenteCreador", fields: [creado_por_id], references: [id], onDelete: SetNull)
   historial   HistorialIncidente[]
+  sistema     Sistema?             @relation(fields: [sistema_id], references: [id], onDelete: SetNull)
 
   @@index([estado])
   @@index([gravedad])
   @@index([responsable_id])
+  @@index([sistema_id])
   @@map("incidentes")
 }
 
@@ -413,17 +429,21 @@ model SolicitudDerecho {
   fecha_respuesta      DateTime?
   responsable_id       Int?
   creado_por_id        Int?
+  // Sistema en el que se ejerce el derecho (vacío si la solicitud es genérica)
+  sistema_id           Int?
   created_at           DateTime        @default(now())
   updated_at           DateTime        @updatedAt
 
   responsable Usuario?                    @relation("SolicitudResponsable", fields: [responsable_id], references: [id], onDelete: SetNull)
   creado_por  Usuario?                    @relation("SolicitudCreador", fields: [creado_por_id], references: [id], onDelete: SetNull)
   historial   HistorialSolicitudDerecho[]
+  sistema     Sistema?                    @relation(fields: [sistema_id], references: [id], onDelete: SetNull)
 
   @@index([estado])
   @@index([tipo_derecho])
   @@index([fecha_limite])
   @@index([responsable_id])
+  @@index([sistema_id])
   @@map("solicitudes_derechos")
 }
 

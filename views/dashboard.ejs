@@ -52,6 +52,9 @@
     ],
   };
   const todas = Object.values(modulos).flat();
+  // Con un sistema elegido, los enlaces a listados mantienen el filtro (?sistema=ID)
+  todas.forEach((k) => { k.href = enlace(k.href); });
+  if (sistema) modulos.ens[0].href = '/sistemas/' + sistema.id + '#ens';
   const criticos = todas.filter((k) => k.nivel === 'critico').length;
   const atencion = todas.filter((k) => k.nivel === 'atencion').length;
   const alDia = todas.filter((k) => k.nivel === 'ok').length;
@@ -63,7 +66,7 @@
   const maxRiesgo = Math.max(act.riesgosAltos, act.riesgosMedios, act.riesgosBajos, 1);
   const maxGravedad = Math.max(...Object.values(inc.activosPorGravedad), 1);
 
-  const encabezadoModulo = (icono_, titulo, descripcion, href) => ({ icono: icono_, titulo, descripcion, href });
+  const encabezadoModulo = (icono_, titulo, descripcion, href) => ({ icono: icono_, titulo, descripcion, href: enlace(href) });
 %>
 <!DOCTYPE html>
 <html lang="es">
@@ -80,9 +83,19 @@
       <div>
         <p class="eyebrow">Panel de control</p>
         <h1 class="mt-1.5 titulo-pagina">Hola, <%= nombrePila %></h1>
-        <p class="subtitulo-pagina">Resumen del estado de cumplimiento y seguridad de tu organización.</p>
+        <p class="subtitulo-pagina"><%= sistema ? 'Resumen del estado de cumplimiento y seguridad del sistema «' + sistema.nombre + '».' : 'Resumen del estado de cumplimiento y seguridad de tu organización.' %></p>
       </div>
       <div class="flex flex-col items-start gap-2 sm:items-end">
+        <form action="/dashboard" method="GET" class="flex items-center gap-2">
+          <label for="sistema-panel" class="flex items-center gap-1.5 text-xs font-medium text-slate-500"><%- icono('server', 'h-3.5 w-3.5') %>Ver</label>
+          <select id="sistema-panel" name="sistema" onchange="this.form.submit()" class="input w-auto min-w-60 py-2 text-sm">
+            <option value="">Toda la organización</option>
+            <% sistemas.forEach((s) => { %>
+              <option value="<%= s.id %>" <%= sistema && sistema.id === s.id ? 'selected' : '' %>><%= s.nombre %></option>
+            <% }) %>
+          </select>
+          <noscript><button type="submit" class="btn btn-secondary btn-sm">Ver</button></noscript>
+        </form>
         <div class="flex flex-wrap gap-2 text-xs" aria-label="Resumen de indicadores">
           <span class="badge bg-white text-slate-700 ring-slate-200"><span class="punto bg-red-500"></span><%= criticos %> críticos</span>
           <span class="badge bg-white text-slate-700 ring-slate-200"><span class="punto bg-amber-500"></span><%= atencion %> requieren atención</span>
@@ -91,6 +104,20 @@
         <p class="flex items-center gap-1.5 text-xs text-slate-400"><%- icono('refresh-cw', 'h-3 w-3') %>Actualizado el <%= fechaHora(m.generado) %></p>
       </div>
     </div>
+
+    <% if (sistema) { %>
+      <div class="alerta alerta-info items-center justify-between" role="status">
+        <span class="flex items-start gap-3">
+          <%- icono('filter', 'h-5 w-5 shrink-0') %>
+          <span>Estás viendo solo la información asociada a <strong><%= sistema.nombre %></strong><%= sistema.tipo_sistema ? ' (' + sistema.tipo_sistema + ')' : '' %>.
+            Proveedores y políticas no se asocian a sistemas: se muestran para toda la organización.</span>
+        </span>
+        <span class="flex shrink-0 gap-2">
+          <a href="/sistemas/<%= sistema.id %>" class="btn btn-secondary btn-sm"><%- icono('layout-dashboard', 'h-3.5 w-3.5') %>Ficha del sistema</a>
+          <a href="/dashboard" class="btn btn-ghost btn-sm">Toda la organización</a>
+        </span>
+      </div>
+    <% } %>
 
     <%# Aviso personal: políticas pendientes de aceptar %>
     <% if (pol.misPendientes.length) { %>
@@ -109,7 +136,7 @@
     <section aria-labelledby="t-resumen" class="space-y-4">
       <h2 id="t-resumen" class="titulo-seccion">Resumen ejecutivo</h2>
       <div class="grid gap-4 lg:grid-cols-12">
-        <a href="/sistemas" class="card group p-5 transition duration-150 hover:border-indigo-200 hover:shadow-sm lg:col-span-5">
+        <a href="<%= sistema ? '/sistemas/' + sistema.id + '#ens' : '/sistemas' %>" class="card group p-5 transition duration-150 hover:border-indigo-200 hover:shadow-sm lg:col-span-5">
           <div class="flex items-start justify-between gap-3">
             <p class="flex items-center gap-2 text-sm font-medium text-slate-600">
               <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-marca-50 text-indigo-600"><%- icono('shield-check', 'h-4 w-4') %></span>Cumplimiento ENS
@@ -132,7 +159,7 @@
             { titulo: 'Incidentes activos', valor: inc.activos, icono: 'siren', href: '/incidentes?alerta=activos', estado: inc.aepdVencidos ? { t: `${inc.aepdVencidos} fuera de plazo AEPD`, n: 'critico' } : inc.activos ? { t: 'En gestión', n: 'atencion' } : { t: 'Ninguno abierto', n: 'ok' } },
             { titulo: 'Acciones pendientes', valor: accionesPendientes.length, icono: 'list-todo', href: '#acciones', estado: accionesCriticas ? { t: `${accionesCriticas} críticas`, n: 'critico' } : accionesPendientes.length ? { t: 'Requieren atención', n: 'atencion' } : { t: 'Todo al día', n: 'ok' } },
           ].forEach((k) => { const c = { ok: 'text-emerald-600', atencion: 'text-amber-600', critico: 'text-red-600' }[k.estado.n]; const ic = { ok: 'circle-check', atencion: 'circle-alert', critico: 'circle-dot' }[k.estado.n]; %>
-            <a href="<%= k.href %>" class="card group flex flex-col justify-between p-5 transition duration-150 hover:border-indigo-200 hover:shadow-sm">
+            <a href="<%= enlace(k.href) %>" class="card group flex flex-col justify-between p-5 transition duration-150 hover:border-indigo-200 hover:shadow-sm">
               <p class="flex items-center gap-2 text-sm font-medium text-slate-600">
                 <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600"><%- icono(k.icono, 'h-4 w-4') %></span><%= k.titulo %>
               </p>
@@ -179,6 +206,51 @@
         <% } %>
       </div>
     </section>
+
+    <%# ================= Desglose por sistema (solo vista global) ================= %>
+    <% if (desglose && desglose.sistemas.length) { %>
+      <section aria-labelledby="t-desglose" class="space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-marca-50 text-indigo-600"><%- icono('server', 'h-4 w-4') %></span>
+            <h2 id="t-desglose" class="titulo-seccion">Desglose por sistema</h2>
+          </div>
+          <a href="/sistemas" class="enlace inline-flex items-center gap-1 text-xs">Ver sistemas<%- icono('arrow-right', 'h-3.5 w-3.5') %></a>
+        </div>
+        <div class="tabla-contenedor">
+          <table class="tabla">
+            <thead>
+              <tr><th>Sistema</th><th>Cumplimiento ENS</th><th>Riesgos altos</th><th>Incidentes activos</th><th>Solicitudes abiertas</th><th class="text-right">Ver</th></tr>
+            </thead>
+            <tbody>
+              <% desglose.sistemas.forEach((s) => { const r = s.rgpd; %>
+                <tr>
+                  <td><a href="/sistemas/<%= s.id %>" class="font-medium text-slate-800 hover:text-indigo-600 hover:underline"><%= s.nombre %></a></td>
+                  <td>
+                    <% if (s.global) { %>
+                      <span class="inline-flex items-center gap-2"><span class="progreso w-24"><span class="<%= colorPct(s.global.porcentaje) %>" style="width: <%= s.global.porcentaje %>%"></span></span><span class="text-sm font-semibold tabular-nums text-slate-800"><%= s.global.porcentaje %> %</span></span>
+                    <% } else { %><span class="text-sm italic text-slate-400">Sin evaluar</span><% } %>
+                  </td>
+                  <td class="tabular-nums"><span class="inline-flex items-center gap-1.5 <%= r.riesgosAltos ? 'font-semibold text-red-700' : 'text-slate-500' %>"><span class="punto <%= r.riesgosAltos ? 'bg-red-500' : 'bg-emerald-500' %>"></span><%= r.riesgosAltos %></span></td>
+                  <td class="tabular-nums"><span class="inline-flex items-center gap-1.5 <%= r.incidentesActivos ? 'font-semibold text-amber-700' : 'text-slate-500' %>"><span class="punto <%= r.incidentesActivos ? 'bg-amber-500' : 'bg-emerald-500' %>"></span><%= r.incidentesActivos %></span></td>
+                  <td class="tabular-nums text-slate-600"><%= r.solicitudesAbiertas %></td>
+                  <td class="whitespace-nowrap text-right"><a href="/dashboard?sistema=<%= s.id %>" class="btn btn-secondary btn-sm"><%- icono('layout-dashboard', 'h-3.5 w-3.5') %>Panel del sistema</a></td>
+                </tr>
+              <% }) %>
+              <tr class="bg-slate-50/60">
+                <td><span class="font-medium text-slate-600">Sin sistema · Transversal</span></td>
+                <td class="text-slate-400">—</td>
+                <td class="tabular-nums"><a href="/riesgos?sistema=ninguno&nivel=ALTO" class="<%= desglose.transversal.riesgosAltos ? 'font-semibold text-red-700' : 'text-slate-500' %> hover:underline"><%= desglose.transversal.riesgosAltos %></a></td>
+                <td class="tabular-nums"><a href="/incidentes?sistema=ninguno&alerta=activos" class="<%= desglose.transversal.incidentesActivos ? 'font-semibold text-amber-700' : 'text-slate-500' %> hover:underline"><%= desglose.transversal.incidentesActivos %></a></td>
+                <td class="tabular-nums"><a href="/derechos?sistema=ninguno&plazo=abiertas" class="text-slate-600 hover:underline"><%= desglose.transversal.solicitudesAbiertas %></a></td>
+                <td class="text-right"><a href="/rat?sistema=ninguno" class="btn btn-ghost btn-sm">Ver RAT</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <% if (user.rol !== 'ADMIN') { %><p class="text-xs text-slate-500">Los riesgos incluyen solo los de las actividades de las que eres responsable.</p><% } %>
+      </section>
+    <% } %>
 
     <%# ================= 2. Estado RGPD ================= %>
     <section aria-labelledby="t-rgpd" class="space-y-4">
@@ -345,7 +417,7 @@
     <section aria-labelledby="t-riesgos" class="space-y-4">
       <h2 id="t-riesgos" class="titulo-seccion">Riesgos e incidencias</h2>
       <div class="grid gap-4 lg:grid-cols-2">
-        <a href="/riesgos" class="card group p-5 transition hover:border-indigo-200">
+        <a href="<%= enlace('/riesgos') %>" class="card group p-5 transition hover:border-indigo-200">
           <div class="flex items-center justify-between">
             <h3 class="flex items-center gap-2 font-semibold text-slate-900"><%- icono('gauge', 'h-4 w-4 text-slate-500') %>Riesgos por nivel</h3>
             <span class="text-xs text-slate-500"><%= act.riesgos %> evaluados</span>
@@ -362,7 +434,7 @@
           <% if (act.altosSinMedidas) { %><p class="mt-4 flex items-center gap-1.5 text-xs text-red-600"><%- icono('circle-dot', 'h-3.5 w-3.5') %><%= act.altosSinMedidas %> riesgo(s) alto(s) sin medidas mitigadoras</p><% } %>
         </a>
 
-        <a href="/incidentes" class="card group p-5 transition hover:border-indigo-200">
+        <a href="<%= enlace('/incidentes') %>" class="card group p-5 transition hover:border-indigo-200">
           <div class="flex items-center justify-between">
             <h3 class="flex items-center gap-2 font-semibold text-slate-900"><%- icono('siren', 'h-4 w-4 text-slate-500') %>Incidentes de los últimos 12 meses</h3>
             <span class="text-xs text-slate-500"><%= total12m %> detectados</span>

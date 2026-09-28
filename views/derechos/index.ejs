@@ -57,8 +57,9 @@
           <option value="vencidas" <%= plazo === 'vencidas' ? 'selected' : '' %>>Vencidas sin resolver</option>
         </select>
       </div>
+      <%- include('../partials/filtro-sistema', { sistemas, sistema }) %>
       <noscript><button type="submit" class="btn btn-secondary">Filtrar</button></noscript>
-      <% if (tipo || estado || plazo) { %>
+      <% if (tipo || estado || plazo || sistema) { %>
         <a href="/derechos" class="py-2 text-sm text-indigo-600 hover:underline">Quitar filtros</a>
       <% } %>
     </form>
@@ -66,7 +67,7 @@
     <div class="mt-4 tabla-contenedor">
       <% if (solicitudes.length === 0) { %>
         <p class="p-8 text-center text-slate-500">
-          <%= tipo || estado || plazo ? 'No hay solicitudes con esos filtros.' : 'No se ha registrado ninguna solicitud.' %>
+          <%= tipo || estado || plazo || sistema ? 'No hay solicitudes con esos filtros.' : 'No se ha registrado ninguna solicitud.' %>
         </p>
       <% } else { %>
         <table class="tabla">
@@ -74,6 +75,7 @@
             <tr>
               <th>Solicitante</th>
               <th>Derecho</th>
+              <th>Sistema</th>
               <th>Recepción</th>
               <th>Fecha límite</th>
               <th>Estado</th>
@@ -89,6 +91,7 @@
                   <span class="block text-xs text-slate-500"><%= s.email_solicitante %></span>
                 </td>
                 <td class="px-4 py-3 text-slate-700"><%= TIPOS_DERECHO[s.tipo_derecho] %></td>
+                <td class="px-4 py-3"><%- include('../partials/sistema-celda', { s: s.sistema }) %></td>
                 <td class="px-4 py-3 text-slate-600 whitespace-nowrap"><%= fecha(s.fecha_recepcion) %></td>
                 <td class="px-4 py-3 whitespace-nowrap">
                   <span class="text-slate-700"><%= fecha(s.fecha_limite) %></span>
