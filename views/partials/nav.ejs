@@ -99,7 +99,7 @@
                  x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
                  x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
                  class="absolute left-0 z-20 mt-2 w-80 rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg shadow-slate-900/5">
-              <p class="miga-area px-3 pb-1 pt-1.5 text-[11px] tracking-[0.08em]"><%= m.texto %></p>
+              <p class="miga-area sin-fondo px-3 pb-1 pt-1.5 text-[11px] tracking-[0.08em]"><%= m.texto %></p>
               <% m.enlaces.forEach((e) => { %>
                 <a href="<%= e.href %>" class="<%= claseItem(activo(e.href)) %>" <%- activo(e.href) ? 'aria-current="page"' : '' %>>
                   <span class="mt-0.5 flex h-7 w-7 items-center justify-center rounded-md <%= activo(e.href) ? 'nav-area-icono bg-white' : 'bg-slate-100 text-slate-500' %>"><%- icono(e.icono, 'h-4 w-4') %></span>
@@ -165,7 +165,7 @@
 
     <% menus.forEach((m) => { %>
       <div data-area="<%= m.id %>">
-        <p class="miga-area px-3 text-xs uppercase tracking-wider"><%= m.texto %></p>
+        <p class="miga-area sin-fondo px-3 text-xs uppercase tracking-wider"><%= m.texto %></p>
         <div class="mt-1 space-y-0.5">
           <% m.enlaces.forEach((e) => { %>
             <a href="<%= e.href %>" class="<%= claseMovilArea(activo(e.href)) %>" <%- activo(e.href) ? 'aria-current="page"' : '' %>><span class="<%= activo(e.href) ? 'nav-area-icono' : 'text-slate-500' %>"><%- icono(e.icono, 'h-4 w-4') %></span><%= e.texto %></a>
@@ -193,4 +193,15 @@
     </div>
   </div>
 </nav>
+<%# Banda del área (RGPD / ENS): recuerda en qué ámbito normativo se está trabajando %>
+<% if (areas[areaActual]) { const a = areas[areaActual]; %>
+  <div class="banda-area">
+    <div class="contenedor flex h-9 items-center gap-2 text-[13px]">
+      <%- icono(a.icono, 'h-4 w-4 shrink-0') %>
+      <span class="font-semibold tracking-wide"><%= a.etiqueta %></span>
+      <span class="hidden opacity-40 sm:inline" aria-hidden="true">·</span>
+      <span class="hidden truncate font-medium opacity-90 sm:inline"><%= a.nombre %></span>
+    </div>
+  </div>
+<% } %>
 </header>

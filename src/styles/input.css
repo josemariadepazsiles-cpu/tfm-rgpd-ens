@@ -117,30 +117,36 @@
   /* Filete superior de la cabecera de la aplicación (sombra interior: no interfiere con
      el color del borde inferior que fijan las utilidades de la cabecera) */
   .cabecera-area {
-    box-shadow: inset 0 3px 0 var(--area);
+    box-shadow: inset 0 4px 0 var(--area);
   }
-  /* Etiqueta «RGPD» / «ENS» junto al título de la página */
-  .badge-area {
-    @apply relative ml-3 inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 align-middle text-[11px] leading-4 font-semibold tracking-[0.08em];
-    top: -0.12em;
+  /* Banda del área bajo la barra de navegación (solo RGPD y ENS): icono y nombre completo */
+  .banda-area {
     color: var(--area);
     background-color: var(--area-suave);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--area) 22%, transparent);
+    border-top: 1px solid color-mix(in srgb, var(--area) 16%, transparent);
   }
-  .badge-area::before {
-    @apply h-1.5 w-1.5 rounded-full;
-    content: "";
+  /* Etiqueta «RGPD» / «ENS» junto al título de la página: rellena con el acento */
+  .badge-area {
+    @apply relative ml-3 inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 align-middle text-xs leading-4 font-semibold tracking-[0.06em] text-white;
+    top: -0.12em;
     background-color: var(--area);
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--area) 30%, transparent);
   }
-  /* Miga de pan del área («RGPD» / «ENS») y enlaces de la ruta */
+  /* Miga de pan del área («RGPD» / «ENS»): píldora suave con el acento */
   .miga-area {
-    @apply inline-flex items-center gap-1.5 font-medium;
+    @apply inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 font-semibold;
     color: var(--area);
+    background-color: var(--area-suave);
   }
   .miga-area::before {
     @apply h-1.5 w-1.5 rounded-full;
     content: "";
     background-color: var(--area);
+  }
+  /* Cabecera del desplegable: solo texto con punto, sin fondo */
+  .miga-area.sin-fondo {
+    @apply px-0;
+    background-color: transparent;
   }
   .miga-enlace:hover {
     color: var(--area);
@@ -151,9 +157,17 @@
     color: var(--area);
   }
   .nav-area-activo {
+    @apply relative font-semibold;
     color: var(--area);
     background-color: var(--area-suave);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--area) 14%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--area) 28%, transparent);
+  }
+  /* Subrayado del área activa, apoyado en el borde inferior de la barra (escritorio) */
+  .nav-area-activo::after {
+    @apply absolute inset-x-2 h-[3px] rounded-full;
+    content: "";
+    bottom: -14px;
+    background-color: var(--area);
   }
   .nav-area-item-activo {
     color: var(--area);

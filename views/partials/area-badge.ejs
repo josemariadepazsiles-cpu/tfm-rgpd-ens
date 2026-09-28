@@ -1,2 +1,2 @@
 <%# Etiqueta del área («RGPD» / «ENS») junto al título de la página. En las pantallas neutras no se muestra. %>
-<% if (areas[area]) { %><span class="badge-area" data-area="<%= area %>"><%= areas[area].etiqueta %></span><% } %>
+<% if (areas[area]) { %><span class="badge-area" data-area="<%= area %>" title="<%= areas[area].nombre %>"><%- icono(areas[area].icono, 'h-3.5 w-3.5') %><%= areas[area].etiqueta %></span><% } %>
