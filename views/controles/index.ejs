@@ -6,12 +6,12 @@
 <body class="min-h-screen bg-fondo">
   <%- include('../partials/nav') %>
 
-  <main class="contenedor py-8 sm:py-10">
+  <main data-area="<%= area %>" class="contenedor py-8 sm:py-10">
     <%- include('../partials/migas', { migas: [{ texto: 'ENS' }, { texto: 'Catálogo de controles' }] }) %>
     <%- include('../partials/flash') %>
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div>
-        <h1 class="titulo-pagina">Catálogo de controles ENS</h1>
+        <h1 class="titulo-pagina">Catálogo de controles ENS<%- include('../partials/area-badge') %></h1>
         <p class="subtitulo-pagina">Todos estos controles se evalúan en cada evaluación de cada sistema</p>
       </div>
       <a href="/controles/nuevo" class="btn btn-primary"><%- icono('plus', 'h-4 w-4') %>Nuevo control</a>

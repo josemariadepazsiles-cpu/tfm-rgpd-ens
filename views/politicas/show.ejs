@@ -18,14 +18,14 @@
 <body class="min-h-screen bg-fondo">
   <%- include('../partials/nav') %>
 
-  <main class="contenedor py-8 sm:py-10">
+  <main data-area="<%= area %>" class="contenedor py-8 sm:py-10">
     <%- include('../partials/migas', { migas: [{ texto: 'ENS' }, { texto: 'Políticas y Documentación', href: '/politicas' }, { texto: politica.titulo }] }) %>
     <%- include('../partials/flash') %>
 
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div class="min-w-0">
         <p class="eyebrow"><%= TIPOS_POLITICA[p.tipo_documento] %></p>
-        <h1 class="mt-1 titulo-pagina"><%= p.titulo %></h1>
+        <h1 class="mt-1 titulo-pagina"><%= p.titulo %><%- include('../partials/area-badge') %></h1>
         <div class="mt-2.5 flex flex-wrap items-center gap-2">
           <span class="badge bg-white text-slate-700 ring-slate-200 tabular-nums">Versión <%= p.version %></span>
           <span class="badge <%= estadoPoliticaClases[p.estado] %>"><%= ESTADOS_POLITICA[p.estado] %></span>

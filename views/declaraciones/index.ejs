@@ -6,12 +6,12 @@
 <body class="min-h-screen bg-fondo">
   <%- include('../partials/nav') %>
 
-  <main class="contenedor py-8 sm:py-10">
+  <main data-area="<%= area %>" class="contenedor py-8 sm:py-10">
     <%- include('../partials/migas', { migas: [{ texto: 'ENS' }, { texto: 'Declaraciones de Conformidad' }] }) %>
     <%- include('../partials/flash') %>
 
     <div>
-      <h1 class="titulo-pagina">Declaraciones de Conformidad ENS</h1>
+      <h1 class="titulo-pagina">Declaraciones de Conformidad ENS<%- include('../partials/area-badge') %></h1>
       <p class="subtitulo-pagina">
         Informes formales de adecuación generados a partir del checklist de cada sistema.
         <% if (user.rol === 'ADMIN') { %>Para generar una nueva, abre la evaluación del sistema y pulsa «Generar Declaración de Conformidad».<% } %>

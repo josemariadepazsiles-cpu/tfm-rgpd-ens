@@ -29,7 +29,7 @@
 <body class="min-h-screen bg-fondo">
   <%- include('../partials/nav') %>
 
-  <main class="contenedor py-8 sm:py-10">
+  <main data-area="<%= area %>" class="contenedor py-8 sm:py-10">
     <%- include('../partials/migas', { migas: [{ texto: 'RGPD' }, { texto: 'Derechos de los Interesados', href: '/derechos' }, { texto: 'Solicitud de ' + solicitud.nombre_solicitante }] }) %>
     <%- include('../partials/flash') %>
 
@@ -37,7 +37,7 @@
       <div class="min-w-0">
         <p class="eyebrow">Solicitud de derecho</p>
         <h1 class="mt-1 titulo-pagina">
-          Derecho de <%= TIPOS_DERECHO[solicitud.tipo_derecho].toLowerCase() %> · <%= solicitud.nombre_solicitante %>
+          Derecho de <%= TIPOS_DERECHO[solicitud.tipo_derecho].toLowerCase() %> · <%= solicitud.nombre_solicitante %><%- include('../partials/area-badge') %>
         </h1>
         <div class="mt-2.5 flex flex-wrap items-center gap-2">
           <%- include('../partials/estado-solicitud', { estadoSolicitud: solicitud.estado }) %>

@@ -10,13 +10,13 @@
 <body class="min-h-screen bg-fondo">
   <%- include('../partials/nav') %>
 
-  <main class="contenedor py-8 sm:py-10">
+  <main data-area="<%= area %>" class="contenedor py-8 sm:py-10">
     <%- include('../partials/migas', { migas: [{ texto: 'RGPD' }, { texto: 'Derechos de los Interesados' }] }) %>
     <%- include('../partials/flash') %>
 
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div>
-        <h1 class="titulo-pagina">Derechos de los interesados</h1>
+        <h1 class="titulo-pagina">Derechos de los interesados<%- include('../partials/area-badge') %></h1>
         <p class="subtitulo-pagina">Solicitudes de acceso, rectificación, supresión, oposición, limitación y portabilidad (arts. 12 a 22 RGPD)</p>
       </div>
       <a href="/derechos/nueva" class="btn btn-primary"><%- icono('plus', 'h-4 w-4') %>Nueva solicitud</a>

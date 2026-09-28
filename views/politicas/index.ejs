@@ -11,13 +11,13 @@
 <body class="min-h-screen bg-fondo">
   <%- include('../partials/nav') %>
 
-  <main class="contenedor py-8 sm:py-10">
+  <main data-area="<%= area %>" class="contenedor py-8 sm:py-10">
     <%- include('../partials/migas', { migas: [{ texto: 'ENS' }, { texto: 'Políticas y Documentación' }] }) %>
     <%- include('../partials/flash') %>
 
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div>
-        <h1 class="titulo-pagina">Políticas y Documentación</h1>
+        <h1 class="titulo-pagina">Políticas y Documentación<%- include('../partials/area-badge') %></h1>
         <p class="subtitulo-pagina">
           Política de Seguridad de la Información, procedimientos, instrucciones técnicas y normativas internas<%= esAdmin ? '' : ' vigentes' %>
         </p>

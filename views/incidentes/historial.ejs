@@ -6,9 +6,9 @@
 <body class="min-h-screen bg-fondo">
   <%- include('../partials/nav') %>
 
-  <main class="contenedor py-8 sm:py-10">
+  <main data-area="<%= area %>" class="contenedor py-8 sm:py-10">
     <%- include('../partials/migas', { migas: [{ texto: 'RGPD' }, { texto: 'Incidentes / Brechas', href: '/incidentes' }, { texto: incidente.titulo, href: '/incidentes/' + incidente.id }, { texto: 'Historial' }] }) %>
-    <h1 class="titulo-pagina">Historial de estados</h1>
+    <h1 class="titulo-pagina">Historial de estados<%- include('../partials/area-badge') %></h1>
     <p class="subtitulo-pagina">
       <%= incidente.titulo %> · <%= total %> cambio(s) · hora de España ·
       reportado el <%= fechaHora(incidente.created_at) %><%= incidente.creado_por ? ' por ' + incidente.creado_por.nombre : '' %> en estado Abierto

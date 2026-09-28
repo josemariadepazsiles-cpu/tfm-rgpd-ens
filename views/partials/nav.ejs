@@ -35,16 +35,25 @@
   const menuActivo = (m) => m.rutas.some(activo);
   const usuarioActivo = activo('/registro');
 
+  // Área de la pantalla actual (lib/areas.js): colorea el filete de la cabecera y la sección activa
+  const areaActual = typeof area !== 'undefined' ? area : 'neutro';
+
+  // Inicio y Sistemas son neutros; RGPD y ENS usan su color de área (clases *-area en input.css)
   const claseBoton = (marcado) =>
     'inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition duration-150 ' +
-    (marcado ? 'bg-marca-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900');
+    (marcado ? 'bg-slate-100 text-slate-900' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900');
+  const claseBotonArea = (marcado) =>
+    'inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition duration-150 ' +
+    (marcado ? 'nav-area-activo' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900');
   const claseItem = (marcado) =>
     'flex items-start gap-3 rounded-lg px-3 py-2.5 text-sm transition duration-150 ' +
-    (marcado ? 'bg-marca-50 text-indigo-700' : 'text-slate-700 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none');
+    (marcado ? 'nav-area-item-activo' : 'text-slate-700 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none');
   const claseMovil = (marcado) =>
-    'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm ' + (marcado ? 'bg-marca-50 font-medium text-indigo-700' : 'text-slate-700 hover:bg-slate-50');
+    'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm ' + (marcado ? 'bg-slate-100 font-medium text-slate-900' : 'text-slate-700 hover:bg-slate-50');
+  const claseMovilArea = (marcado) =>
+    'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm ' + (marcado ? 'nav-area-item-activo font-medium' : 'text-slate-700 hover:bg-slate-50');
 %>
-<header class="sticky top-0 z-30 border-b border-slate-200/80 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+<header data-area="<%= areaActual %>" class="cabecera-area sticky top-0 z-30 border-b border-slate-200/80 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/80">
 <nav class="contenedor" aria-label="Navegación principal"
      x-data="{
        abierto: false,
@@ -79,20 +88,21 @@
         </a>
 
         <% menus.forEach((m) => { %>
-          <div class="relative" @click.outside="menu === '<%= m.id %>' && cerrar(false)">
+          <div class="relative" data-area="<%= m.id %>" @click.outside="menu === '<%= m.id %>' && cerrar(false)">
             <button type="button" x-ref="btn-<%= m.id %>" @click="alternar('<%= m.id %>')"
-                    class="<%= claseBoton(menuActivo(m)) %>"
+                    class="<%= claseBotonArea(menuActivo(m)) %>"
                     aria-haspopup="true" :aria-expanded="menu === '<%= m.id %>'" aria-controls="menu-<%= m.id %>">
-              <%- icono(m.icono, 'h-4 w-4') %><%= m.texto %>
+              <span class="nav-area-icono"><%- icono(m.icono, 'h-4 w-4') %></span><%= m.texto %>
               <span class="transition-transform duration-150" :class="menu === '<%= m.id %>' && 'rotate-180'"><%- icono('chevron-down', 'h-3.5 w-3.5 opacity-60') %></span>
             </button>
             <div id="menu-<%= m.id %>" x-show="menu === '<%= m.id %>'" x-cloak
                  x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
                  x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
                  class="absolute left-0 z-20 mt-2 w-80 rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg shadow-slate-900/5">
+              <p class="miga-area px-3 pb-1 pt-1.5 text-[11px] tracking-[0.08em]"><%= m.texto %></p>
               <% m.enlaces.forEach((e) => { %>
                 <a href="<%= e.href %>" class="<%= claseItem(activo(e.href)) %>" <%- activo(e.href) ? 'aria-current="page"' : '' %>>
-                  <span class="mt-0.5 flex h-7 w-7 items-center justify-center rounded-md <%= activo(e.href) ? 'bg-white text-indigo-600' : 'bg-slate-100 text-slate-500' %>"><%- icono(e.icono, 'h-4 w-4') %></span>
+                  <span class="mt-0.5 flex h-7 w-7 items-center justify-center rounded-md <%= activo(e.href) ? 'nav-area-icono bg-white' : 'bg-slate-100 text-slate-500' %>"><%- icono(e.icono, 'h-4 w-4') %></span>
                   <span>
                     <span class="block font-medium"><%= e.texto %></span>
                     <span class="block text-xs text-slate-500"><%= e.detalle %></span>
@@ -108,7 +118,7 @@
     <%# Escritorio: desplegable de usuario %>
     <div class="relative hidden md:block" @click.outside="menu === 'usuario' && cerrar(false)">
       <button type="button" x-ref="btn-usuario" @click="alternar('usuario')"
-              class="flex items-center gap-2.5 rounded-lg py-1.5 pl-1.5 pr-2.5 text-sm transition duration-150 <%= usuarioActivo ? 'bg-marca-50' : 'hover:bg-slate-100' %> max-w-64"
+              class="flex items-center gap-2.5 rounded-lg py-1.5 pl-1.5 pr-2.5 text-sm transition duration-150 <%= usuarioActivo ? 'bg-slate-100' : 'hover:bg-slate-100' %> max-w-64"
               aria-haspopup="true" :aria-expanded="menu === 'usuario'" aria-controls="menu-usuario">
         <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-blue-800 text-xs font-semibold text-white" aria-hidden="true"><%= iniciales(user.nombre) %></span>
         <span class="min-w-0 text-left leading-tight">
@@ -128,7 +138,7 @@
         </div>
         <div class="my-1 border-t border-slate-100"></div>
         <% if (esAdmin) { %>
-          <a href="/registro" class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm <%= activo('/registro') ? 'bg-marca-50 text-indigo-700' : 'text-slate-700 hover:bg-slate-50' %>" <%- activo('/registro') ? 'aria-current="page"' : '' %>>
+          <a href="/registro" class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm <%= activo('/registro') ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:bg-slate-50' %>" <%- activo('/registro') ? 'aria-current="page"' : '' %>>
             <%- icono('user-plus', 'h-4 w-4 text-slate-500') %>Registrar usuario
           </a>
         <% } %>
@@ -154,11 +164,11 @@
     <a href="/sistemas" class="<%= claseMovil(activo('/sistemas')) %>" <%- activo('/sistemas') ? 'aria-current="page"' : '' %>><%- icono('server', 'h-4 w-4') %>Sistemas de información</a>
 
     <% menus.forEach((m) => { %>
-      <div>
-        <p class="px-3 text-xs font-semibold uppercase tracking-wider <%= menuActivo(m) ? 'text-indigo-600' : 'text-slate-400' %>"><%= m.texto %></p>
+      <div data-area="<%= m.id %>">
+        <p class="miga-area px-3 text-xs uppercase tracking-wider"><%= m.texto %></p>
         <div class="mt-1 space-y-0.5">
           <% m.enlaces.forEach((e) => { %>
-            <a href="<%= e.href %>" class="<%= claseMovil(activo(e.href)) %>" <%- activo(e.href) ? 'aria-current="page"' : '' %>><%- icono(e.icono, 'h-4 w-4 text-slate-500') %><%= e.texto %></a>
+            <a href="<%= e.href %>" class="<%= claseMovilArea(activo(e.href)) %>" <%- activo(e.href) ? 'aria-current="page"' : '' %>><span class="<%= activo(e.href) ? 'nav-area-icono' : 'text-slate-500' %>"><%- icono(e.icono, 'h-4 w-4') %></span><%= e.texto %></a>
           <% }) %>
         </div>
       </div>

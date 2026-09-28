@@ -32,14 +32,14 @@
 <body class="min-h-screen bg-fondo">
   <%- include('../partials/nav') %>
 
-  <main class="contenedor py-8 sm:py-10">
+  <main data-area="<%= area %>" class="contenedor py-8 sm:py-10">
     <%- include('../partials/migas', { migas: [{ texto: 'RGPD' }, { texto: 'Proveedores', href: '/proveedores' }, { texto: proveedor.nombre_empresa }] }) %>
     <%- include('../partials/flash') %>
 
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div class="min-w-0">
         <p class="eyebrow">Encargado del tratamiento</p>
-        <h1 class="mt-1 titulo-pagina"><%= p.nombre_empresa %></h1>
+        <h1 class="mt-1 titulo-pagina"><%= p.nombre_empresa %><%- include('../partials/area-badge') %></h1>
         <div class="mt-2.5 flex flex-wrap items-center gap-2">
           <span class="badge <%= estadoProveedorClases[p.estado] %>"><%= ESTADOS_PROVEEDOR[p.estado] %></span>
           <%- include('../partials/alertas-proveedor', { lista: alertas }) %>

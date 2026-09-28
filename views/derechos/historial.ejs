@@ -6,9 +6,9 @@
 <body class="min-h-screen bg-fondo">
   <%- include('../partials/nav') %>
 
-  <main class="contenedor py-8 sm:py-10">
+  <main data-area="<%= area %>" class="contenedor py-8 sm:py-10">
     <%- include('../partials/migas', { migas: [{ texto: 'RGPD' }, { texto: 'Derechos de los Interesados', href: '/derechos' }, { texto: 'Solicitud de ' + solicitud.nombre_solicitante, href: '/derechos/' + solicitud.id }, { texto: 'Historial' }] }) %>
-    <h1 class="titulo-pagina">Historial de la solicitud</h1>
+    <h1 class="titulo-pagina">Historial de la solicitud<%- include('../partials/area-badge') %></h1>
     <p class="subtitulo-pagina">
       <%= TIPOS_DERECHO[solicitud.tipo_derecho] %> · <%= solicitud.nombre_solicitante %> · <%= total %> cambio(s) · hora de España ·
       registrada el <%= fechaHora(solicitud.created_at) %><%= solicitud.creado_por ? ' por ' + solicitud.creado_por.nombre : '' %> en estado Recibida

@@ -46,7 +46,37 @@
   --color-marca-900: #1e1b4b;
 }
 
+/* --------------------------------------------------------------------------
+   Color de ÁREA (contexto «en qué área estoy»): RGPD índigo, ENS violeta,
+   neutro gris pizarra (panel, sistemas, usuarios). Es solo una pista visual
+   discreta; NO se usa para estados ni gravedades (verde/ámbar/naranja/rojo).
+   El área de cada pantalla la decide lib/areas.js según la URL y llega a las
+   vistas como `area`; los elementos la leen con el atributo data-area.
+   -------------------------------------------------------------------------- */
+:root {
+  --color-area-rgpd: #4f46e5;
+  --color-area-rgpd-suave: #eef2ff;
+  --color-area-ens: #7c3aed;
+  --color-area-ens-suave: #f5f3ff;
+  --color-area-neutro: #64748b;
+  --color-area-neutro-suave: #f1f5f9;
+}
+
 @layer base {
+  /* Cada elemento con data-area expone --area (acento) y --area-suave (fondo) */
+  [data-area] {
+    --area: var(--color-area-neutro);
+    --area-suave: var(--color-area-neutro-suave);
+  }
+  [data-area="rgpd"] {
+    --area: var(--color-area-rgpd);
+    --area-suave: var(--color-area-rgpd-suave);
+  }
+  [data-area="ens"] {
+    --area: var(--color-area-ens);
+    --area-suave: var(--color-area-ens-suave);
+  }
+
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -80,6 +110,54 @@
   }
   .eyebrow {
     @apply text-xs font-semibold uppercase tracking-wider text-indigo-600;
+    color: var(--area, var(--color-marca-600));
+  }
+
+  /* --- Código de color de área --- */
+  /* Filete superior de la cabecera de la aplicación (sombra interior: no interfiere con
+     el color del borde inferior que fijan las utilidades de la cabecera) */
+  .cabecera-area {
+    box-shadow: inset 0 3px 0 var(--area);
+  }
+  /* Etiqueta «RGPD» / «ENS» junto al título de la página */
+  .badge-area {
+    @apply relative ml-3 inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 align-middle text-[11px] leading-4 font-semibold tracking-[0.08em];
+    top: -0.12em;
+    color: var(--area);
+    background-color: var(--area-suave);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--area) 22%, transparent);
+  }
+  .badge-area::before {
+    @apply h-1.5 w-1.5 rounded-full;
+    content: "";
+    background-color: var(--area);
+  }
+  /* Miga de pan del área («RGPD» / «ENS») y enlaces de la ruta */
+  .miga-area {
+    @apply inline-flex items-center gap-1.5 font-medium;
+    color: var(--area);
+  }
+  .miga-area::before {
+    @apply h-1.5 w-1.5 rounded-full;
+    content: "";
+    background-color: var(--area);
+  }
+  .miga-enlace:hover {
+    color: var(--area);
+  }
+  /* Desplegable RGPD / ENS de la barra superior: icono siempre en su color y,
+     cuando la sección está activa, fondo muy suave con texto y filete del acento */
+  .nav-area-icono {
+    color: var(--area);
+  }
+  .nav-area-activo {
+    color: var(--area);
+    background-color: var(--area-suave);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--area) 14%, transparent);
+  }
+  .nav-area-item-activo {
+    color: var(--area);
+    background-color: var(--area-suave);
   }
 
   /* --- Tarjetas: fondo blanco, borde sutil, sin sombras fuertes --- */

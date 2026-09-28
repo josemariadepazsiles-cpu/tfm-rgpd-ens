@@ -24,13 +24,13 @@
 <body class="min-h-screen bg-fondo">
   <%- include('../partials/nav') %>
 
-  <main class="contenedor py-8 sm:py-10">
+  <main data-area="<%= area %>" class="contenedor py-8 sm:py-10">
     <%- include('../partials/migas', { migas: [{ texto: 'RGPD' }, { texto: 'Incidentes / Brechas', href: '/incidentes' }, { texto: incidente.titulo }] }) %>
     <%- include('../partials/flash') %>
 
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div class="min-w-0">
-        <h1 class="titulo-pagina"><%= incidente.titulo %></h1>
+        <h1 class="titulo-pagina"><%= incidente.titulo %><%- include('../partials/area-badge') %></h1>
         <div class="mt-2.5 flex flex-wrap items-center gap-2">
           <%- include('../partials/incidente-badges', { gravedadBadge: incidente.gravedad }) %>
           <%- include('../partials/incidente-badges', { estadoBadge: incidente.estado }) %>

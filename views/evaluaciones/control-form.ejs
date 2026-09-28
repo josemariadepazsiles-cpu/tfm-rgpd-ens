@@ -10,11 +10,11 @@
 <body class="min-h-screen bg-fondo">
   <%- include('../partials/nav') %>
 
-  <main class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+  <main data-area="<%= area %>" class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
     <%- include('../partials/migas', { migas: [{ texto: 'Sistemas de información', href: '/sistemas' }, { texto: evaluacion.sistema.nombre, href: '/sistemas/' + evaluacion.sistema.id + '#ens' }, { texto: evaluacion.nombre, href: '/evaluaciones/' + evaluacion.id }, { texto: control.nombre }] }) %>
 
     <div class="mt-2 flex flex-wrap items-center gap-3">
-      <h1 class="titulo-pagina"><%= control.nombre %></h1>
+      <h1 class="titulo-pagina"><%= control.nombre %><%- include('../partials/area-badge') %></h1>
       <span class="badge <%= categoriaClases[control.categoria].badge %>">
         Categoría <%= categorias[control.categoria] %>
       </span>

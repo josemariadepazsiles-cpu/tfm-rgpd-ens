@@ -23,6 +23,7 @@ const biaRoutes = require('./routes/bia');
 const { CRITICIDAD_CLASES, ESTADO_REVISION_CLASES, RESULTADO_CLASES, ALERTA_BIA_CLASES } = require('./lib/bia');
 const { ESTADO_POLITICA_CLASES, REVISION_CLASES } = require('./lib/politicas');
 const { icono } = require('./lib/iconos');
+const { AREAS, areaDeRuta } = require('./lib/areas');
 const { ESTADO_DECLARACION_CLASES } = require('./lib/declaraciones');
 const { fecha, fechaHora, aInputFechaHora, aInputFecha } = require('./lib/formato');
 const { ESTADO_PROVEEDOR_CLASES, NIVEL_ENS_CLASES, ALERTA_CLASES } = require('./lib/proveedores');
@@ -65,6 +66,9 @@ app.locals.estadoRevisionClases = ESTADO_REVISION_CLASES;
 app.locals.resultadoClases = RESULTADO_CLASES;
 app.locals.alertaBiaClases = ALERTA_BIA_CLASES;
 app.locals.icono = icono;
+// Valores por defecto del área (el middleware los fija en cada petición según la URL)
+app.locals.area = 'neutro';
+app.locals.areas = AREAS;
 app.locals.producto = { nombre: 'Compliance AI', lema: 'AI Compliance Platform' };
 // Iniciales para el avatar: "José María de Paz" → "JM" (sin partículas como "de" o "la")
 const PARTICULAS = new Set(['de', 'del', 'la', 'las', 'los', 'y', 'i', 'da', 'do', 'van', 'von']);
@@ -101,10 +105,13 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Datos comunes a todas las vistas: usuario, ruta actual y mensaje flash (se muestra una vez)
+// Datos comunes a todas las vistas: usuario, ruta actual, área (RGPD/ENS/neutro, para el
+// código de color de contexto) y mensaje flash (se muestra una vez)
 app.use((req, res, next) => {
   res.locals.user = req.user || null;
   res.locals.currentPath = req.path;
+  res.locals.area = areaDeRuta(req.path);
+  res.locals.areas = AREAS;
   res.locals.flash = req.session.flash || null;
   delete req.session.flash;
   next();

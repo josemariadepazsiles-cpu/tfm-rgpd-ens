@@ -6,13 +6,13 @@
 <body class="min-h-screen bg-fondo">
   <%- include('../partials/nav') %>
 
-  <main class="contenedor py-8 sm:py-10">
+  <main data-area="<%= area %>" class="contenedor py-8 sm:py-10">
     <%- include('../partials/migas', { migas: [{ texto: 'RGPD' }, { texto: 'Actividades RAT' }] }) %>
     <%- include('../partials/flash') %>
 
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div>
-        <h1 class="titulo-pagina">Actividades de tratamiento</h1>
+        <h1 class="titulo-pagina">Actividades de tratamiento<%- include('../partials/area-badge') %></h1>
         <p class="subtitulo-pagina">Registro de Actividades de Tratamiento (art. 30 RGPD)</p>
       </div>
       <a href="/rat/nueva" class="btn btn-primary"><%- icono('plus', 'h-4 w-4') %>Nueva actividad
