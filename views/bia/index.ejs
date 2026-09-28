@@ -10,13 +10,13 @@
 <body class="min-h-screen bg-fondo">
   <%- include('../partials/nav') %>
 
-  <main class="contenedor py-8 sm:py-10">
+  <main data-area="<%= area %>" class="contenedor py-8 sm:py-10">
     <%- include('../partials/migas', { migas: [{ texto: 'ENS' }, { texto: 'BIA y Continuidad' }] }) %>
     <%- include('../partials/flash') %>
 
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div>
-        <h1 class="titulo-pagina">BIA y Continuidad</h1>
+        <h1 class="titulo-pagina">BIA y Continuidad<%- include('../partials/area-badge') %></h1>
         <p class="subtitulo-pagina">Análisis de impacto en el negocio: criticidad de los procesos, RTO/RPO y pruebas del plan de continuidad</p>
       </div>
       <% if (user.rol === 'ADMIN') { %>
@@ -52,13 +52,14 @@
           <% }) %>
         </select>
       </div>
+      <%- include('../partials/filtro-sistema', { sistemas, sistema }) %>
       <noscript><button type="submit" class="btn btn-secondary">Filtrar</button></noscript>
-      <% if (criticidad || estado || filtro) { %><a href="/bia" class="py-2 text-sm text-indigo-600 hover:underline">Quitar filtros</a><% } %>
+      <% if (criticidad || estado || filtro || sistema) { %><a href="/bia" class="py-2 text-sm text-indigo-600 hover:underline">Quitar filtros</a><% } %>
     </form>
 
     <div class="mt-4 tabla-contenedor">
       <% if (procesos.length === 0) { %>
-        <p class="p-8 text-center text-slate-500"><%= criticidad || estado || filtro ? 'No hay procesos con esos filtros.' : 'No se ha registrado ningún proceso de negocio.' %></p>
+        <p class="p-8 text-center text-slate-500"><%= criticidad || estado || filtro || sistema ? 'No hay procesos con esos filtros.' : 'No se ha registrado ningún proceso de negocio.' %></p>
       <% } else { %>
         <table class="tabla">
           <thead>

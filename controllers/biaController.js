@@ -5,6 +5,7 @@ const {
   CRITICIDADES, ESTADOS_REVISION_BIA, TIPOS_PRUEBA, RESULTADOS_PRUEBA, CRITICIDADES_ALTAS,
   alertas, formatoHoras, inicioVentanaPruebas,
 } = require('../lib/bia');
+const { listaSistemas, filtroSistema } = require('../lib/sistemas');
 
 // Cualquier usuario autenticado puede consultar el BIA. Crear procesos es solo para el
 // Administrador; editar la ficha y registrar pruebas, para el Administrador o el
@@ -133,18 +134,20 @@ const list = async (req, res) => {
   const criticidad = esOpcion(CRITICIDADES, req.query.criticidad) ? req.query.criticidad : '';
   const estado = esOpcion(ESTADOS_REVISION_BIA, req.query.estado) ? req.query.estado : '';
   const filtro = esOpcion(FILTROS, req.query.filtro) ? req.query.filtro : '';
+  const porSistema = filtroSistema(req.query.sistema);
 
-  const procesos = await prisma.procesoNegocio.findMany({
+  const [procesos, sistemas] = await Promise.all([prisma.procesoNegocio.findMany({
     where: {
       AND: [
         criticidad ? { criticidad } : {},
         estado ? { estado_revision: estado } : {},
         filtro ? FILTROS[filtro].where() : {},
+        porSistema.where,
       ],
     },
     include: { responsable: usuarioSelect, sistema: { select: { id: true, nombre: true } } },
     orderBy: [{ criticidad: 'desc' }, { nombre: 'asc' }],
-  });
+  }), listaSistemas()]);
   const ultimas = await ultimasPruebas(procesos.map((p) => p.id));
   const ahora = new Date();
 
@@ -159,7 +162,9 @@ const list = async (req, res) => {
     criticidad,
     estado,
     filtro,
-    filtroAlerta: filtro ? { texto: FILTROS[filtro].texto, quitar: '/bia' } : null,
+    sistemas,
+    sistema: porSistema.sistema,
+    filtroAlerta: filtro ? { texto: FILTROS[filtro].texto, quitar: '/bia' + (porSistema.sistema ? '?sistema=' + porSistema.sistema : '') } : null,
     ...opciones,
   });
 };

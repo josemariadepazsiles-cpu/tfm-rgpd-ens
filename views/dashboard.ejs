@@ -76,48 +76,103 @@
 <body class="min-h-screen bg-fondo">
   <%- include('partials/nav') %>
 
-  <main class="contenedor space-y-10 py-8 sm:py-10">
+  <main data-area="<%= area %>" class="contenedor space-y-10 py-8 sm:py-10">
+
+    <%
+      const g = panel.global;
+      const v = vista;
+      const esTodos = !sistema;
+      const r = v.rgpd;
+      const tr = panel.transversal;
+      const q = (ruta, extra) => {
+        // Enlace a un listado filtrado por el sistema elegido (o sin filtro en «Todos»)
+        const params = new URLSearchParams(extra || {});
+        if (!esTodos) params.set('sistema', v.id);
+        const cadena = params.toString();
+        return ruta + (cadena ? '?' + cadena : '');
+      };
+      const plural = (n, uno, varios) => n + ' ' + (n === 1 ? uno : varios);
+      const nivelPct = (pct) => (pct === null || pct === undefined ? 'neutro' : pct >= 80 ? 'ok' : pct >= 50 ? 'atencion' : 'critico');
+      const colorNivel = { ok: 'bg-emerald-500', atencion: 'bg-amber-500', critico: 'bg-red-500', neutro: 'bg-slate-300' };
+      const textoNivel = { ok: 'text-emerald-700', atencion: 'text-amber-700', critico: 'text-red-700', neutro: 'text-slate-500' };
+
+      // --- Tarjeta Cumplimiento ENS ---
+      const pctVista = v.ens.porcentaje;
+      const filasEns = esTodos
+        ? [
+            { titulo: 'Sistemas evaluados', valor: v.ens.evaluados + ' / ' + v.ens.total, detalle: v.ens.sinEvaluar ? plural(v.ens.sinEvaluar, 'sistema sin evaluar', 'sistemas sin evaluar') : 'Todos tienen evaluación', href: '/sistemas', nivel: v.ens.sinEvaluar ? 'atencion' : 'ok', textual: true },
+            { titulo: 'Declaraciones vigentes', valor: v.declaracion.vigentes + ' / ' + v.ens.total, detalle: v.declaracion.ninguna || v.declaracion.caducadas ? [v.declaracion.ninguna ? v.declaracion.ninguna + ' sin declaración' : '', v.declaracion.caducadas ? v.declaracion.caducadas + ' caducada(s)' : ''].filter(Boolean).join(' · ') : 'Todas al día', href: '/declaraciones', nivel: v.declaracion.ninguna || v.declaracion.caducadas ? 'atencion' : 'ok', textual: true },
+          ]
+        : [
+            { titulo: 'Categoría ENS', valor: v.categoria ? CATEGORIAS_SISTEMA[v.categoria] : 'Sin definir', detalle: v.categoria ? 'Según el RD 311/2022' : 'Defínela en la ficha del sistema', href: '/sistemas/' + v.id, nivel: v.categoria ? 'neutro' : 'atencion', textual: true },
+            { titulo: 'Última Declaración de Conformidad', valor: v.declaracion.emitida ? fecha(v.declaracion.emitida) : 'Ninguna',
+              detalle: v.declaracion.estado === 'vigente' ? 'Emitida y vigente' : v.declaracion.estado === 'caducada' ? 'Emitida hace más de 12 meses: renuévala' : 'No se ha emitido ninguna declaración',
+              href: q('/declaraciones'), nivel: v.declaracion.estado === 'vigente' ? 'ok' : 'atencion', textual: true },
+          ];
+
+      // --- Tarjeta RGPD ---
+      const filasRgpd = [
+        { titulo: 'Actividades RAT', valor: r.actividades, detalle: esTodos ? (tr.rgpd.actividades ? tr.rgpd.actividades + ' transversales' : 'Registradas en el RAT') : 'Tratamientos en este sistema', href: q('/rat'), nivel: 'neutro' },
+        { titulo: 'Riesgos altos', valor: r.riesgosAltos, detalle: r.riesgos ? `${r.riesgosMedios} medios · ${r.riesgosBajos} bajos · ${plural(r.riesgos, 'riesgo', 'riesgos')} en total` : 'Sin riesgos evaluados', href: q('/riesgos', { nivel: 'ALTO' }), nivel: r.riesgosAltos ? 'critico' : 'ok' },
+        { titulo: 'Incidentes abiertos', valor: r.incidentesActivos, detalle: r.incidentesActivos ? 'Sin cerrar' : 'Ninguno abierto', href: q('/incidentes', { alerta: 'activos' }), nivel: r.incidentesActivos ? 'atencion' : 'ok' },
+        { titulo: 'Solicitudes de derechos abiertas', valor: r.solicitudesAbiertas, detalle: r.solicitudesAbiertas ? 'Sin resolver' : 'Ninguna pendiente', href: q('/derechos', { plazo: 'abiertas' }), nivel: r.solicitudesAbiertas ? 'atencion' : 'ok' },
+      ];
+
+      // --- Tarjeta Continuidad ---
+      const b = v.bia;
+      const filasBia = b.procesos
+        ? [
+            { titulo: 'Procesos de negocio', valor: b.procesos, detalle: esTodos ? 'Analizados en el BIA' : 'Dependen de este sistema', href: q('/bia'), nivel: 'neutro' },
+            { titulo: 'Criticidad más alta', valor: CRITICIDADES[b.criticidadMax], detalle: b.criticidadMax === 'CRITICA' || b.criticidadMax === 'ALTA' ? 'Requiere plan y pruebas periódicas' : 'Impacto moderado', href: q('/bia', { criticidad: b.criticidadMax }), nivel: b.criticidadMax === 'CRITICA' ? 'critico' : b.criticidadMax === 'ALTA' ? 'atencion' : 'neutro', textual: true },
+            { titulo: 'Plan de contingencia definido', valor: b.conPlan + ' / ' + b.procesos, detalle: b.sinPlan ? (b.altosSinPlan ? plural(b.altosSinPlan, 'proceso crítico/alto sin plan', 'procesos críticos/altos sin plan') : plural(b.sinPlan, 'proceso sin plan', 'procesos sin plan')) : 'Todos con plan definido', href: b.altosSinPlan ? q('/bia', { filtro: 'sin_plan' }) : q('/bia'), nivel: b.altosSinPlan ? 'critico' : b.sinPlan ? 'atencion' : 'ok', textual: true },
+          ]
+        : [];
+
+      // Nota de lo transversal en la vista de un sistema concreto
+      const notaTransversal = [
+        tr.rgpd.riesgos ? { texto: plural(tr.rgpd.riesgos, 'riesgo', 'riesgos'), href: '/riesgos?sistema=ninguno' } : null,
+        tr.rgpd.incidentesActivos ? { texto: plural(tr.rgpd.incidentesActivos, 'incidente abierto', 'incidentes abiertos'), href: '/incidentes?sistema=ninguno&alerta=activos' } : null,
+        tr.rgpd.solicitudesAbiertas ? { texto: plural(tr.rgpd.solicitudesAbiertas, 'solicitud abierta', 'solicitudes abiertas'), href: '/derechos?sistema=ninguno&plazo=abiertas' } : null,
+        tr.rgpd.actividades ? { texto: plural(tr.rgpd.actividades, 'actividad RAT', 'actividades RAT'), href: '/rat?sistema=ninguno' } : null,
+      ].filter(Boolean);
+
+      const kpisGlobales = [
+        { titulo: 'Sistemas de información', valor: g.sistemas, icono: 'server', href: '/sistemas', detalle: plural(g.evaluados, 'evaluado', 'evaluados') + ' frente al ENS', nivel: g.sistemas && g.evaluados < g.sistemas ? 'atencion' : 'ok' },
+        { titulo: 'Cumplimiento ENS medio', valor: g.ensMedio === null ? '—' : g.ensMedio + ' %', icono: 'shield-check', href: '/sistemas', detalle: g.evaluados ? 'Media de ' + plural(g.evaluados, 'sistema evaluado', 'sistemas evaluados') : 'Ningún sistema evaluado', nivel: g.ensMedio === null ? 'neutro' : nivelPct(g.ensMedio), barra: g.ensMedio },
+        { titulo: 'Incidentes abiertos', valor: g.incidentesAbiertos, icono: 'siren', href: '/incidentes?alerta=activos', detalle: g.incidentesAbiertos ? 'En toda la organización' : 'Ninguno abierto', nivel: g.incidentesAbiertos ? 'atencion' : 'ok' },
+        { titulo: 'Alertas críticas activas', valor: g.alertas, icono: 'bell-ring', href: '/dashboard#alertas', detalle: g.alertas ? g.alertasVencidas + ' vencidas · ' + g.alertasProximas + ' próximas a vencer' : 'Ningún plazo vencido ni próximo', nivel: g.alertasVencidas ? 'critico' : g.alertas ? 'atencion' : 'ok' },
+      ];
+      const iconoNivel = { ok: 'circle-check', atencion: 'circle-alert', critico: 'circle-dot', neutro: 'circle' };
+    %>
 
     <%# ================= Cabecera ================= %>
-    <div class="flex flex-wrap items-end justify-between gap-5">
+    <div class="flex flex-wrap items-end justify-between gap-4">
       <div>
         <p class="eyebrow">Panel de control</p>
         <h1 class="mt-1.5 titulo-pagina">Hola, <%= nombrePila %></h1>
-        <p class="subtitulo-pagina"><%= sistema ? 'Resumen del estado de cumplimiento y seguridad del sistema «' + sistema.nombre + '».' : 'Resumen del estado de cumplimiento y seguridad de tu organización.' %></p>
+        <p class="subtitulo-pagina">Resumen del estado de cumplimiento y seguridad de tu organización, por sistema de información.</p>
       </div>
-      <div class="flex flex-col items-start gap-2 sm:items-end">
-        <form action="/dashboard" method="GET" class="flex items-center gap-2">
-          <label for="sistema-panel" class="flex items-center gap-1.5 text-xs font-medium text-slate-500"><%- icono('server', 'h-3.5 w-3.5') %>Ver</label>
-          <select id="sistema-panel" name="sistema" onchange="this.form.submit()" class="input w-auto min-w-60 py-2 text-sm">
-            <option value="">Toda la organización</option>
-            <% sistemas.forEach((s) => { %>
-              <option value="<%= s.id %>" <%= sistema && sistema.id === s.id ? 'selected' : '' %>><%= s.nombre %></option>
-            <% }) %>
-          </select>
-          <noscript><button type="submit" class="btn btn-secondary btn-sm">Ver</button></noscript>
-        </form>
-        <div class="flex flex-wrap gap-2 text-xs" aria-label="Resumen de indicadores">
-          <span class="badge bg-white text-slate-700 ring-slate-200"><span class="punto bg-red-500"></span><%= criticos %> críticos</span>
-          <span class="badge bg-white text-slate-700 ring-slate-200"><span class="punto bg-amber-500"></span><%= atencion %> requieren atención</span>
-          <span class="badge bg-white text-slate-700 ring-slate-200"><span class="punto bg-emerald-500"></span><%= alDia %> al día</span>
-        </div>
-        <p class="flex items-center gap-1.5 text-xs text-slate-400"><%- icono('refresh-cw', 'h-3 w-3') %>Actualizado el <%= fechaHora(m.generado) %></p>
-      </div>
+      <p class="flex items-center gap-1.5 text-xs text-slate-400"><%- icono('refresh-cw', 'h-3 w-3') %>Actualizado el <%= fechaHora(panel.generado) %></p>
     </div>
 
-    <% if (sistema) { %>
-      <div class="alerta alerta-info items-center justify-between" role="status">
-        <span class="flex items-start gap-3">
-          <%- icono('filter', 'h-5 w-5 shrink-0') %>
-          <span>Estás viendo solo la información asociada a <strong><%= sistema.nombre %></strong><%= sistema.tipo_sistema ? ' (' + sistema.tipo_sistema + ')' : '' %>.
-            Proveedores y políticas no se asocian a sistemas: se muestran para toda la organización.</span>
-        </span>
-        <span class="flex shrink-0 gap-2">
-          <a href="/sistemas/<%= sistema.id %>" class="btn btn-secondary btn-sm"><%- icono('layout-dashboard', 'h-3.5 w-3.5') %>Ficha del sistema</a>
-          <a href="/dashboard" class="btn btn-ghost btn-sm">Toda la organización</a>
-        </span>
+    <%# ================= Visión global de la organización ================= %>
+    <section aria-labelledby="t-global" class="space-y-3">
+      <h2 id="t-global" class="text-xs font-semibold uppercase tracking-wide text-slate-500">Visión global de la organización</h2>
+      <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <% kpisGlobales.forEach((k) => { %>
+          <a href="<%= k.href %>" class="card group flex flex-col p-4 transition duration-150 hover:border-indigo-200 hover:shadow-sm sm:p-5 <%= k.nivel === 'critico' ? 'border-red-200' : '' %>">
+            <p class="flex items-center gap-2 text-[13px] font-medium leading-tight text-slate-600 sm:text-sm">
+              <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg <%= k.nivel === 'critico' ? 'bg-red-50 text-red-600' : 'bg-marca-50 text-indigo-600' %>"><%- icono(k.icono, 'h-4 w-4') %></span><%= k.titulo %>
+            </p>
+            <p class="mt-3 text-2xl font-semibold tabular-nums tracking-tight sm:mt-4 sm:text-3xl <%= k.nivel === 'critico' ? 'text-red-600' : 'text-slate-900' %>"><%= k.valor %></p>
+            <% if (k.barra !== undefined && k.barra !== null) { %>
+              <div class="progreso mt-2 h-2" role="progressbar" aria-valuenow="<%= k.barra %>" aria-valuemin="0" aria-valuemax="100" aria-label="Cumplimiento ENS medio"><span class="<%= colorNivel[k.nivel] %>" style="width: <%= k.barra %>%"></span></div>
+            <% } %>
+            <p class="mt-auto flex items-start gap-1 pt-2 text-xs <%= textoNivel[k.nivel] %>"><%- icono(iconoNivel[k.nivel], 'mt-px h-3.5 w-3.5 shrink-0') %><%= k.detalle %></p>
+          </a>
+        <% }) %>
       </div>
-    <% } %>
+    </section>
 
     <%# Aviso personal: políticas pendientes de aceptar %>
     <% if (pol.misPendientes.length) { %>
@@ -132,125 +187,181 @@
       </div>
     <% } %>
 
-    <%# ================= 1. Resumen ejecutivo ================= %>
-    <section aria-labelledby="t-resumen" class="space-y-4">
-      <h2 id="t-resumen" class="titulo-seccion">Resumen ejecutivo</h2>
-      <div class="grid gap-4 lg:grid-cols-12">
-        <a href="<%= sistema ? '/sistemas/' + sistema.id + '#ens' : '/sistemas' %>" class="card group p-5 transition duration-150 hover:border-indigo-200 hover:shadow-sm lg:col-span-5">
-          <div class="flex items-start justify-between gap-3">
-            <p class="flex items-center gap-2 text-sm font-medium text-slate-600">
-              <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-marca-50 text-indigo-600"><%- icono('shield-check', 'h-4 w-4') %></span>Cumplimiento ENS
-            </p>
-            <span class="badge <%= estadoEns.clase %>"><span class="punto h-1.5 w-1.5 <%= estadoEns.punto %>"></span><%= estadoEns.texto %></span>
+    <%# ================= Ver por sistema ================= %>
+    <section aria-labelledby="t-sistema" class="space-y-5">
+      <div class="card flex flex-wrap items-center justify-between gap-4 p-4 sm:px-5">
+        <form action="/dashboard" method="GET" class="flex flex-wrap items-center gap-3">
+          <label for="sistema-panel" id="t-sistema" class="flex items-center gap-2 text-sm font-semibold text-slate-900"><%- icono('server', 'h-4 w-4 text-indigo-600') %>Ver por sistema</label>
+          <select id="sistema-panel" name="sistema" onchange="this.form.submit()" class="input w-auto min-w-64">
+            <option value="">Todos los sistemas</option>
+            <% panel.sistemas.forEach((s) => { %>
+              <option value="<%= s.id %>" <%= sistema && sistema.id === s.id ? 'selected' : '' %>><%= s.nombre %></option>
+            <% }) %>
+          </select>
+          <noscript><button type="submit" class="btn btn-secondary btn-sm">Ver</button></noscript>
+        </form>
+        <% if (esTodos) { %>
+          <p class="text-sm text-slate-500">Vista agregada de <%= plural(panel.sistemas.length, 'sistema', 'sistemas') %> y de la información transversal (sin sistema asignado).</p>
+        <% } else { %>
+          <div class="flex flex-wrap items-center gap-2 text-sm">
+            <% if (v.tipo) { %><span class="text-slate-500"><%= v.tipo %></span><% } %>
+            <% if (v.categoria) { %><span class="badge <%= categoriaClases[v.categoria].badge %>">Categoría <%= CATEGORIAS_SISTEMA[v.categoria].toLowerCase() %></span><% } %>
+            <a href="/sistemas/<%= v.id %>" class="btn btn-secondary btn-sm"><%- icono('layout-dashboard', 'h-3.5 w-3.5') %>Ficha del sistema</a>
+            <a href="/dashboard" class="btn btn-ghost btn-sm">Todos los sistemas</a>
           </div>
-          <p class="mt-4 text-4xl font-semibold tabular-nums tracking-tight text-slate-900"><%= ens.global.evaluados ? pctEns : '—' %><span class="text-2xl text-slate-400">%</span></p>
-          <div class="progreso mt-3 h-2.5" role="progressbar" aria-valuenow="<%= pctEns %>" aria-valuemin="0" aria-valuemax="100" aria-label="Cumplimiento ENS global">
-            <span class="<%= colorPct(pctEns) %>" style="width: <%= pctEns %>%"></span>
-          </div>
-          <p class="mt-2.5 text-xs text-slate-500">
-            <strong class="font-semibold text-slate-700"><%= ens.global.implementados %> de <%= ens.global.aplicables %></strong> controles aplicables implementados ·
-            última evaluación de <%= ens.global.evaluados %> sistema(s)<%= ensSinEvaluar ? ' · ' + ensSinEvaluar + ' sin evaluar' : '' %>
-          </p>
-        </a>
-
-        <div class="grid gap-4 sm:grid-cols-3 lg:col-span-7">
-          <% [
-            { titulo: 'Riesgos altos', valor: act.riesgosAltos, icono: 'gauge', href: '/riesgos?nivel=ALTO', estado: act.riesgosAltos ? { t: act.altosSinMedidas ? `${act.altosSinMedidas} sin medidas mitigadoras` : 'Con medidas definidas', n: act.altosSinMedidas ? 'critico' : 'atencion' } : { t: 'Sin riesgos altos', n: 'ok' } },
-            { titulo: 'Incidentes activos', valor: inc.activos, icono: 'siren', href: '/incidentes?alerta=activos', estado: inc.aepdVencidos ? { t: `${inc.aepdVencidos} fuera de plazo AEPD`, n: 'critico' } : inc.activos ? { t: 'En gestión', n: 'atencion' } : { t: 'Ninguno abierto', n: 'ok' } },
-            { titulo: 'Acciones pendientes', valor: accionesPendientes.length, icono: 'list-todo', href: '#acciones', estado: accionesCriticas ? { t: `${accionesCriticas} críticas`, n: 'critico' } : accionesPendientes.length ? { t: 'Requieren atención', n: 'atencion' } : { t: 'Todo al día', n: 'ok' } },
-          ].forEach((k) => { const c = { ok: 'text-emerald-600', atencion: 'text-amber-600', critico: 'text-red-600' }[k.estado.n]; const ic = { ok: 'circle-check', atencion: 'circle-alert', critico: 'circle-dot' }[k.estado.n]; %>
-            <a href="<%= enlace(k.href) %>" class="card group flex flex-col justify-between p-5 transition duration-150 hover:border-indigo-200 hover:shadow-sm">
-              <p class="flex items-center gap-2 text-sm font-medium text-slate-600">
-                <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600"><%- icono(k.icono, 'h-4 w-4') %></span><%= k.titulo %>
-              </p>
-              <p class="mt-4 text-3xl font-semibold tabular-nums tracking-tight text-slate-900"><%= k.valor %></p>
-              <p class="mt-1 flex items-center gap-1 text-xs <%= c %>"><%- icono(ic, 'h-3.5 w-3.5') %><%= k.estado.t %></p>
-            </a>
-          <% }) %>
-        </div>
+        <% } %>
       </div>
 
-      <%# Asistente de cumplimiento (recomendaciones generadas a partir de los datos) %>
-      <div class="card relative overflow-hidden border-indigo-100">
-        <div class="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-indigo-500 to-violet-500" aria-hidden="true"></div>
-        <div class="flex flex-wrap items-start justify-between gap-4 p-5 pl-6">
-          <div class="flex items-start gap-3">
-            <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-50 to-violet-100 text-violet-600"><%- icono('sparkles', 'h-5 w-5') %></span>
-            <div>
-              <h3 class="font-semibold text-slate-900">Asistente de cumplimiento</h3>
-              <p class="text-sm text-slate-500">
-                <% if (accionesPendientes.length) { %>
-                  He revisado el estado de tus datos: hay <strong class="text-slate-700"><%= accionesPendientes.length %> acción(es) recomendada(s)</strong><%= accionesCriticas ? ', ' + accionesCriticas + ' de ellas críticas' : '' %>.
-                <% } else { %>
-                  Tus datos no muestran acciones urgentes. Buen trabajo.
-                <% } %>
-              </p>
+      <%# ---- Lo urgente primero: alertas activas de la selección ---- %>
+      <div id="alertas" class="scroll-mt-24">
+        <% if (v.alertas.length) { const criticas = v.alertas.filter((a) => a.nivel === 'critico').length; %>
+          <div class="card overflow-hidden border-red-200" x-data="{ todas: false }">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-red-100 bg-red-50/60 px-5 py-3">
+              <h3 class="flex items-center gap-2 font-semibold text-red-800"><%- icono('triangle-alert', 'h-4 w-4') %>Alertas urgentes<%= esTodos ? '' : ' de ' + v.nombre %></h3>
+              <span class="text-xs text-red-700"><strong><%= criticas %></strong> con plazo vencido · <strong><%= v.alertas.length - criticas %></strong> próximas a vencer</span>
             </div>
+            <ul class="divide-y divide-slate-100">
+              <% v.alertas.forEach((a, i) => { %>
+                <li <%- i >= 6 ? 'x-show="todas" x-cloak' : '' %>>
+                  <a href="<%= a.href %>" class="group flex items-center gap-3 px-5 py-3 transition hover:bg-slate-50">
+                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg <%= a.nivel === 'critico' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600' %>"><%- icono(a.icono, 'h-4 w-4') %></span>
+                    <span class="min-w-0 flex-1">
+                      <span class="block text-sm font-medium <%= a.nivel === 'critico' ? 'text-red-700' : 'text-amber-800' %>"><%= a.titulo %></span>
+                      <span class="block truncate text-xs text-slate-500"><%= a.modulo %> · <%= a.detalle %></span>
+                    </span>
+                    <span class="hidden shrink-0 items-center gap-1.5 text-xs font-medium sm:flex <%= a.nivel === 'critico' ? 'text-red-600' : 'text-amber-600' %>"><span class="punto h-1.5 w-1.5 <%= a.nivel === 'critico' ? 'bg-red-500' : 'bg-amber-500' %>"></span><%= a.nivel === 'critico' ? 'Vencido' : 'Próximo' %></span>
+                    <%- icono('chevron-right', 'h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5') %>
+                  </a>
+                </li>
+              <% }) %>
+            </ul>
+            <% if (v.alertas.length > 6) { %>
+              <button type="button" class="w-full border-t border-slate-100 px-5 py-2.5 text-center text-sm font-medium text-indigo-600 hover:bg-slate-50" @click="todas = !todas"
+                      x-text="todas ? 'Ver menos' : 'Ver las <%= v.alertas.length %> alertas'">Ver las <%= v.alertas.length %> alertas</button>
+            <% } %>
           </div>
-          <% if (recomendaciones.length) { %>
-            <a href="#acciones" class="btn btn-secondary btn-sm"><%- icono('list-todo', 'h-3.5 w-3.5') %>Ver todas (<%= recomendaciones.length %>)</a>
+        <% } else { %>
+          <div class="alerta alerta-exito" role="status"><%- icono('circle-check', 'h-5 w-5') %>
+            <span>Sin alertas urgentes<%= esTodos ? '' : ' en ' + v.nombre %>: ningún plazo vencido ni próximo a vencer.</span>
+          </div>
+        <% } %>
+        <% if (!esTodos && tr.alertas.length) { %>
+          <p class="mt-2 text-xs text-slate-500">+ <%= plural(tr.alertas.length, 'alerta transversal', 'alertas transversales') %> (políticas o registros sin sistema asignado) · <a href="/dashboard#alertas" class="enlace">ver en Todos los sistemas</a></p>
+        <% } %>
+      </div>
+
+      <%# ---- Tarjetas de la selección ---- %>
+      <div class="grid items-start gap-4 lg:grid-cols-3">
+        <%# Cumplimiento ENS %>
+        <div class="card p-5">
+          <div class="flex items-center justify-between gap-3">
+            <h3 class="flex items-center gap-2 font-semibold text-slate-900"><%- icono('shield-check', 'h-4 w-4 text-slate-500') %>Cumplimiento ENS</h3>
+            <a href="<%= esTodos ? '/sistemas' : '/sistemas/' + v.id + '#ens' %>" class="enlace text-xs"><%= esTodos ? 'Ver sistemas' : 'Ver checklist' %></a>
+          </div>
+          <a href="<%= esTodos ? '/sistemas' : (v.ens.ultima ? '/evaluaciones/' + v.ens.ultima.id : '/sistemas/' + v.id + '#ens') %>" class="-mx-2 mt-2 block rounded-lg px-2 py-2 transition hover:bg-slate-50">
+            <% if (pctVista === null || pctVista === undefined) { %>
+              <p class="text-2xl font-semibold text-slate-400">Sin evaluar</p>
+              <p class="mt-1 text-xs text-amber-700"><%= esTodos ? 'Ningún sistema tiene evaluación ENS' : 'Crea la primera evaluación del checklist' %></p>
+            <% } else { %>
+              <p class="text-4xl font-semibold tabular-nums tracking-tight text-slate-900"><%= pctVista %><span class="text-2xl text-slate-400"> %</span></p>
+              <div class="progreso mt-2 h-2.5"><span class="<%= colorNivel[nivelPct(pctVista)] %>" style="width: <%= pctVista %>%"></span></div>
+              <p class="mt-2 text-xs text-slate-500">
+                <% if (esTodos) { %>Media de la última evaluación de <%= plural(v.ens.evaluados, 'sistema', 'sistemas') %>
+                <% } else { %><%= v.ens.global.implementados %> de <%= v.ens.global.aplicables %> controles aplicables · <%= v.ens.ultima.nombre %><% } %>
+              </p>
+            <% } %>
+          </a>
+          <div class="mt-1 divide-y divide-slate-100 border-t border-slate-100"><% filasEns.forEach((k) => { %><%- include('partials/metrica', { k }) %><% }) %></div>
+        </div>
+
+        <%# RGPD %>
+        <div class="card p-5">
+          <div class="flex items-center justify-between gap-3">
+            <h3 class="flex items-center gap-2 font-semibold text-slate-900"><%- icono('scale', 'h-4 w-4 text-slate-500') %>RGPD<%= esTodos ? '' : ' del sistema' %></h3>
+            <% if (!esTodos) { %><a href="/sistemas/<%= v.id %>" class="enlace text-xs">Ver ficha</a><% } %>
+          </div>
+          <div class="mt-2 divide-y divide-slate-100"><% filasRgpd.forEach((k) => { %><%- include('partials/metrica', { k }) %><% }) %></div>
+          <% if (esTodos && (tr.rgpd.riesgos || tr.rgpd.incidentes || tr.rgpd.solicitudes)) { %>
+            <p class="mt-2 border-t border-slate-100 pt-2 text-xs text-slate-500">Incluye la información transversal (sin sistema asignado).</p>
+          <% } %>
+          <% if (!esTodos && notaTransversal.length) { %>
+            <p class="mt-2 border-t border-slate-100 pt-2 text-xs text-slate-500">
+              + <% notaTransversal.forEach((n, i) => { %><%= i ? ', ' : '' %><a href="<%= n.href %>" class="enlace"><%= n.texto %></a><% }) %>
+              transversales no asignados a ningún sistema.
+            </p>
+          <% } %>
+          <% if (user.rol !== 'ADMIN') { %><p class="mt-2 text-xs text-slate-400">Actividades y riesgos: solo los de las actividades de las que eres responsable.</p><% } %>
+        </div>
+
+        <%# Continuidad %>
+        <div class="card p-5">
+          <div class="flex items-center justify-between gap-3">
+            <h3 class="flex items-center gap-2 font-semibold text-slate-900"><%- icono('life-buoy', 'h-4 w-4 text-slate-500') %>Continuidad (BIA)</h3>
+            <a href="<%= q('/bia') %>" class="enlace text-xs">Ver BIA</a>
+          </div>
+          <% if (filasBia.length) { %>
+            <div class="mt-2 divide-y divide-slate-100"><% filasBia.forEach((k) => { %><%- include('partials/metrica', { k }) %><% }) %></div>
+          <% } else { %>
+            <div class="vacio py-8"><%- icono('life-buoy', 'h-6 w-6 text-slate-300') %><%= esTodos ? 'No se ha analizado ningún proceso de negocio.' : 'Ningún proceso de negocio depende de este sistema.' %></div>
+          <% } %>
+          <% if (!esTodos && tr.bia.procesos) { %>
+            <p class="mt-2 border-t border-slate-100 pt-2 text-xs text-slate-500">+ <a href="/bia" class="enlace"><%= plural(tr.bia.procesos, 'proceso', 'procesos') %></a> sin sistema asignado.</p>
           <% } %>
         </div>
-        <% if (recomendaciones.length) { %>
-          <ul class="grid gap-px border-t border-slate-100 bg-slate-100 sm:grid-cols-3">
-            <% recomendaciones.slice(0, 3).forEach((r) => { const e = nivelEstilo[r.nivel]; %>
-              <li class="bg-white">
-                <a href="<%= r.href %>" class="group flex h-full flex-col gap-2 p-5 pl-6 transition hover:bg-slate-50/70">
-                  <span class="flex items-center gap-1.5 text-xs font-medium <%= e.texto %>"><span class="punto h-1.5 w-1.5 <%= e.punto %>"></span><%= e.etiqueta %></span>
-                  <span class="text-sm font-medium text-slate-900"><%= r.titulo %></span>
-                  <span class="mt-auto inline-flex items-center gap-1 text-xs font-medium text-indigo-600"><%= r.accion %><%- icono('arrow-right', 'h-3.5 w-3.5 transition group-hover:translate-x-0.5') %></span>
+      </div>
+    </section>
+
+    <%# ================= Comparativa entre sistemas ================= %>
+    <% if (panel.comparativa.length) { %>
+      <section aria-labelledby="t-comparativa" class="space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 id="t-comparativa" class="titulo-seccion">Comparativa entre sistemas</h2>
+            <p class="text-sm text-slate-500">Cumplimiento ENS de la última evaluación, de menor a mayor: los primeros son los que necesitan más atención.</p>
+          </div>
+          <span class="flex flex-wrap gap-3 text-xs text-slate-500">
+            <span class="flex items-center gap-1.5"><span class="punto bg-emerald-500"></span>≥ 80 %</span>
+            <span class="flex items-center gap-1.5"><span class="punto bg-amber-500"></span>50–79 %</span>
+            <span class="flex items-center gap-1.5"><span class="punto bg-red-500"></span>&lt; 50 %</span>
+          </span>
+        </div>
+        <div class="card p-5">
+          <ul class="space-y-1">
+            <% panel.comparativa.forEach((s) => { const pct = s.ens.porcentaje; const n = nivelPct(pct); const activo = sistema && sistema.id === s.id; %>
+              <li>
+                <a href="/dashboard?sistema=<%= s.id %>" class="-mx-2 grid grid-cols-12 items-center gap-x-3 gap-y-1 rounded-lg px-2 py-2 transition hover:bg-slate-50 <%= activo ? 'bg-marca-50/60 ring-1 ring-indigo-100' : '' %>"
+                   <%- activo ? 'aria-current="true"' : '' %> aria-label="<%= s.nombre %>: <%= pct === null ? 'sin evaluar' : pct + ' % de cumplimiento ENS' %>">
+                  <span class="col-span-12 truncate text-sm font-medium text-slate-800 sm:col-span-3"><%= s.nombre %></span>
+                  <span class="col-span-9 sm:col-span-5">
+                    <% if (pct === null) { %>
+                      <span class="block h-3 w-full rounded-full border border-dashed border-slate-300 bg-slate-50" aria-hidden="true"></span>
+                    <% } else { %>
+                      <span class="block h-3 w-full overflow-hidden rounded-full bg-slate-100" aria-hidden="true"><span class="block h-full rounded-full <%= colorNivel[n] %>" style="width: <%= Math.max(pct, 1) %>%"></span></span>
+                    <% } %>
+                  </span>
+                  <span class="col-span-3 text-right text-sm font-semibold tabular-nums sm:col-span-1 <%= pct === null ? 'font-normal italic text-slate-400' : textoNivel[n] %>"><%= pct === null ? 'Sin evaluar' : pct + ' %' %></span>
+                  <span class="col-span-12 flex flex-wrap gap-x-3 text-xs text-slate-500 sm:col-span-3 sm:justify-end">
+                    <span class="inline-flex items-center gap-1 <%= s.rgpd.riesgosAltos ? 'text-red-700' : '' %>"><span class="punto h-1.5 w-1.5 <%= s.rgpd.riesgosAltos ? 'bg-red-500' : 'bg-emerald-500' %>"></span><%= plural(s.rgpd.riesgosAltos, 'riesgo alto', 'riesgos altos') %></span>
+                    <span class="inline-flex items-center gap-1 <%= s.alertas.length ? 'text-red-700' : '' %>"><span class="punto h-1.5 w-1.5 <%= s.alertas.length ? 'bg-red-500' : 'bg-emerald-500' %>"></span><%= plural(s.alertas.length, 'alerta', 'alertas') %></span>
+                  </span>
                 </a>
               </li>
             <% }) %>
           </ul>
-        <% } %>
-      </div>
-    </section>
-
-    <%# ================= Desglose por sistema (solo vista global) ================= %>
-    <% if (desglose && desglose.sistemas.length) { %>
-      <section aria-labelledby="t-desglose" class="space-y-4">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div class="flex items-center gap-2">
-            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-marca-50 text-indigo-600"><%- icono('server', 'h-4 w-4') %></span>
-            <h2 id="t-desglose" class="titulo-seccion">Desglose por sistema</h2>
-          </div>
-          <a href="/sistemas" class="enlace inline-flex items-center gap-1 text-xs">Ver sistemas<%- icono('arrow-right', 'h-3.5 w-3.5') %></a>
+          <% if (esTodos && (tr.rgpd.riesgos || tr.rgpd.incidentes || tr.alertas.length)) { %>
+            <p class="mt-3 border-t border-slate-100 pt-3 text-xs text-slate-500">
+              Sin sistema asignado (transversal): <%= plural(tr.rgpd.riesgosAltos, 'riesgo alto', 'riesgos altos') %> · <%= plural(tr.rgpd.incidentesActivos, 'incidente abierto', 'incidentes abiertos') %> · <%= plural(tr.alertas.length, 'alerta', 'alertas') %>.
+            </p>
+          <% } %>
         </div>
-        <div class="tabla-contenedor">
-          <table class="tabla">
-            <thead>
-              <tr><th>Sistema</th><th>Cumplimiento ENS</th><th>Riesgos altos</th><th>Incidentes activos</th><th>Solicitudes abiertas</th><th class="text-right">Ver</th></tr>
-            </thead>
-            <tbody>
-              <% desglose.sistemas.forEach((s) => { const r = s.rgpd; %>
-                <tr>
-                  <td><a href="/sistemas/<%= s.id %>" class="font-medium text-slate-800 hover:text-indigo-600 hover:underline"><%= s.nombre %></a></td>
-                  <td>
-                    <% if (s.global) { %>
-                      <span class="inline-flex items-center gap-2"><span class="progreso w-24"><span class="<%= colorPct(s.global.porcentaje) %>" style="width: <%= s.global.porcentaje %>%"></span></span><span class="text-sm font-semibold tabular-nums text-slate-800"><%= s.global.porcentaje %> %</span></span>
-                    <% } else { %><span class="text-sm italic text-slate-400">Sin evaluar</span><% } %>
-                  </td>
-                  <td class="tabular-nums"><span class="inline-flex items-center gap-1.5 <%= r.riesgosAltos ? 'font-semibold text-red-700' : 'text-slate-500' %>"><span class="punto <%= r.riesgosAltos ? 'bg-red-500' : 'bg-emerald-500' %>"></span><%= r.riesgosAltos %></span></td>
-                  <td class="tabular-nums"><span class="inline-flex items-center gap-1.5 <%= r.incidentesActivos ? 'font-semibold text-amber-700' : 'text-slate-500' %>"><span class="punto <%= r.incidentesActivos ? 'bg-amber-500' : 'bg-emerald-500' %>"></span><%= r.incidentesActivos %></span></td>
-                  <td class="tabular-nums text-slate-600"><%= r.solicitudesAbiertas %></td>
-                  <td class="whitespace-nowrap text-right"><a href="/dashboard?sistema=<%= s.id %>" class="btn btn-secondary btn-sm"><%- icono('layout-dashboard', 'h-3.5 w-3.5') %>Panel del sistema</a></td>
-                </tr>
-              <% }) %>
-              <tr class="bg-slate-50/60">
-                <td><span class="font-medium text-slate-600">Sin sistema · Transversal</span></td>
-                <td class="text-slate-400">—</td>
-                <td class="tabular-nums"><a href="/riesgos?sistema=ninguno&nivel=ALTO" class="<%= desglose.transversal.riesgosAltos ? 'font-semibold text-red-700' : 'text-slate-500' %> hover:underline"><%= desglose.transversal.riesgosAltos %></a></td>
-                <td class="tabular-nums"><a href="/incidentes?sistema=ninguno&alerta=activos" class="<%= desglose.transversal.incidentesActivos ? 'font-semibold text-amber-700' : 'text-slate-500' %> hover:underline"><%= desglose.transversal.incidentesActivos %></a></td>
-                <td class="tabular-nums"><a href="/derechos?sistema=ninguno&plazo=abiertas" class="text-slate-600 hover:underline"><%= desglose.transversal.solicitudesAbiertas %></a></td>
-                <td class="text-right"><a href="/rat?sistema=ninguno" class="btn btn-ghost btn-sm">Ver RAT</a></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <% if (user.rol !== 'ADMIN') { %><p class="text-xs text-slate-500">Los riesgos incluyen solo los de las actividades de las que eres responsable.</p><% } %>
       </section>
     <% } %>
+
+    <%# ================= Detalle por módulo (según la selección) ================= %>
+    <div class="flex items-center gap-3 pt-2">
+      <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Detalle por módulo<%= esTodos ? '' : ' · ' + v.nombre %></h2>
+      <span class="h-px flex-1 bg-slate-200"></span>
+    </div>
 
     <%# ================= 2. Estado RGPD ================= %>
     <section aria-labelledby="t-rgpd" class="space-y-4">

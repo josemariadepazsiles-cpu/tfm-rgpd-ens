@@ -1,5 +1,6 @@
 <%#
-  Fila de métrica de un módulo del panel. Recibe `k` = { titulo, valor, detalle, href, nivel }
+  Fila de métrica de un módulo del panel. Recibe `k` = { titulo, valor, detalle, href, nivel, textual? }
+  (`textual`: el valor es un texto, p. ej. una fecha o una categoría, y se muestra más pequeño)
   nivel: 'ok' (✓ verde) · 'atencion' (! ámbar) · 'critico' (● rojo) · 'neutro'.
   El color solo aparece en el indicador y en el texto de estado; el fondo es siempre blanco.
 %>
@@ -20,7 +21,7 @@
     </span>
   </span>
   <span class="flex items-center gap-2">
-    <span class="text-2xl font-semibold tabular-nums tracking-tight <%= k.nivel === 'critico' ? 'text-red-600' : 'text-slate-900' %>"><%= k.valor %></span>
+    <span class="<%= k.textual ? 'text-sm font-semibold' : 'text-2xl font-semibold tabular-nums tracking-tight' %> <%= k.nivel === 'critico' ? 'text-red-600' : 'text-slate-900' %>"><%= k.valor %></span>
     <%- icono('chevron-right', 'h-4 w-4 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-slate-400') %>
   </span>
 </a>
