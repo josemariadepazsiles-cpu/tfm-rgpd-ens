@@ -51,7 +51,7 @@
    neutro gris pizarra (panel, sistemas, usuarios). Es solo una pista visual
    discreta; NO se usa para estados ni gravedades (verde/ámbar/naranja/rojo).
    El área de cada pantalla la decide lib/areas.js según la URL y llega a las
-   vistas como `area`; los elementos la leen con el atributo data-area.
+   vistas como `areaNormativa`; los elementos la leen con el atributo data-area.
    -------------------------------------------------------------------------- */
 :root {
   --color-area-rgpd: #4f46e5;

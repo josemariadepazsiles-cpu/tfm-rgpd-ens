@@ -68,10 +68,10 @@ app.locals.resultadoClases = RESULTADO_CLASES;
 app.locals.alertaBiaClases = ALERTA_BIA_CLASES;
 app.locals.icono = icono;
 // Valores por defecto del área (el middleware los fija en cada petición según la URL)
-app.locals.area = 'neutro';
+app.locals.areaNormativa = 'neutro';
 app.locals.versionCss = '0';
 const CSS_COMPILADO = path.join(__dirname, 'public', 'css', 'output.css');
-app.locals.areas = AREAS;
+app.locals.areasNormativas = AREAS;
 app.locals.producto = { nombre: 'Compliance AI', lema: 'AI Compliance Platform' };
 // Iniciales para el avatar: "José María de Paz" → "JM" (sin partículas como "de" o "la")
 const PARTICULAS = new Set(['de', 'del', 'la', 'las', 'los', 'y', 'i', 'da', 'do', 'van', 'von']);
@@ -113,7 +113,7 @@ app.use(passport.session());
 app.use((req, res, next) => {
   res.locals.user = req.user || null;
   res.locals.currentPath = req.path;
-  res.locals.area = areaDeRuta(req.path);
+  res.locals.areaNormativa = areaDeRuta(req.path);
   // Versión del CSS compilado (fecha de modificación): cambia la URL de la hoja de estilos al
   // recompilarla, para que el navegador no siga usando la versión antigua de su caché
   try {
@@ -121,7 +121,7 @@ app.use((req, res, next) => {
   } catch {
     res.locals.versionCss = '0';
   }
-  res.locals.areas = AREAS;
+  res.locals.areasNormativas = AREAS;
   res.locals.flash = req.session.flash || null;
   delete req.session.flash;
   next();

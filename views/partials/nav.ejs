@@ -24,7 +24,6 @@
       icono: 'shield-check',
       rutas: ['/evaluaciones', '/controles', '/declaraciones', '/politicas', '/bia'],
       enlaces: [
-        { href: '/sistemas', texto: 'Checklist ENS', detalle: 'Evaluaciones de controles de cada sistema', icono: 'list-checks' },
         { href: '/declaraciones', texto: 'Declaraciones de Conformidad', detalle: 'Informes formales de adecuación', icono: 'file-badge' },
         { href: '/politicas', texto: 'Políticas y Documentación', detalle: 'PSI, procedimientos y aceptaciones', icono: 'book-open-check' },
         { href: '/bia', texto: 'BIA y Continuidad', detalle: 'Impacto en el negocio, RTO y RPO', icono: 'life-buoy' },
@@ -36,7 +35,7 @@
   const usuarioActivo = activo('/registro');
 
   // Área de la pantalla actual (lib/areas.js): colorea el filete de la cabecera y la sección activa
-  const areaActual = typeof area !== 'undefined' ? area : 'neutro';
+  const areaActual = typeof areaNormativa !== 'undefined' ? areaNormativa : 'neutro';
 
   // Inicio y Sistemas son neutros; RGPD y ENS usan su color de área (clases *-area en input.css)
   const claseBoton = (marcado) =>
@@ -194,7 +193,7 @@
   </div>
 </nav>
 <%# Banda del área (RGPD / ENS): recuerda en qué ámbito normativo se está trabajando %>
-<% if (areas[areaActual]) { const a = areas[areaActual]; %>
+<% if (areasNormativas[areaActual]) { const a = areasNormativas[areaActual]; %>
   <div class="banda-area">
     <div class="contenedor flex h-9 items-center gap-2 text-[13px]">
       <%- icono(a.icono, 'h-4 w-4 shrink-0') %>

@@ -32,7 +32,7 @@
 <body class="min-h-screen bg-fondo">
   <%- include('../partials/nav') %>
 
-  <main data-area="<%= area %>" class="contenedor py-8 sm:py-10">
+  <main data-area="<%= areaNormativa %>" class="contenedor py-8 sm:py-10">
     <%- include('../partials/migas', { migas: [{ texto: 'RGPD' }, { texto: 'Proveedores', href: '/proveedores' }, { texto: proveedor.nombre_empresa }] }) %>
     <%- include('../partials/flash') %>
 
