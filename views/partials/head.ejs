@@ -4,7 +4,7 @@
 <title><%= typeof title !== 'undefined' ? title + ' · ' + producto.nombre : producto.nombre %></title>
 <link rel="icon" type="image/svg+xml" href="/img/logo.svg">
 <link rel="preload" href="/fuentes/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/css/output.css">
+<link rel="stylesheet" href="/css/output.css?v=<%= versionCss %>">
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <script>
   // Pestañas (ver partials/pestanas.ejs): la activa se toma de la URL (#id) y se actualiza al cambiar

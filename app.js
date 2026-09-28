@@ -1,6 +1,7 @@
 require('dotenv').config();
 
 const path = require('path');
+const fs = require('fs');
 const express = require('express');
 const session = require('express-session');
 const passport = require('./config/passport');
@@ -68,6 +69,8 @@ app.locals.alertaBiaClases = ALERTA_BIA_CLASES;
 app.locals.icono = icono;
 // Valores por defecto del área (el middleware los fija en cada petición según la URL)
 app.locals.area = 'neutro';
+app.locals.versionCss = '0';
+const CSS_COMPILADO = path.join(__dirname, 'public', 'css', 'output.css');
 app.locals.areas = AREAS;
 app.locals.producto = { nombre: 'Compliance AI', lema: 'AI Compliance Platform' };
 // Iniciales para el avatar: "José María de Paz" → "JM" (sin partículas como "de" o "la")
@@ -111,6 +114,13 @@ app.use((req, res, next) => {
   res.locals.user = req.user || null;
   res.locals.currentPath = req.path;
   res.locals.area = areaDeRuta(req.path);
+  // Versión del CSS compilado (fecha de modificación): cambia la URL de la hoja de estilos al
+  // recompilarla, para que el navegador no siga usando la versión antigua de su caché
+  try {
+    res.locals.versionCss = fs.statSync(CSS_COMPILADO).mtimeMs.toFixed(0);
+  } catch {
+    res.locals.versionCss = '0';
+  }
   res.locals.areas = AREAS;
   res.locals.flash = req.session.flash || null;
   delete req.session.flash;
