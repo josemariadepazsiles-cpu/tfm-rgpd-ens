@@ -169,6 +169,32 @@
     bottom: -14px;
     background-color: var(--area);
   }
+  /* Zonas del panel de control: mismo color de área que el resto de la app, algo más marcado */
+  .zona {
+    @apply space-y-4 rounded-2xl p-4 sm:p-6;
+    border-left: 4px solid var(--area);
+    background-color: color-mix(in srgb, var(--area-suave) 75%, white);
+  }
+  .zona-titulo {
+    @apply flex items-center gap-3 text-lg font-semibold tracking-tight;
+    color: var(--area);
+  }
+  .zona-icono {
+    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-xl;
+    color: var(--area);
+    background-color: color-mix(in srgb, var(--area) 13%, white);
+  }
+  .zona-enlace {
+    @apply inline-flex items-center gap-1 text-xs font-semibold whitespace-nowrap hover:underline;
+    color: var(--area);
+  }
+  /* Etiqueta pequeña del área de un elemento (acciones, actividad reciente) */
+  .etiqueta-area {
+    @apply inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] leading-4 font-semibold tracking-wide;
+    color: var(--area);
+    background-color: var(--area-suave);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--area) 18%, transparent);
+  }
   .nav-area-item-activo {
     color: var(--area);
     background-color: var(--area-suave);

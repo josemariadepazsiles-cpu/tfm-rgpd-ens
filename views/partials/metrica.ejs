@@ -1,8 +1,9 @@
 <%#
   Fila de métrica de un módulo del panel. Recibe `k` = { titulo, valor, detalle, href, nivel, textual? }
-  (`textual`: el valor es un texto, p. ej. una fecha o una categoría, y se muestra más pequeño)
   nivel: 'ok' (✓ verde) · 'atencion' (! ámbar) · 'critico' (● rojo) · 'neutro'.
-  El color solo aparece en el indicador y en el texto de estado; el fondo es siempre blanco.
+  (`textual`: el valor es un texto, p. ej. una fecha o una categoría, y se muestra más pequeño)
+  Una fila a 0 no llama la atención: número en gris claro, sin icono ni texto de confirmación.
+  El color nunca va solo: siempre lo acompaña un icono y un texto.
 %>
 <%
   const estilos = {
@@ -11,17 +12,20 @@
     critico: { icono: 'circle-dot', color: 'text-red-600' },
     neutro: { icono: null, color: 'text-slate-500' },
   };
-  const e = estilos[k.nivel] || estilos.neutro;
+  const cero = k.valor === 0;
+  const e = cero ? estilos.neutro : estilos[k.nivel] || estilos.neutro;
 %>
-<a href="<%= k.href %>" class="group -mx-2 flex items-center justify-between gap-4 rounded-lg px-2 py-2.5 transition duration-150 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-indigo-500">
+<a href="<%= k.href %>" class="group -mx-2 flex items-center justify-between gap-4 rounded-lg px-2 py-2 transition duration-150 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-indigo-500">
   <span class="min-w-0">
-    <span class="block text-sm text-slate-700 group-hover:text-slate-900"><%= k.titulo %></span>
-    <span class="mt-0.5 flex items-center gap-1 text-xs <%= e.color %>">
-      <% if (e.icono) { %><%- icono(e.icono, 'h-3.5 w-3.5') %><% } %><span class="<%= k.nivel === 'neutro' ? 'text-slate-500' : '' %>"><%= k.detalle %></span>
-    </span>
+    <span class="block text-sm <%= cero ? 'text-slate-500' : 'text-slate-700 group-hover:text-slate-900' %>"><%= k.titulo %></span>
+    <% if (!cero && k.detalle) { %>
+      <span class="mt-0.5 flex items-center gap-1 text-xs <%= e.color %>">
+        <% if (e.icono) { %><%- icono(e.icono, 'h-3.5 w-3.5 shrink-0') %><% } %><span class="<%= k.nivel === 'neutro' ? 'text-slate-500' : '' %>"><%= k.detalle %></span>
+      </span>
+    <% } %>
   </span>
   <span class="flex items-center gap-2">
-    <span class="<%= k.textual ? 'text-sm font-semibold' : 'text-2xl font-semibold tabular-nums tracking-tight' %> <%= k.nivel === 'critico' ? 'text-red-600' : 'text-slate-900' %>"><%= k.valor %></span>
+    <span class="<%= k.textual ? 'text-sm font-semibold' : 'text-[22px] leading-7 font-semibold tabular-nums tracking-tight' %> <%= cero ? 'text-slate-300' : k.nivel === 'critico' ? 'text-red-600' : 'text-slate-900' %>"><%= k.valor %></span>
     <%- icono('chevron-right', 'h-4 w-4 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-slate-400') %>
   </span>
 </a>
