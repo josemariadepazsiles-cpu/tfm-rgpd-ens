@@ -1,6 +1,6 @@
 <%
   // Panel de control. Estructura: cabecera con selector · aviso de plazos (solo si los hay) ·
-  // 4 KPIs · acciones pendientes · zonas ENS, RGPD, Continuidad y Riesgos (cada una con su color
+  // 4 KPIs · acciones pendientes · zonas RGPD, ENS, Continuidad y Riesgos (cada una con su color
   // de área) · actividad reciente. Cada dato aparece una sola vez.
   const { actividades: act, incidentes: inc, derechos: der, proveedores: prov, ens, declaraciones: decl, politicas: pol, bia, actividad } = m;
   const esTodos = !sistema;
@@ -241,7 +241,30 @@
       </div>
     </section>
 
-    <%# ================= 4. Zona ENS ================= %>
+    <%# ================= 4. Zona RGPD ================= %>
+    <section data-area="rgpd" aria-labelledby="t-rgpd" class="zona">
+      <h2 id="t-rgpd" class="zona-titulo"><span class="zona-icono"><%- icono('scale', 'h-5 w-5') %></span>RGPD · Protección de datos</h2>
+      <div class="grid gap-4 md:grid-cols-2">
+        <% tarjetasRgpd.forEach((t) => { %>
+          <div class="card p-5">
+            <div class="flex items-center justify-between gap-3">
+              <h3 class="flex items-center gap-2 font-semibold text-slate-900"><%- icono(t.icono, 'h-4 w-4 text-slate-400') %><%= t.titulo %></h3>
+              <a href="<%= t.href %>" class="zona-enlace">Ver módulo<%- icono('arrow-right', 'h-3.5 w-3.5') %></a>
+            </div>
+            <% if (t.nota) { %><p class="mt-1 text-xs text-slate-500"><%= t.nota %></p><% } %>
+            <div class="mt-2 divide-y divide-slate-100"><% t.filas.forEach((k) => { %><%- include('partials/metrica', { k }) %><% }) %></div>
+          </div>
+        <% }) %>
+      </div>
+      <% if (!esTodos && notaTransversal.length) { %>
+        <p class="text-xs text-slate-500">
+          + <% notaTransversal.forEach((n, i) => { %><%= i ? ', ' : '' %><a href="<%= n.href %>" class="zona-enlace"><%= n.texto %></a><% }) %>
+          transversales no asignados a ningún sistema.
+        </p>
+      <% } %>
+    </section>
+
+    <%# ================= 5. Zona ENS ================= %>
     <section id="zona-ens" data-area="ens" aria-labelledby="t-ens" class="zona scroll-mt-24">
       <h2 id="t-ens" class="zona-titulo"><span class="zona-icono"><%- icono('shield-check', 'h-5 w-5') %></span>ENS · Esquema Nacional de Seguridad</h2>
       <div class="grid gap-4 lg:grid-cols-3">
@@ -298,29 +321,6 @@
           <div class="mt-2 divide-y divide-slate-100"><% filasPol.forEach((k) => { %><%- include('partials/metrica', { k }) %><% }) %></div>
         </div>
       </div>
-    </section>
-
-    <%# ================= 5. Zona RGPD ================= %>
-    <section data-area="rgpd" aria-labelledby="t-rgpd" class="zona">
-      <h2 id="t-rgpd" class="zona-titulo"><span class="zona-icono"><%- icono('scale', 'h-5 w-5') %></span>RGPD · Protección de datos</h2>
-      <div class="grid gap-4 md:grid-cols-2">
-        <% tarjetasRgpd.forEach((t) => { %>
-          <div class="card p-5">
-            <div class="flex items-center justify-between gap-3">
-              <h3 class="flex items-center gap-2 font-semibold text-slate-900"><%- icono(t.icono, 'h-4 w-4 text-slate-400') %><%= t.titulo %></h3>
-              <a href="<%= t.href %>" class="zona-enlace">Ver módulo<%- icono('arrow-right', 'h-3.5 w-3.5') %></a>
-            </div>
-            <% if (t.nota) { %><p class="mt-1 text-xs text-slate-500"><%= t.nota %></p><% } %>
-            <div class="mt-2 divide-y divide-slate-100"><% t.filas.forEach((k) => { %><%- include('partials/metrica', { k }) %><% }) %></div>
-          </div>
-        <% }) %>
-      </div>
-      <% if (!esTodos && notaTransversal.length) { %>
-        <p class="text-xs text-slate-500">
-          + <% notaTransversal.forEach((n, i) => { %><%= i ? ', ' : '' %><a href="<%= n.href %>" class="zona-enlace"><%= n.texto %></a><% }) %>
-          transversales no asignados a ningún sistema.
-        </p>
-      <% } %>
     </section>
 
     <%# ================= 6. Zona Continuidad (BIA) ================= %>
