@@ -1,0 +1,2 @@
+# Las migraciones aplicadas no deben cambiar ni un byte (Prisma compara su checksum)
+prisma/migrations/**/*.sql text eol=lf
