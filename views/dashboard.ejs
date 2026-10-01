@@ -221,7 +221,16 @@
                   <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg <%= a.nivel === 'critico' ? 'bg-red-50 text-red-600' : a.nivel === 'atencion' ? 'bg-amber-50 text-amber-600' : 'bg-slate-50 text-slate-500' %>"><%- icono(a.icono, 'h-4 w-4') %></span>
                   <div class="min-w-0">
                     <p class="flex flex-wrap items-center gap-2 text-sm font-medium text-slate-900">
-                      <% if (etiquetaArea[a.area]) { %><span class="etiqueta-area" data-area="<%= a.area %>"><%= etiquetaArea[a.area] %></span><% } %><%= a.titulo %>
+                      <% if (etiquetaArea[a.area]) { %><span class="etiqueta-area" data-area="<%= a.area %>"><%= etiquetaArea[a.area] %></span><% } %>
+                      <%# Ámbito: sistema concreto, transversal o recuento de toda la organización %>
+                      <% if (a.ambito && a.ambito.sistema) { %>
+                        <a href="/sistemas/<%= a.ambito.sistema.id %>" class="inline-flex items-center gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-700 transition hover:bg-slate-200" title="Sistema: <%= a.ambito.sistema.nombre %>"><%- icono('server', 'h-3 w-3 text-slate-400') %><%= a.ambito.sistema.nombre %></a>
+                      <% } else if (a.ambito && a.ambito.transversal) { %>
+                        <span class="inline-flex items-center gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-500" title="No depende de un sistema concreto"><%- icono('layers', 'h-3 w-3 text-slate-400') %>Transversal</span>
+                      <% } else if (a.ambito && a.ambito.organizacion) { %>
+                        <span class="inline-flex items-center gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-500" title="Recuento de todos los sistemas"><%- icono('building-2', 'h-3 w-3 text-slate-400') %>Toda la organización</span>
+                      <% } %>
+                      <%= a.titulo %>
                     </p>
                     <p class="mt-0.5 text-[13px] text-slate-500"><%= a.motivo %></p>
                   </div>

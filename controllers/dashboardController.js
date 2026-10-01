@@ -28,21 +28,42 @@ const CUBIERTAS_POR_ALERTAS = {
 // Acciones pendientes: alertas con plazo (una por registro) + recomendaciones del asistente
 // (sin repetir lo que ya cubren las alertas) + seguimiento de incidentes abiertos y de la
 // próxima solicitud de derechos. Ordenadas por urgencia: crítico > atención > informativo.
-const construirAcciones = (vista, recs, m) => {
+// Ámbito de cada acción (se muestra junto al título):
+//   { sistema: { id, nombre } } · { transversal: true } (no depende de un sistema) · { organizacion: true } (recuento de varios)
+const MODULOS_TRANSVERSALES = ['/proveedores', '/politicas'];
+const ambitoRecomendacion = (href, m, sistemaSel) => {
+  const ruta = href.split(/[?#]/)[0];
+  if (MODULOS_TRANSVERSALES.some((t) => ruta === t || ruta.startsWith(t + '/'))) return { transversal: true };
+  const ev = /^\/evaluaciones\/(\d+)$/.exec(ruta);
+  if (ev) {
+    const s = m.ens.sistemas.find((x) => x.ultima && x.ultima.id === Number(ev[1]));
+    if (s) return { sistema: { id: s.id, nombre: s.nombre } };
+  }
+  return sistemaSel ? { sistema: { id: sistemaSel.id, nombre: sistemaSel.nombre } } : { organizacion: true };
+};
+
+const construirAcciones = (vista, recs, m, sistemaSel) => {
   const modulosConAlertas = new Set(vista.alertas.map((a) => a.modulo));
   const acciones = [
-    ...vista.alertas.map((a) => ({ nivel: a.nivel, icono: a.icono, titulo: a.titulo, motivo: a.detalle, href: a.href, accion: 'Abrir', modulo: a.modulo })),
-    ...recs.filter((r) => ![...modulosConAlertas].some((mod) => CUBIERTAS_POR_ALERTAS[mod] && CUBIERTAS_POR_ALERTAS[mod](r.href))),
+    ...vista.alertas.map((a) => ({
+      nivel: a.nivel, icono: a.icono, titulo: a.titulo, motivo: a.detalle, href: a.href, accion: 'Abrir', modulo: a.modulo,
+      ambito: a.sistema ? { sistema: a.sistema } : { transversal: true },
+    })),
+    ...recs
+      .filter((r) => ![...modulosConAlertas].some((mod) => CUBIERTAS_POR_ALERTAS[mod] && CUBIERTAS_POR_ALERTAS[mod](r.href)))
+      .map((r) => ({ ...r, ambito: ambitoRecomendacion(r.href, m, sistemaSel) })),
   ];
   const sinAepd = (m.incidentes.activos || 0) - (m.incidentes.aepdPendientes || 0);
   if (sinAepd > 0) {
     acciones.push({ nivel: 'atencion', icono: 'siren', titulo: `${plural(sinAepd, 'incidente abierto', 'incidentes abiertos')} en gestión`,
-      motivo: 'Sin notificación a la AEPD pendiente: completa la investigación y ciérralos cuando estén resueltos.', href: '/incidentes?alerta=activos', accion: 'Ver incidentes' });
+      motivo: 'Sin notificación a la AEPD pendiente: completa la investigación y ciérralos cuando estén resueltos.', href: '/incidentes?alerta=activos', accion: 'Ver incidentes',
+      ambito: sistemaSel ? { sistema: { id: sistemaSel.id, nombre: sistemaSel.nombre } } : { organizacion: true } });
   }
   const p = m.derechos.proxima;
   if (p && p.urgencia.nivel === 'verde') {
     acciones.push({ nivel: 'info', icono: 'calendar-clock', titulo: `La solicitud de ${p.nombre_solicitante} vence en ${plural(p.urgencia.dias, 'día', 'días')}`,
-      motivo: 'Próxima solicitud de derechos en vencer (plazo de 1 mes, art. 12.3 RGPD).', href: `/derechos/${p.id}`, accion: 'Abrir solicitud' });
+      motivo: 'Próxima solicitud de derechos en vencer (plazo de 1 mes, art. 12.3 RGPD).', href: `/derechos/${p.id}`, accion: 'Abrir solicitud',
+      ambito: p.sistema ? { sistema: p.sistema } : { transversal: true } });
   }
   return acciones
     .map((a) => ({ ...a, area: areaDeEnlace(a.href) }))
@@ -100,7 +121,7 @@ const index = async (req, res) => {
     vista,
     // Con un sistema elegido, los enlaces a listados mantienen el filtro
     enlace: (href) => enlaceConSistema(href, sid),
-    acciones: construirAcciones(vista, recs, metricas),
+    acciones: construirAcciones(vista, recs, metricas, sistema),
     proximo: proximoVencimiento(vista, metricas, TIPOS_DERECHO),
     areaDeEnlace,
     nivelEstilo: NIVEL_ESTILO,
