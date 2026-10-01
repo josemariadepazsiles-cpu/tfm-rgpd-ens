@@ -1,0 +1,14 @@
+<%#
+  Etiqueta del ámbito de una acción o evento. Recibe `ambito`:
+  { sistema: { id, nombre } } → nombre del sistema (enlace a su ficha)
+  { transversal: true }       → no depende de un sistema concreto
+  { organizacion: true }      → recuento de varios sistemas
+%>
+<% const claseAmbito = 'inline-flex items-center gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium'; %>
+<% if (ambito && ambito.sistema) { %>
+  <a href="/sistemas/<%= ambito.sistema.id %>" class="<%= claseAmbito %> text-slate-700 transition hover:bg-slate-200" title="Sistema: <%= ambito.sistema.nombre %>"><%- icono('server', 'h-3 w-3 text-slate-400') %><%= ambito.sistema.nombre %></a>
+<% } else if (ambito && ambito.transversal) { %>
+  <span class="<%= claseAmbito %> text-slate-500" title="No depende de un sistema concreto"><%- icono('layers', 'h-3 w-3 text-slate-400') %>Transversal</span>
+<% } else if (ambito && ambito.organizacion) { %>
+  <span class="<%= claseAmbito %> text-slate-500" title="Recuento de todos los sistemas"><%- icono('building-2', 'h-3 w-3 text-slate-400') %>Toda la organización</span>
+<% } %>

@@ -222,14 +222,7 @@
                   <div class="min-w-0">
                     <p class="flex flex-wrap items-center gap-2 text-sm font-medium text-slate-900">
                       <% if (etiquetaArea[a.area]) { %><span class="etiqueta-area" data-area="<%= a.area %>"><%= etiquetaArea[a.area] %></span><% } %>
-                      <%# Ámbito: sistema concreto, transversal o recuento de toda la organización %>
-                      <% if (a.ambito && a.ambito.sistema) { %>
-                        <a href="/sistemas/<%= a.ambito.sistema.id %>" class="inline-flex items-center gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-700 transition hover:bg-slate-200" title="Sistema: <%= a.ambito.sistema.nombre %>"><%- icono('server', 'h-3 w-3 text-slate-400') %><%= a.ambito.sistema.nombre %></a>
-                      <% } else if (a.ambito && a.ambito.transversal) { %>
-                        <span class="inline-flex items-center gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-500" title="No depende de un sistema concreto"><%- icono('layers', 'h-3 w-3 text-slate-400') %>Transversal</span>
-                      <% } else if (a.ambito && a.ambito.organizacion) { %>
-                        <span class="inline-flex items-center gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-500" title="Recuento de todos los sistemas"><%- icono('building-2', 'h-3 w-3 text-slate-400') %>Toda la organización</span>
-                      <% } %>
+                      <%- include('partials/ambito', { ambito: a.ambito }) %>
                       <%= a.titulo %>
                     </p>
                     <p class="mt-0.5 text-[13px] text-slate-500"><%= a.motivo %></p>
@@ -444,7 +437,8 @@
                   </p>
                   <p class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
                     <% if (etiquetaArea[zona]) { %><span class="etiqueta-area" data-area="<%= zona %>"><%= etiquetaArea[zona] %></span><% } %>
-                    <span class="font-medium text-slate-600"><%= ev.modulo %></span><%= ev.contexto && ev.modulo === 'ENS' ? ' · ' + ev.contexto : '' %> · <%= fechaHora(ev.fecha) %><%= ev.usuario ? ' · ' + ev.usuario : '' %>
+                    <%- include('partials/ambito', { ambito: ev.ambito }) %>
+                    <span class="font-medium text-slate-600"><%= ev.modulo %></span> · <%= fechaHora(ev.fecha) %><%= ev.usuario ? ' · ' + ev.usuario : '' %>
                   </p>
                 </div>
               </li>
