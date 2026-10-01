@@ -7,14 +7,14 @@
     definido en partials/head.ejs).
   - La barra es un botón con aria-expanded / aria-controls (Enter y Espacio funcionan de serie).
   - `area` ('rgpd' | 'ens' | 'neutro'): color de zona (filete izquierdo, icono y título). Sin área, neutra.
-  - Un enlace a «#<id>» en cualquier parte de la página despliega el bloque y se desplaza hasta él.
+  - Un enlace a «#<id>» (o al id de una subsección suya) despliega el bloque y se desplaza hasta él.
 %>
 <%
   const pArea = typeof area !== 'undefined' && area ? area : null;
   const pContador = typeof contador !== 'undefined' && contador !== null && contador !== '' ? contador : null;
 %>
 <section id="<%= id %>" data-area="<%= pArea || 'neutro' %>" x-data='plegable(<%- JSON.stringify(id) %>)'
-         @abrir-plegable.window="$event.detail === '<%= id %>' && abrir(true)"
+         @abrir-plegable.window="$event.detail.seccion === '<%= id %>' && abrir($event.detail.elemento)"
          class="plegable card scroll-mt-24 overflow-hidden <%= pArea ? 'plegable-area' : '' %>">
   <h2>
     <button type="button" id="<%= id %>-barra" class="plegable-barra" @click="alternar()"
@@ -24,7 +24,7 @@
         <%# Título y contador pueden pasar a una segunda línea en pantallas estrechas %>
         <span class="flex min-w-0 flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
           <span class="text-base font-semibold tracking-tight sm:text-lg <%= pArea ? 'plegable-titulo-area' : 'text-slate-900' %>"><%= titulo %></span>
-          <% if (pContador !== null) { %><span class="text-sm font-normal text-slate-400 sm:text-base">(<%= pContador %>)</span><% } %>
+          <% if (pContador !== null) { %><span class="block max-w-full truncate text-sm font-normal text-slate-400 sm:text-base" title="<%= pContador %>">(<%= pContador %>)</span><% } %>
         </span>
       </span>
       <span class="plegable-chevron shrink-0 text-slate-400" :class="abierto && 'rotate-180'"><%- icono('chevron-down', 'h-5 w-5') %></span>

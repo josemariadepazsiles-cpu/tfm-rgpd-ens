@@ -29,6 +29,8 @@
   // Secciones plegables (ver partials/plegable-abrir.ejs). Plegadas por defecto; las que el usuario
   // despliega se recuerdan en localStorage (con try/catch: puede no estar disponible).
   var CLAVE_PLEGABLES = 'compliance-ai:plegables-abiertos';
+  // Secciones que ya no existen como bloque propio (ahora son subsecciones): se borran del estado guardado
+  var PLEGABLES_OBSOLETOS = ['zona-bia', 'zona-riesgos'];
   function leerPlegables() {
     try { return JSON.parse(localStorage.getItem(CLAVE_PLEGABLES)) || {}; } catch (e) { return {}; }
   }
@@ -39,27 +41,50 @@
       localStorage.setItem(CLAVE_PLEGABLES, JSON.stringify(estado));
     } catch (e) { /* sin almacenamiento: el estado solo dura hasta recargar */ }
   }
+  (function limpiarPlegablesObsoletos() {
+    try {
+      var estado = leerPlegables();
+      var cambiado = false;
+      PLEGABLES_OBSOLETOS.forEach(function (id) { if (id in estado) { delete estado[id]; cambiado = true; } });
+      if (cambiado) localStorage.setItem(CLAVE_PLEGABLES, JSON.stringify(estado));
+    } catch (e) { /* nada que limpiar */ }
+  })();
+  // Destino de un enlace «#id»: la sección plegable que lo contiene (o que es) y el elemento al que bajar
+  function destinoPlegable(id) {
+    var el = id && document.getElementById(id);
+    var seccion = el && el.closest('.plegable');
+    return seccion ? { seccion: seccion.id, elemento: el } : null;
+  }
+  function bajarA(el, suave) {
+    el.scrollIntoView({ behavior: suave ? 'smooth' : 'auto', block: 'start' });
+  }
   document.addEventListener('alpine:init', function () {
     Alpine.data('plegable', function (id) {
       return {
-        abierto: !!leerPlegables()[id] || location.hash === '#' + id,
+        abierto: !!leerPlegables()[id],
         listo: false,
         init: function () {
           var self = this;
+          // Al cargar con «#id» de la sección o de una subsección suya: se abre sin animación y se baja hasta él
+          var destino = destinoPlegable(location.hash.slice(1));
+          if (destino && destino.seccion === id) {
+            this.abierto = true;
+            this.$nextTick(function () { bajarA(destino.elemento, false); });
+          }
           // La animación se activa tras el primer pintado: al cargar no hay saltos ni animación
           requestAnimationFrame(function () { requestAnimationFrame(function () { self.listo = true; }); });
-          if (location.hash === '#' + id) this.$nextTick(function () { self.$root.scrollIntoView({ block: 'start' }); });
         },
         alternar: function () {
-          if (this.abierto) this.cerrar(); else this.abrir(false);
+          if (this.abierto) this.cerrar(); else this.abrir(null);
         },
-        abrir: function (desplazar) {
-          var raiz = this.$root;
+        // `destino`: elemento al que desplazarse tras abrir (la propia sección o una subsección)
+        abrir: function (destino) {
+          var yaAbierto = this.abierto;
           this.abierto = true;
           guardarPlegable(id, true);
           // Gráficos que se dibujen con tamaño 0 estando ocultos: se recalculan al terminar de abrir
           setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 240);
-          if (desplazar) this.$nextTick(function () { raiz.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+          if (destino) setTimeout(function () { bajarA(destino, true); }, yaAbierto ? 0 : 240);
         },
         cerrar: function () {
           this.abierto = false;
@@ -68,16 +93,21 @@
       };
     });
   });
-  // Un enlace «#id» a una sección plegable la despliega y se desplaza hasta ella
+  // Un enlace «#id» a una sección plegable, o a una subsección suya, la despliega y se desplaza hasta él
   document.addEventListener('click', function (e) {
     var enlace = e.target.closest && e.target.closest('a[href^="#"]');
     if (!enlace) return;
     var id = enlace.getAttribute('href').slice(1);
-    var destino = id && document.getElementById(id);
-    if (!destino || !destino.classList.contains('plegable')) return;
+    var destino = destinoPlegable(id);
+    if (!destino) return;
     e.preventDefault();
     history.replaceState(null, '', '#' + id);
-    window.dispatchEvent(new CustomEvent('abrir-plegable', { detail: id }));
+    window.dispatchEvent(new CustomEvent('abrir-plegable', { detail: destino }));
+  });
+  // También si el «#id» cambia sin recargar la página (atrás/adelante, enlaces externos)
+  window.addEventListener('hashchange', function () {
+    var destino = destinoPlegable(location.hash.slice(1));
+    if (destino) window.dispatchEvent(new CustomEvent('abrir-plegable', { detail: destino }));
   });
 
   // Tablas en móvil: copia el título de cada columna a sus celdas (data-label) para mostrar

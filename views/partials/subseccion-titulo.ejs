@@ -1,0 +1,12 @@
+<%#
+  Subtítulo de una subsección dentro de una sección plegable (p. ej. BIA dentro de ENS).
+  Recibe { titulo, iconoBarra, contador? }. Usa el color de área de la sección que la contiene.
+  El contenedor de la subsección (con su id y la línea divisoria) lo pone la vista.
+%>
+<h3 class="flex min-w-0 items-center gap-2.5">
+  <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg" style="color: var(--area); background-color: color-mix(in srgb, var(--area) 11%, white)"><%- icono(iconoBarra, 'h-4 w-4') %></span>
+  <span class="flex min-w-0 items-baseline gap-2">
+    <span class="shrink-0 text-base font-semibold tracking-tight text-slate-900"><%= titulo %></span>
+    <% if (typeof contador !== 'undefined' && contador !== null && contador !== '') { %><span class="min-w-0 truncate text-sm font-normal text-slate-400">(<%= contador %>)</span><% } %>
+  </span>
+</h3>
