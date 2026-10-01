@@ -71,8 +71,8 @@
                   <% if (a.responsable.area) { %><span class="block text-xs text-slate-400"><%= a.responsable.area %></span><% } %>
                 </td>
                 <td class="px-4 py-3 text-right whitespace-nowrap">
-                  <a href="/rat/<%= a.id %>" class="btn btn-secondary btn-sm"><%- icono('eye', 'h-3.5 w-3.5') %>Ver</a>
-                  <a href="/rat/<%= a.id %>/editar" class="ml-1 btn btn-primary btn-sm"><%- icono('pencil', 'h-3.5 w-3.5') %>Editar</a>
+                  <a href="/rat/<%= a.id %>" class="btn-icono" title="Ver detalle" aria-label="Ver detalle"><%- icono('eye', 'h-4 w-4') %></a>
+                  <a href="/rat/<%= a.id %>/editar" class="ml-1 btn-icono-primario" title="Editar" aria-label="Editar"><%- icono('pencil', 'h-4 w-4') %></a>
                 </td>
               </tr>
             <% }) %>

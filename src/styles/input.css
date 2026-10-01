@@ -302,8 +302,16 @@
   }
 
   /* --- Tablas --- */
+  /* Si una tabla no cabe, se desplaza en horizontal en lugar de cortar la columna derecha */
   .tabla-contenedor {
-    @apply overflow-hidden rounded-2xl border border-slate-200/80 bg-white;
+    @apply overflow-x-auto rounded-2xl border border-slate-200/80 bg-white;
+  }
+  /* Botón cuadrado solo con icono (acciones de los listados). Lleva title y aria-label */
+  .btn-icono {
+    @apply inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition duration-150 hover:border-indigo-200 hover:bg-marca-50 hover:text-indigo-700;
+  }
+  .btn-icono-primario {
+    @apply inline-flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-sm transition duration-150 hover:bg-indigo-700;
   }
   .tabla {
     @apply w-full text-sm;

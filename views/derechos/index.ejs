@@ -99,7 +99,7 @@
                   <div class="mt-1"><%- include('../partials/urgencia-derecho', { u: s.urgencia }) %></div>
                 </td>
                 <td class="px-4 py-3"><%- include('../partials/estado-solicitud', { estadoSolicitud: s.estado }) %></td>
-                <td class="px-4 py-3 text-slate-600 whitespace-nowrap">
+                <td class="px-4 py-3 text-slate-600">
                   <% if (!s.responsable) { %>
                     <span class="text-slate-400 italic">Sin asignar</span>
                   <% } else { %>
@@ -107,9 +107,9 @@
                   <% } %>
                 </td>
                 <td class="px-4 py-3 text-right whitespace-nowrap">
-                  <a href="/derechos/<%= s.id %>" class="btn btn-secondary btn-sm"><%- icono('eye', 'h-3.5 w-3.5') %>Ver</a>
+                  <a href="/derechos/<%= s.id %>" class="btn-icono" title="Ver detalle" aria-label="Ver detalle"><%- icono('eye', 'h-4 w-4') %></a>
                   <% if (s.gestionable) { %>
-                    <a href="/derechos/<%= s.id %>/editar" class="ml-1 btn btn-primary btn-sm"><%- icono('pencil', 'h-3.5 w-3.5') %>Tramitar</a>
+                    <a href="/derechos/<%= s.id %>/editar" class="ml-1 btn-icono-primario" title="Tramitar" aria-label="Tramitar"><%- icono('pencil', 'h-4 w-4') %></a>
                   <% } %>
                 </td>
               </tr>

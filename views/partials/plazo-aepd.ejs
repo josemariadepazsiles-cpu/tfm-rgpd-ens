@@ -5,8 +5,8 @@
     <%- icono('triangle-alert', 'h-3 w-3') %>¡Plazo AEPD!
   </span>
 <% } else if (plazo.tipo === 'pendiente') { %>
-  <span class="badge bg-amber-50 text-amber-800 ring-amber-600/25" title="Vence el <%= fechaHora(plazo.limite) %>">
-    <%- icono('clock', 'h-3 w-3') %>Pendiente · quedan <%= plazo.horasRestantes %> h
+  <span class="badge bg-amber-50 text-amber-800 ring-amber-600/25" title="Notificación a la AEPD pendiente: vence el <%= fechaHora(plazo.limite) %>">
+    <%- icono('clock', 'h-3 w-3') %>Quedan <%= plazo.horasRestantes %> h
   </span>
 <% } else if (plazo.tipo === 'notificado') { %>
   <span class="badge bg-green-50 text-green-700 ring-green-600/20"><%- icono('check', 'h-3 w-3') %>Notificada <%= fecha(plazo.fecha) %></span>

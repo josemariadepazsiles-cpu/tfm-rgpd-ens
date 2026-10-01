@@ -70,8 +70,8 @@
                 <td class="px-4 py-3 text-slate-600"><%= impactos[r.impacto] %></td>
                 <td class="px-4 py-3"><%- include('../partials/nivel-badge', { nivel: r.nivel_riesgo, nivelEtiquetas: niveles }) %></td>
                 <td class="px-4 py-3 text-right whitespace-nowrap">
-                  <a href="/riesgos/<%= r.id %>" class="btn btn-secondary btn-sm"><%- icono('eye', 'h-3.5 w-3.5') %>Ver</a>
-                  <a href="/riesgos/<%= r.id %>/editar" class="ml-1 btn btn-primary btn-sm"><%- icono('pencil', 'h-3.5 w-3.5') %>Editar</a>
+                  <a href="/riesgos/<%= r.id %>" class="btn-icono" title="Ver detalle" aria-label="Ver detalle"><%- icono('eye', 'h-4 w-4') %></a>
+                  <a href="/riesgos/<%= r.id %>/editar" class="ml-1 btn-icono-primario" title="Editar" aria-label="Editar"><%- icono('pencil', 'h-4 w-4') %></a>
                 </td>
               </tr>
             <% }) %>

@@ -88,13 +88,13 @@
                 <td class="px-4 py-3">
                   <span class="badge <%= estadoPoliticaClases[p.estado] %>"><%= ESTADOS_POLITICA[p.estado] %></span>
                 </td>
-                <td class="px-4 py-3 whitespace-nowrap">
+                <td class="px-4 py-3">
                   <span class="text-slate-600"><%= p.fecha_proxima_revision ? fecha(p.fecha_proxima_revision) : '—' %></span>
                   <% if (p.alerta) { %>
                     <span class="badge mt-1 <%= revisionClases[p.alerta.nivel] %>"><%= p.alerta.nivel === 'vencida' ? '⚠ ' : '' %><%= p.alerta.texto %></span>
                   <% } %>
                 </td>
-                <td class="px-4 py-3 whitespace-nowrap">
+                <td class="px-4 py-3">
                   <% if (!p.requiere_aceptacion) { %>
                     <span class="text-xs text-slate-400">No requiere</span>
                   <% } else if (p.pendienteAceptar) { %>
@@ -106,9 +106,9 @@
                   <% } %>
                 </td>
                 <td class="px-4 py-3 text-right whitespace-nowrap">
-                  <a href="/politicas/<%= p.id %>" class="btn btn-secondary btn-sm"><%- icono('eye', 'h-3.5 w-3.5') %>Ver</a>
+                  <a href="/politicas/<%= p.id %>" class="btn-icono" title="Ver detalle" aria-label="Ver detalle"><%- icono('eye', 'h-4 w-4') %></a>
                   <% if (esAdmin) { %>
-                    <a href="/politicas/<%= p.id %>/editar" class="ml-1 btn btn-primary btn-sm"><%- icono('pencil', 'h-3.5 w-3.5') %>Editar</a>
+                    <a href="/politicas/<%= p.id %>/editar" class="ml-1 btn-icono-primario" title="Editar" aria-label="Editar"><%- icono('pencil', 'h-4 w-4') %></a>
                   <% } %>
                 </td>
               </tr>

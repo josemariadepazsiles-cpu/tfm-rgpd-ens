@@ -73,22 +73,22 @@
               <th>Estado</th>
               <th>Detección</th>
               <th>Responsable</th>
-              <th>Notificación AEPD</th>
+              <th class="whitespace-normal">Notificación<br>AEPD</th>
               <th class="text-right">Acciones</th>
             </tr>
           </thead>
           <tbody>
             <% incidentes.forEach((i) => { %>
               <tr class="hover:bg-slate-50">
-                <td class="px-4 py-3 max-w-xs">
-                  <a href="/incidentes/<%= i.id %>" class="font-medium text-slate-800 hover:text-indigo-600 hover:underline line-clamp-2"><%= i.titulo %></a>
+                <td class="px-4 py-3">
+                  <a href="/incidentes/<%= i.id %>" class="font-medium text-slate-800 hover:text-indigo-600 hover:underline line-clamp-2 max-w-[14rem]"><%= i.titulo %></a>
                 </td>
                 <td class="px-4 py-3"><%- include('../partials/sistema-celda', { s: i.sistema }) %></td>
                 <td class="px-4 py-3 text-slate-600"><%= TIPOS[i.tipo] %></td>
                 <td class="px-4 py-3"><%- include('../partials/incidente-badges', { gravedadBadge: i.gravedad }) %></td>
                 <td class="px-4 py-3"><%- include('../partials/incidente-badges', { estadoBadge: i.estado }) %></td>
-                <td class="px-4 py-3 text-slate-600 whitespace-nowrap"><%= fechaHora(i.fecha_deteccion) %></td>
-                <td class="px-4 py-3 text-slate-600 whitespace-nowrap">
+                <td class="px-4 py-3 text-slate-600 whitespace-nowrap tabular-nums"><% const fh = fechaHora(i.fecha_deteccion).split(', '); %><%= fh[0] %><span class="block text-xs text-slate-400"><%= fh[1] %></span></td>
+                <td class="px-4 py-3 text-slate-600">
                   <% if (!i.responsable) { %>
                     <span class="text-slate-400 italic">Sin asignar</span>
                   <% } else { %>
@@ -97,9 +97,9 @@
                 </td>
                 <td class="px-4 py-3 whitespace-nowrap"><%- include('../partials/plazo-aepd', { plazo: i.plazo }) %></td>
                 <td class="px-4 py-3 text-right whitespace-nowrap">
-                  <a href="/incidentes/<%= i.id %>" class="btn btn-secondary btn-sm"><%- icono('eye', 'h-3.5 w-3.5') %>Ver</a>
+                  <a href="/incidentes/<%= i.id %>" class="btn-icono" title="Ver detalle" aria-label="Ver detalle"><%- icono('eye', 'h-4 w-4') %></a>
                   <% if (i.gestionable) { %>
-                    <a href="/incidentes/<%= i.id %>/editar" class="ml-1 btn btn-primary btn-sm"><%- icono('pencil', 'h-3.5 w-3.5') %>Editar</a>
+                    <a href="/incidentes/<%= i.id %>/editar" class="ml-1 btn-icono-primario" title="Editar" aria-label="Editar"><%- icono('pencil', 'h-4 w-4') %></a>
                   <% } %>
                 </td>
               </tr>
