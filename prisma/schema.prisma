@@ -268,11 +268,13 @@ model Riesgo {
 
 // Catálogo de controles ENS; se evalúan todos en cada evaluación de cada sistema
 model ControlEns {
-  id         Int          @id @default(autoincrement())
-  nombre     String       @unique
-  categoria  CategoriaEns
-  created_at DateTime     @default(now())
-  updated_at DateTime     @updatedAt
+  id          Int          @id @default(autoincrement())
+  nombre      String       @unique
+  categoria   CategoriaEns
+  // Explicación del control (texto largo, opcional; máx. 2000 caracteres validados en la app)
+  descripcion String?
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
 
   evaluaciones EvaluacionControl[]
 

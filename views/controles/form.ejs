@@ -36,6 +36,16 @@
           <% }) %>
         </select>
       </div>
+      <div x-data="{ n: <%= (control.descripcion || '').length %> }">
+        <label for="descripcion" class="label">Descripción <span class="font-normal text-slate-400">(opcional)</span></label>
+        <textarea id="descripcion" name="descripcion" rows="5" maxlength="<%= maxDescripcion %>" class="<%= inputClase %> resize-y"
+                  @input="n = $event.target.value.length"
+                  placeholder="Objetivo del control y qué debe implantar la organización (Anexo II del ENS)."><%= control.descripcion || '' %></textarea>
+        <p class="ayuda flex justify-between gap-3">
+          <span>Se muestra en el catálogo bajo el nombre del control.</span>
+          <span class="shrink-0 tabular-nums" x-text="n + ' / <%= maxDescripcion %>'"><%= (control.descripcion || '').length %> / <%= maxDescripcion %></span>
+        </p>
+      </div>
       <div class="flex justify-end gap-3 pt-2">
         <a href="/controles" class="btn btn-secondary">Cancelar</a>
         <button type="submit" class="btn btn-primary">

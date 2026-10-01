@@ -14,6 +14,16 @@ const buscar = (req) => {
 };
 
 const texto = (valor) => (typeof valor === 'string' ? valor.trim() : '');
+const MAX_DESCRIPCION = 2000;
+
+// Datos del formulario. La descripción vacía se guarda como null; el escapado HTML lo hace la
+// vista (<%= %>), por lo que el texto se guarda tal cual lo escribe el administrador.
+const leerFormulario = (body) => ({
+  nombre: texto(body.nombre),
+  categoria: body.categoria,
+  // Los saltos de línea del navegador (\r\n) se guardan como \n
+  descripcion: texto(body.descripcion).replace(/\r\n/g, '\n') || null,
+});
 
 const renderFormulario = (res, { control, errores = [], status = 200 }) =>
   res.status(status).render('controles/form', {
@@ -21,12 +31,16 @@ const renderFormulario = (res, { control, errores = [], status = 200 }) =>
     control,
     errores,
     categorias: CATEGORIAS,
+    maxDescripcion: MAX_DESCRIPCION,
   });
 
 const validar = (datos) => {
   const errores = [];
   if (!datos.nombre) errores.push('El nombre es obligatorio.');
   if (!esCategoria(datos.categoria)) errores.push('La categoría no es válida.');
+  if (datos.descripcion && datos.descripcion.length > MAX_DESCRIPCION) {
+    errores.push(`La descripción no puede superar los ${MAX_DESCRIPCION} caracteres (tiene ${datos.descripcion.length}).`);
+  }
   return errores;
 };
 
@@ -63,7 +77,7 @@ const list = async (req, res) => {
 const newForm = (req, res) => renderFormulario(res, { control: { categoria: req.query.categoria } });
 
 const create = async (req, res) => {
-  const datos = { nombre: texto(req.body.nombre), categoria: req.body.categoria };
+  const datos = leerFormulario(req.body);
   const control = await guardar(res, datos, () => prisma.controlEns.create({ data: datos }));
   if (!control) return;
   req.session.flash = { tipo: 'exito', mensaje: `Control "${control.nombre}" añadido al catálogo.` };
@@ -80,9 +94,10 @@ const update = async (req, res) => {
   const actual = await buscar(req);
   if (!actual) return noEncontrado(res);
 
-  const datos = { id: actual.id, nombre: texto(req.body.nombre), categoria: req.body.categoria };
+  const { nombre, categoria, descripcion } = leerFormulario(req.body);
+  const datos = { id: actual.id, nombre, categoria, descripcion };
   const control = await guardar(res, datos, () =>
-    prisma.controlEns.update({ where: { id: actual.id }, data: { nombre: datos.nombre, categoria: datos.categoria } })
+    prisma.controlEns.update({ where: { id: actual.id }, data: { nombre, categoria, descripcion } })
   );
   if (!control) return;
   req.session.flash = { tipo: 'exito', mensaje: `Control "${control.nombre}" actualizado.` };

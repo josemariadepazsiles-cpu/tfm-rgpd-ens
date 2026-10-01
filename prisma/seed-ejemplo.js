@@ -11,6 +11,7 @@ const { prisma, MODELOS, ajustarSecuencias, contarTodo } = require('./utilidades
 const { calcularNivel } = require('../lib/riesgo');
 const { calcularFechaLimite } = require('../lib/derechos');
 const { generarDeclaracion, emitirDeclaracion } = require('../lib/declaraciones');
+const { rellenarDescripciones } = require('./descripciones-ens');
 
 if (!process.argv.includes('--confirmar')) {
   console.error('Este script BORRA los datos actuales. Ejecútalo con: npm run db:ejemplo -- --confirmar');
@@ -180,6 +181,7 @@ async function main() {
 
   // 3) Catálogo de medidas ENS (Anexo II)
   await prisma.controlEns.createMany({ data: MEDIDAS.map(([nombre, categoria]) => ({ nombre, categoria, created_at: hace(540) })) });
+  await rellenarDescripciones(prisma);
   const controles = await prisma.controlEns.findMany({ orderBy: { id: 'asc' } });
   const responsableMedida = (nombre) => {
     const c = codigo(nombre);
