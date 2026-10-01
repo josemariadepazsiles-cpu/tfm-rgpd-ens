@@ -26,6 +26,60 @@
     });
   });
 
+  // Secciones plegables (ver partials/plegable-abrir.ejs). Plegadas por defecto; las que el usuario
+  // despliega se recuerdan en localStorage (con try/catch: puede no estar disponible).
+  var CLAVE_PLEGABLES = 'compliance-ai:plegables-abiertos';
+  function leerPlegables() {
+    try { return JSON.parse(localStorage.getItem(CLAVE_PLEGABLES)) || {}; } catch (e) { return {}; }
+  }
+  function guardarPlegable(id, abierto) {
+    try {
+      var estado = leerPlegables();
+      if (abierto) estado[id] = true; else delete estado[id];
+      localStorage.setItem(CLAVE_PLEGABLES, JSON.stringify(estado));
+    } catch (e) { /* sin almacenamiento: el estado solo dura hasta recargar */ }
+  }
+  document.addEventListener('alpine:init', function () {
+    Alpine.data('plegable', function (id) {
+      return {
+        abierto: !!leerPlegables()[id] || location.hash === '#' + id,
+        listo: false,
+        init: function () {
+          var self = this;
+          // La animación se activa tras el primer pintado: al cargar no hay saltos ni animación
+          requestAnimationFrame(function () { requestAnimationFrame(function () { self.listo = true; }); });
+          if (location.hash === '#' + id) this.$nextTick(function () { self.$root.scrollIntoView({ block: 'start' }); });
+        },
+        alternar: function () {
+          if (this.abierto) this.cerrar(); else this.abrir(false);
+        },
+        abrir: function (desplazar) {
+          var raiz = this.$root;
+          this.abierto = true;
+          guardarPlegable(id, true);
+          // Gráficos que se dibujen con tamaño 0 estando ocultos: se recalculan al terminar de abrir
+          setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 240);
+          if (desplazar) this.$nextTick(function () { raiz.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+        },
+        cerrar: function () {
+          this.abierto = false;
+          guardarPlegable(id, false);
+        },
+      };
+    });
+  });
+  // Un enlace «#id» a una sección plegable la despliega y se desplaza hasta ella
+  document.addEventListener('click', function (e) {
+    var enlace = e.target.closest && e.target.closest('a[href^="#"]');
+    if (!enlace) return;
+    var id = enlace.getAttribute('href').slice(1);
+    var destino = id && document.getElementById(id);
+    if (!destino || !destino.classList.contains('plegable')) return;
+    e.preventDefault();
+    history.replaceState(null, '', '#' + id);
+    window.dispatchEvent(new CustomEvent('abrir-plegable', { detail: id }));
+  });
+
   // Tablas en móvil: copia el título de cada columna a sus celdas (data-label) para mostrar
   // cada fila como una ficha sin scroll horizontal (ver .tabla en input.css)
   document.addEventListener('DOMContentLoaded', function () {

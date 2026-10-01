@@ -1,0 +1,36 @@
+<%#
+  Sección plegable (componente reutilizable). Se usa en pareja con plegable-cerrar:
+    include('partials/plegable-abrir', { id, titulo, iconoBarra, contador?, area? })
+      … contenido del bloque …
+    include('partials/plegable-cerrar')
+  - Plegada por defecto; recuerda en el navegador las que el usuario ha desplegado (Alpine «plegable»,
+    definido en partials/head.ejs).
+  - La barra es un botón con aria-expanded / aria-controls (Enter y Espacio funcionan de serie).
+  - `area` ('rgpd' | 'ens' | 'neutro'): color de zona (filete izquierdo, icono y título). Sin área, neutra.
+  - Un enlace a «#<id>» en cualquier parte de la página despliega el bloque y se desplaza hasta él.
+%>
+<%
+  const pArea = typeof area !== 'undefined' && area ? area : null;
+  const pContador = typeof contador !== 'undefined' && contador !== null && contador !== '' ? contador : null;
+%>
+<section id="<%= id %>" data-area="<%= pArea || 'neutro' %>" x-data='plegable(<%- JSON.stringify(id) %>)'
+         @abrir-plegable.window="$event.detail === '<%= id %>' && abrir(true)"
+         class="plegable card scroll-mt-24 overflow-hidden <%= pArea ? 'plegable-area' : '' %>">
+  <h2>
+    <button type="button" id="<%= id %>-barra" class="plegable-barra" @click="alternar()"
+            aria-expanded="false" :aria-expanded="abierto ? 'true' : 'false'" aria-controls="<%= id %>-contenido">
+      <span class="flex min-w-0 items-center gap-3">
+        <span class="<%= pArea ? 'zona-icono' : 'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500' %>"><%- icono(iconoBarra, 'h-5 w-5') %></span>
+        <%# Título y contador pueden pasar a una segunda línea en pantallas estrechas %>
+        <span class="flex min-w-0 flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
+          <span class="text-base font-semibold tracking-tight sm:text-lg <%= pArea ? 'plegable-titulo-area' : 'text-slate-900' %>"><%= titulo %></span>
+          <% if (pContador !== null) { %><span class="text-sm font-normal text-slate-400 sm:text-base">(<%= pContador %>)</span><% } %>
+        </span>
+      </span>
+      <span class="plegable-chevron shrink-0 text-slate-400" :class="abierto && 'rotate-180'"><%- icono('chevron-down', 'h-5 w-5') %></span>
+    </button>
+  </h2>
+  <div id="<%= id %>-contenido" role="region" aria-labelledby="<%= id %>-barra" inert
+       class="plegable-cuerpo" :class="{ 'abierto': abierto, 'animado': listo }" :inert="!abierto">
+    <div class="plegable-interior">
+      <div class="plegable-relleno">

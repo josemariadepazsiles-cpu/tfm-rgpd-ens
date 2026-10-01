@@ -204,48 +204,53 @@
       </a>
     </section>
 
+    <%
+      // Contadores de las barras de los bloques plegables
+      const avisosRgpd = tarjetasRgpd.flatMap((t) => t.filas).filter((k) => k.valor > 0 && (k.nivel === 'critico' || k.nivel === 'atencion')).length;
+    %>
+
+    <%# Bloques plegables (partials/plegable-abrir.ejs): plegados por defecto, se despliegan uno a uno %>
+    <div class="space-y-4">
     <%# ================= 3. Acciones pendientes ================= %>
-    <section id="acciones" aria-labelledby="t-acciones" class="scroll-mt-24 space-y-3" x-data="{ todas: false }">
-      <div class="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 id="t-acciones" class="text-lg font-semibold tracking-tight text-slate-900">Acciones pendientes</h2>
-        <span class="flex items-center gap-1.5 text-xs text-slate-500"><%- icono('sparkles', 'h-3.5 w-3.5 text-violet-500') %>Ordenadas por urgencia a partir de tus datos</span>
-      </div>
-      <div class="card">
-        <% if (!acciones.length) { %>
-          <p class="px-5 py-6 text-sm text-slate-500">No hay acciones pendientes<%= esTodos ? '' : ' para este sistema' %>.</p>
-        <% } else { %>
-          <ul class="divide-y divide-slate-100">
-            <% acciones.forEach((a, i) => { const e = nivelEstilo[a.nivel]; %>
-              <li <%- i >= 6 ? 'x-show="todas" x-cloak' : '' %> class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-                <div class="flex min-w-0 items-start gap-3">
-                  <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg <%= a.nivel === 'critico' ? 'bg-red-50 text-red-600' : a.nivel === 'atencion' ? 'bg-amber-50 text-amber-600' : 'bg-slate-50 text-slate-500' %>"><%- icono(a.icono, 'h-4 w-4') %></span>
-                  <div class="min-w-0">
-                    <p class="flex flex-wrap items-center gap-2 text-sm font-medium text-slate-900">
-                      <% if (etiquetaArea[a.area]) { %><span class="etiqueta-area" data-area="<%= a.area %>"><%= etiquetaArea[a.area] %></span><% } %>
-                      <%- include('partials/ambito', { ambito: a.ambito }) %>
-                      <%= a.titulo %>
-                    </p>
-                    <p class="mt-0.5 text-[13px] text-slate-500"><%= a.motivo %></p>
+    <%- include('partials/plegable-abrir', { id: 'acciones', titulo: 'Acciones pendientes', iconoBarra: 'list-todo', contador: acciones.length }) %>
+      <div x-data="{ todas: false }" class="space-y-3">
+        <p class="flex items-center gap-1.5 text-xs text-slate-500"><%- icono('sparkles', 'h-3.5 w-3.5 text-violet-500') %>Ordenadas por urgencia a partir de tus datos</p>
+        <div class="card">
+          <% if (!acciones.length) { %>
+            <p class="px-5 py-6 text-sm text-slate-500">No hay acciones pendientes<%= esTodos ? '' : ' para este sistema' %>.</p>
+          <% } else { %>
+            <ul class="divide-y divide-slate-100">
+              <% acciones.forEach((a, i) => { const e = nivelEstilo[a.nivel]; %>
+                <li <%- i >= 6 ? 'x-show="todas" x-cloak' : '' %> class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                  <div class="flex min-w-0 items-start gap-3">
+                    <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg <%= a.nivel === 'critico' ? 'bg-red-50 text-red-600' : a.nivel === 'atencion' ? 'bg-amber-50 text-amber-600' : 'bg-slate-50 text-slate-500' %>"><%- icono(a.icono, 'h-4 w-4') %></span>
+                    <div class="min-w-0">
+                      <p class="flex flex-wrap items-center gap-2 text-sm font-medium text-slate-900">
+                        <% if (etiquetaArea[a.area]) { %><span class="etiqueta-area" data-area="<%= a.area %>"><%= etiquetaArea[a.area] %></span><% } %>
+                        <%- include('partials/ambito', { ambito: a.ambito }) %>
+                        <%= a.titulo %>
+                      </p>
+                      <p class="mt-0.5 text-[13px] text-slate-500"><%= a.motivo %></p>
+                    </div>
                   </div>
-                </div>
-                <div class="flex shrink-0 items-center gap-3 pl-11 sm:pl-0">
-                  <span class="flex items-center gap-1 text-xs font-medium <%= e.texto %>"><%- icono(nivelIcono[a.nivel], 'h-3.5 w-3.5') %><%= e.etiqueta %></span>
-                  <a href="<%= a.href %>" class="btn btn-secondary btn-sm"><%= a.accion %><%- icono('arrow-right', 'h-3.5 w-3.5') %></a>
-                </div>
-              </li>
-            <% }) %>
-          </ul>
-          <% if (acciones.length > 6) { %>
-            <button type="button" class="w-full border-t border-slate-100 px-5 py-2.5 text-sm font-medium text-indigo-600 hover:bg-slate-50" @click="todas = !todas"
-                    x-text="todas ? 'Ver menos' : 'Ver las <%= acciones.length %> acciones'">Ver las <%= acciones.length %> acciones</button>
+                  <div class="flex shrink-0 items-center gap-3 pl-11 sm:pl-0">
+                    <span class="flex items-center gap-1 text-xs font-medium <%= e.texto %>"><%- icono(nivelIcono[a.nivel], 'h-3.5 w-3.5') %><%= e.etiqueta %></span>
+                    <a href="<%= a.href %>" class="btn btn-secondary btn-sm"><%= a.accion %><%- icono('arrow-right', 'h-3.5 w-3.5') %></a>
+                  </div>
+                </li>
+              <% }) %>
+            </ul>
+            <% if (acciones.length > 6) { %>
+              <button type="button" class="w-full border-t border-slate-100 px-5 py-2.5 text-sm font-medium text-indigo-600 hover:bg-slate-50" @click="todas = !todas"
+                      x-text="todas ? 'Ver menos' : 'Ver las <%= acciones.length %> acciones'">Ver las <%= acciones.length %> acciones</button>
+            <% } %>
           <% } %>
-        <% } %>
+        </div>
       </div>
-    </section>
+    <%- include('partials/plegable-cerrar') %>
 
     <%# ================= 4. Zona RGPD ================= %>
-    <section data-area="rgpd" aria-labelledby="t-rgpd" class="zona">
-      <h2 id="t-rgpd" class="zona-titulo"><span class="zona-icono"><%- icono('scale', 'h-5 w-5') %></span>RGPD · Protección de datos</h2>
+    <%- include('partials/plegable-abrir', { id: 'zona-rgpd', titulo: 'RGPD · Protección de datos', iconoBarra: 'scale', area: 'rgpd', contador: avisosRgpd ? plural(avisosRgpd, 'aviso', 'avisos') : 'sin avisos' }) %>
       <div class="grid gap-4 md:grid-cols-2">
         <% tarjetasRgpd.forEach((t) => { %>
           <div class="card p-5">
@@ -264,11 +269,10 @@
           transversales no asignados a ningún sistema.
         </p>
       <% } %>
-    </section>
+    <%- include('partials/plegable-cerrar') %>
 
     <%# ================= 5. Zona ENS ================= %>
-    <section id="zona-ens" data-area="ens" aria-labelledby="t-ens" class="zona scroll-mt-24">
-      <h2 id="t-ens" class="zona-titulo"><span class="zona-icono"><%- icono('shield-check', 'h-5 w-5') %></span>ENS · Esquema Nacional de Seguridad</h2>
+    <%- include('partials/plegable-abrir', { id: 'zona-ens', titulo: 'ENS · Esquema Nacional de Seguridad', iconoBarra: 'shield-check', area: 'ens', contador: pctEns === null || pctEns === undefined ? 'sin evaluar' : pctEns + ' %' }) %>
       <div class="grid gap-4 lg:grid-cols-3">
         <div class="card flex flex-col p-5">
           <div class="flex items-start justify-between gap-3">
@@ -323,15 +327,14 @@
           <div class="mt-2 divide-y divide-slate-100"><% filasPol.forEach((k) => { %><%- include('partials/metrica', { k }) %><% }) %></div>
         </div>
       </div>
-    </section>
+    <%- include('partials/plegable-cerrar') %>
 
     <%# ================= 6. Zona Continuidad (BIA) ================= %>
-    <section data-area="ens" aria-labelledby="t-bia" class="zona">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <h2 id="t-bia" class="zona-titulo"><span class="zona-icono"><%- icono('life-buoy', 'h-5 w-5') %></span>Continuidad del negocio (BIA)</h2>
-        <a href="<%= enlace('/bia') %>" class="zona-enlace">Ver módulo<%- icono('arrow-right', 'h-3.5 w-3.5') %></a>
-      </div>
+    <%- include('partials/plegable-abrir', { id: 'zona-bia', titulo: 'Continuidad del negocio (BIA)', iconoBarra: 'life-buoy', area: 'ens', contador: plural(b.procesos, 'proceso', 'procesos') }) %>
       <div class="card p-5">
+        <div class="mb-1 flex justify-end">
+          <a href="<%= enlace('/bia') %>" class="zona-enlace">Ver módulo<%- icono('arrow-right', 'h-3.5 w-3.5') %></a>
+        </div>
         <% if (!b.procesos) { %>
           <div class="flex flex-col items-center gap-3 py-6 text-center">
             <span class="zona-icono"><%- icono('life-buoy', 'h-5 w-5') %></span>
@@ -358,11 +361,10 @@
           <% } %>
         <% } %>
       </div>
-    </section>
+    <%- include('partials/plegable-cerrar') %>
 
     <%# ================= 7. Zona Riesgos e incidencias (transversal) ================= %>
-    <section data-area="neutro" aria-labelledby="t-riesgos" class="zona">
-      <h2 id="t-riesgos" class="zona-titulo"><span class="zona-icono"><%- icono('activity', 'h-5 w-5') %></span>Riesgos e incidencias</h2>
+    <%- include('partials/plegable-abrir', { id: 'zona-riesgos', titulo: 'Riesgos e incidencias', iconoBarra: 'activity', area: 'neutro', contador: plural(act.riesgos, 'riesgo', 'riesgos') + ' · ' + plural(incAbiertos, 'incidente abierto', 'incidentes abiertos') }) %>
       <div class="grid gap-4 lg:grid-cols-2">
         <a href="<%= enlace('/riesgos') %>" class="card group flex flex-col p-5 transition hover:border-slate-300">
           <div class="flex items-start justify-between gap-3">
@@ -413,11 +415,10 @@
         </a>
       </div>
       <% if (!esTodos) { %><p class="text-xs text-slate-500">Riesgos e incidentes asociados a «<%= v.nombre %>».</p><% } %>
-    </section>
+    <%- include('partials/plegable-cerrar') %>
 
     <%# ================= 8. Actividad reciente ================= %>
-    <section aria-labelledby="t-actividad" class="space-y-3">
-      <h2 id="t-actividad" class="text-lg font-semibold tracking-tight text-slate-900">Actividad reciente</h2>
+    <%- include('partials/plegable-abrir', { id: 'actividad', titulo: 'Actividad reciente', iconoBarra: 'history', contador: Math.min(actividad.length, 5) }) %>
       <div class="card p-5">
         <% if (actividad.length === 0) { %>
           <p class="text-sm text-slate-500">Todavía no hay actividad registrada.</p>
@@ -446,7 +447,8 @@
           </ol>
         <% } %>
       </div>
-    </section>
+    <%- include('partials/plegable-cerrar') %>
+    </div>
   </main>
 </body>
 </html>
