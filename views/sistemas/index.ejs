@@ -81,9 +81,7 @@
                     <% if (s.ultima) { %>
                       <a href="/evaluaciones/<%= s.ultima.id %>" class="<%= iconoBtn %>" title="Checklist de la última evaluación" aria-label="Checklist de la última evaluación de <%= s.nombre %>"><%- icono('list-checks', 'h-4 w-4') %></a>
                     <% } %>
-                    <a href="/sistemas/<%= s.id %>#ens" class="<%= iconoBtn %>" title="Evaluaciones" aria-label="Evaluaciones de <%= s.nombre %>"><%- icono('layers', 'h-4 w-4') %></a>
-                    <a href="/sistemas/<%= s.id %>/historial" class="<%= iconoBtn %>" title="Histórico" aria-label="Histórico de <%= s.nombre %>"><%- icono('history', 'h-4 w-4') %></a>
-                  </span>
+                    <a href="/sistemas/<%= s.id %>#ens" class="<%= iconoBtn %>" title="Evaluaciones" aria-label="Evaluaciones de <%= s.nombre %>"><%- icono('layers', 'h-4 w-4') %></a>                  </span>
                 </td>
               </tr>
             <% }) %>
