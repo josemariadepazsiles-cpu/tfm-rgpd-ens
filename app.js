@@ -21,6 +21,8 @@ const proveedorRoutes = require('./routes/proveedores');
 const declaracionRoutes = require('./routes/declaraciones');
 const politicaRoutes = require('./routes/politicas');
 const biaRoutes = require('./routes/bia');
+const empresaRoutes = require('./routes/empresa');
+const { obtenerOrganizacion } = require('./lib/organizacion');
 const { CRITICIDAD_CLASES, ESTADO_REVISION_CLASES, RESULTADO_CLASES, ALERTA_BIA_CLASES } = require('./lib/bia');
 const { ESTADO_POLITICA_CLASES, REVISION_CLASES } = require('./lib/politicas');
 const { icono } = require('./lib/iconos');
@@ -127,6 +129,16 @@ app.use((req, res, next) => {
   next();
 });
 
+// Datos de la empresa para la cabecera de todas las pantallas (en caché, ver lib/organizacion.js)
+app.use((req, res, next) => {
+  obtenerOrganizacion()
+    .then((organizacion) => {
+      res.locals.organizacion = organizacion;
+      next();
+    })
+    .catch(next);
+});
+
 // Rutas
 app.use('/', indexRoutes);
 app.use('/', authRoutes);
@@ -142,6 +154,7 @@ app.use('/proveedores', proveedorRoutes);
 app.use('/declaraciones', declaracionRoutes);
 app.use('/politicas', politicaRoutes);
 app.use('/bia', biaRoutes);
+app.use('/empresa', empresaRoutes);
 // El checklist global se sustituyó por evaluaciones por sistema
 app.get('/checklist', (req, res) => res.redirect(301, '/sistemas'));
 

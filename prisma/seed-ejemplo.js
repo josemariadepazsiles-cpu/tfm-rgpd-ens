@@ -1,4 +1,4 @@
-// Datos de ejemplo: «Laboratorios Farmacéuticos Ibéricos, S.A.» (empresa FICTICIA).
+// Datos de ejemplo: «Laboratorios Farmacéuticos Reunidos» (empresa FICTICIA).
 // BORRA todos los datos (salvo las cuentas de usuario ya existentes) y carga un ejemplo
 // coherente de cumplimiento RGPD + ENS con fechas de los últimos 12-18 meses.
 // Todos los datos personales son inventados; los correos usan el dominio reservado .example.
@@ -37,15 +37,23 @@ const azar = () => {
   t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
   return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
 };
-const DOMINIO = 'labfarmaiberica.example';
+const DOMINIO = 'labfarmareunidos.example';
+// Dominios de cargas de ejemplo anteriores (sus usuarios se borran al recargar)
+const DOMINIOS_ANTERIORES = ['labfarmaiberica.example'];
 
 // ---------------------------------------------------------------------------
-// Empresa (no hay entidad «Organización»: estos datos se recogen en las políticas)
+// Empresa: ficha de la organización (tabla organizacion) y pie de las políticas
 // ---------------------------------------------------------------------------
 const EMPRESA = {
-  nombre: 'Laboratorios Farmacéuticos Ibéricos, S.A.',
-  cif: 'A87654321 (ficticio)',
-  direccion: 'Avenida de la Innovación 14, Parque Tecnológico, 28760 Tres Cantos (Madrid)',
+  nombre: 'Laboratorios Farmacéuticos Reunidos',
+  cif: 'A87654321',
+  sector: 'Industria farmacéutica',
+  direccion: 'Avenida de la Innovación 14, Parque Tecnológico',
+  codigo_postal: '28760',
+  localidad: 'Tres Cantos',
+  provincia: 'Madrid',
+  telefono: '910 000 000',
+  web: 'https://www.labfarmareunidos.example',
 };
 
 const USUARIOS = {
@@ -125,33 +133,18 @@ const codigo = (nombre) => nombre.split(' ')[0];
 // Sistemas de información (activos), por departamento
 // ---------------------------------------------------------------------------
 const SISTEMAS = [
-  { clave: 'lims', nombre: 'LIMS · Gestión de laboratorio', tipo: 'Aplicación de laboratorio (GxP)', categoria: 'ALTA', depto: 'Área de laboratorio',
-    niveles: 'C: Alta · I: Alta · T: Media · A: Media · D: Media', desc: 'Sistema de gestión de información de laboratorio: muestras, análisis de control de calidad, liberación de lotes y datos de ensayos clínicos. Validado según GMP Anexo 11.',
-    evaluaciones: [0.55, 0.78], noAplica: ['op.nub.1', 'mp.s.2'] },
-  { clave: 'repositorio', nombre: 'Repositorio de resultados analíticos', tipo: 'Gestión documental (GxP)', categoria: 'MEDIA', depto: 'Área de laboratorio',
-    niveles: 'C: Media · I: Alta · T: Media · A: Media · D: Baja', desc: 'Archivo electrónico de certificados de análisis, cromatogramas y registros de lote, con firma electrónica y audit trail.',
-    evaluaciones: [0.5, 0.66], noAplica: ['mp.s.2'] },
-  { clave: 'equipos', nombre: 'Equipos de análisis de laboratorio', tipo: 'Equipamiento analítico conectado', categoria: 'MEDIA', depto: 'Área de laboratorio',
-    niveles: 'C: Baja · I: Alta · T: Media · A: Baja · D: Media', desc: 'Cromatógrafos HPLC, espectrómetros y balanzas conectados a la red de laboratorio, con estaciones de control dedicadas.',
-    evaluaciones: [0.38], noAplica: ['op.nub.1', 'mp.s.2', 'op.acc.5'] },
-  { clave: 'ad', nombre: 'Directorio activo corporativo', tipo: 'Infraestructura de identidad', categoria: 'MEDIA', depto: 'Área de informática',
-    niveles: 'C: Media · I: Media · T: Media · A: Alta · D: Media', desc: 'Active Directory con SSO y MFA para todos los empleados; gestión centralizada de cuentas y grupos.',
-    evaluaciones: [0.72, 0.9], noAplica: ['mp.s.2'] },
-  { clave: 'cpd', nombre: 'Infraestructura de servidores y red (CPD)', tipo: 'Infraestructura', categoria: 'MEDIA', depto: 'Área de informática',
-    niveles: 'C: Media · I: Media · T: Media · A: Media · D: Alta', desc: 'Servidores virtualizados, almacenamiento, red corporativa y cortafuegos del CPD de Tres Cantos.',
-    evaluaciones: [0.7, 0.86], noAplica: [] },
-  { clave: 'copias', nombre: 'Sistema de copias de seguridad', tipo: 'Infraestructura', categoria: 'MEDIA', depto: 'Área de informática',
-    niveles: 'C: Media · I: Media · T: Baja · A: Baja · D: Alta', desc: 'Copias diarias locales e inmutables y réplica externa en la nube de un proveedor (regla 3-2-1).',
-    evaluaciones: [0.92], noAplica: ['mp.s.2', 'op.acc.5'] },
-  { clave: 'video', nombre: 'Videovigilancia del CPD', tipo: 'Seguridad física', categoria: 'BAJA', depto: 'Área de informática',
-    niveles: 'C: Media · I: Baja · T: Baja · A: Baja · D: Baja', desc: 'Cámaras del CPD y de la sala de comunicaciones con grabación local cifrada (conservación 30 días).',
-    evaluaciones: [0.68], noAplica: ['op.nub.1', 'mp.s.2', 'op.cont.2', 'op.cont.3', 'op.acc.5'] },
-  { clave: 'erp', nombre: 'ERP corporativo (finanzas y RR. HH.)', tipo: 'Aplicación de gestión', categoria: 'MEDIA', depto: 'Área financiera',
-    niveles: 'C: Media · I: Alta · T: Media · A: Media · D: Media', desc: 'ERP de contabilidad, compras, facturación, tesorería y nóminas, con módulo de portal del empleado.',
-    evaluaciones: [0.48, 0.62], noAplica: [] },
-  { clave: 'banca', nombre: 'Banca electrónica y pagos', tipo: 'Servicio externo', categoria: 'MEDIA', depto: 'Área financiera',
-    niveles: 'C: Media · I: Alta · T: Alta · A: Alta · D: Media', desc: 'Acceso a la banca electrónica de las entidades financieras para remesas de pago, cobros SEPA y conciliación.',
-    evaluaciones: [], noAplica: [] },
+  { clave: 'lab', nombre: 'Área de laboratorio', tipo: 'Sistemas de laboratorio (GxP)', categoria: 'ALTA', depto: 'Área de laboratorio',
+    niveles: 'C: Alta · I: Alta · T: Media · A: Media · D: Media',
+    desc: 'Activos: LIMS (gestión de muestras, control de calidad y liberación de lotes; validado según GMP Anexo 11), repositorio de resultados analíticos con firma electrónica y audit trail, y equipos de análisis conectados (cromatógrafos HPLC, espectrómetros, balanzas). Incluye los datos de ensayos clínicos y de farmacovigilancia.',
+    evaluaciones: [0.4, 0.6], noAplica: ['op.nub.1', 'mp.s.2'] },
+  { clave: 'info', nombre: 'Área de informática', tipo: 'Infraestructura TIC corporativa', categoria: 'MEDIA', depto: 'Área de informática',
+    niveles: 'C: Media · I: Media · T: Media · A: Alta · D: Alta',
+    desc: 'Activos: Directorio activo con SSO y MFA, servidores virtualizados y red del CPD de Tres Cantos, sistema de copias de seguridad (3-2-1 con réplica externa inmutable) y videovigilancia del CPD.',
+    evaluaciones: [0.68, 0.88], noAplica: [] },
+  { clave: 'fin', nombre: 'Área financiera', tipo: 'Aplicaciones de gestión', categoria: 'MEDIA', depto: 'Área financiera',
+    niveles: 'C: Media · I: Alta · T: Alta · A: Alta · D: Media',
+    desc: 'Activos: ERP corporativo (contabilidad, compras, facturación, tesorería y nóminas, con portal del empleado) y banca electrónica para remesas de pago, cobros SEPA y conciliación.',
+    evaluaciones: [0.3, 0.45], noAplica: ['op.nub.1'] },
 ];
 
 // ---------------------------------------------------------------------------
@@ -159,7 +152,7 @@ async function main() {
   // 1) Vaciar datos conservando las cuentas de usuario existentes (salvo las de ejemplo anteriores)
   const tablas = MODELOS.filter(([m]) => m !== 'usuario').map(([, t]) => `"${t}"`).join(', ');
   await prisma.$executeRawUnsafe(`TRUNCATE TABLE ${tablas} RESTART IDENTITY CASCADE`);
-  await prisma.usuario.deleteMany({ where: { email: { endsWith: '@' + DOMINIO } } });
+  for (const d of [DOMINIO, ...DOMINIOS_ANTERIORES]) await prisma.usuario.deleteMany({ where: { email: { endsWith: '@' + d } } });
 
   // 2) Usuarios: administrador de acceso garantizado + plantilla ficticia de la empresa
   const hashAdmin = await bcrypt.hash('admin1234', 12);
@@ -176,6 +169,14 @@ async function main() {
     u[clave] = await prisma.usuario.create({ data: { nombre: d.nombre, email, password_hash: hash, rol: d.rol, area: d.area } });
   }
   const todosUsuarios = await prisma.usuario.findMany();
+
+  await prisma.organizacion.create({
+    data: {
+      ...EMPRESA, email: 'info@' + DOMINIO, categoria_ens: 'MEDIA',
+      dpd_nombre: USUARIOS.dpd.nombre, dpd_email: 'dpd@' + DOMINIO,
+      responsable_informacion: USUARIOS.direccion.nombre, responsable_seguridad: USUARIOS.seguridad.nombre, responsable_sistema: USUARIOS.sistemas.nombre,
+    },
+  });
 
   // 3) Catálogo de medidas ENS (Anexo II)
   await prisma.controlEns.createMany({ data: MEDIDAS.map(([nombre, categoria]) => ({ nombre, categoria, created_at: hace(540) })) });
@@ -238,6 +239,12 @@ async function main() {
       (evaluaciones[s.clave] = evaluaciones[s.clave] || []).push(ev);
     }
   }
+  // Cada activo pertenece al sistema de su departamento
+  Object.assign(sis, {
+    lims: sis.lab, repositorio: sis.lab, equipos: sis.lab,
+    ad: sis.info, cpd: sis.info, copias: sis.info, video: sis.info,
+    erp: sis.fin, banca: sis.fin,
+  });
 
   // 5) Declaraciones de conformidad (con la lógica de la aplicación) y fechas realistas
   // `deLaInicial`: generarla desde la primera evaluación del sistema (declaración antigua)
@@ -250,13 +257,12 @@ async function main() {
       data: { fecha_generacion: hace(diasGen), ...(emitir && { fecha_emision: hace(diasEmision) }), observaciones: emitir ? 'Revisada por el Comité de Seguridad de la Información.' : 'Pendiente de cerrar las medidas de continuidad antes de emitir.' },
     });
   };
-  await declarar('ad', true, 30, 25);
-  await declarar('cpd', true, 410, 400, true); // emitida hace más de 12 meses: hay que renovarla
-  await declarar('copias', true, 100, 95);
-  await declarar('lims', false, 12);
+  await declarar('info', true, 30, 25);
+  await declarar('fin', true, 395, 390, true); // emitida hace más de 12 meses: hay que renovarla
+  await declarar('lab', false, 12);
 
   // 6) Políticas y documentación (los datos de la empresa van en su descripción)
-  const pie = `${EMPRESA.nombre} · CIF ${EMPRESA.cif} · ${EMPRESA.direccion}. Responsable de la Información: ${USUARIOS.direccion.nombre}. Responsable de Seguridad: ${USUARIOS.seguridad.nombre}. Responsable del Sistema: ${USUARIOS.sistemas.nombre}. DPD: ${USUARIOS.dpd.nombre} (dpd@${DOMINIO}).`;
+  const pie = `${EMPRESA.nombre} · CIF ${EMPRESA.cif} · ${EMPRESA.direccion}, ${EMPRESA.codigo_postal} ${EMPRESA.localidad} (${EMPRESA.provincia}). Responsable de la Información: ${USUARIOS.direccion.nombre}. Responsable de Seguridad: ${USUARIOS.seguridad.nombre}. Responsable del Sistema: ${USUARIOS.sistemas.nombre}. DPD: ${USUARIOS.dpd.nombre} (dpd@${DOMINIO}).`;
   const POLITICAS = [
     { titulo: 'Política de Seguridad de la Información', tipo: 'POLITICA', version: '2.0', estado: 'APROBADA', aprob: 300, rev: 65, acepta: true,
       desc: `Marco de seguridad conforme al ENS (RD 311/2022, art. 12). Categoría global de la organización: MEDIA. Define roles, comité de seguridad y estructura normativa. ${pie}` },

@@ -685,3 +685,28 @@ model PruebaContinuidad {
   @@index([proceso_id, fecha_prueba])
   @@map("pruebas_continuidad")
 }
+
+// Datos de la organización (una sola fila): se muestran en la cabecera de todas las pantallas
+model Organizacion {
+  id                      Int           @id @default(autoincrement())
+  nombre                  String
+  cif                     String?
+  sector                  String?
+  direccion               String?
+  codigo_postal           String?
+  localidad               String?
+  provincia               String?
+  telefono                String?
+  email                   String?
+  web                     String?
+  // Categoría ENS global de la organización
+  categoria_ens           CategoriaEns?
+  dpd_nombre              String?
+  dpd_email               String?
+  responsable_informacion String?
+  responsable_seguridad   String?
+  responsable_sistema     String?
+  updated_at              DateTime      @updatedAt
+
+  @@map("organizacion")
+}

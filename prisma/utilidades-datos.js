@@ -5,6 +5,7 @@ const prisma = require('../lib/prisma');
 // Modelos en orden de dependencia (primero los que no dependen de otros), con su tabla real.
 // Restaurar en este orden respeta las claves foráneas; vaciar se hace con TRUNCATE ... CASCADE.
 const MODELOS = [
+  ['organizacion', 'organizacion'],
   ['usuario', 'usuarios'],
   ['sistema', 'sistemas'],
   ['controlEns', 'controles_ens'],

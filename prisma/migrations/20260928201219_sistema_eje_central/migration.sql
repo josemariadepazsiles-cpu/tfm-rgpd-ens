@@ -1,8 +1,3 @@
--- El sistema pasa a ser el eje de RGPD y ENS: RAT, riesgos, incidentes y solicitudes de
--- derechos pueden asociarse a un sistema. La columna es opcional y los registros existentes
--- quedan con sistema_id = NULL (transversales a toda la organización), sin forzar un sistema.
--- Al borrar un sistema, sus registros vuelven a quedar como transversales (ON DELETE SET NULL).
-
 -- AlterTable
 ALTER TABLE "actividades_rat" ADD COLUMN     "sistema_id" INTEGER;
 

@@ -36,6 +36,8 @@
 
   // Área de la pantalla actual (lib/areas.js): colorea el filete de la cabecera y la sección activa
   const areaActual = typeof areaNormativa !== 'undefined' ? areaNormativa : 'neutro';
+  // Empresa (lib/organizacion.js): su nombre se ve en la cabecera de todas las pantallas
+  const empresaCabecera = typeof organizacion !== 'undefined' && organizacion ? organizacion : null;
 
   // Inicio y Sistemas son neutros; RGPD y ENS usan su color de área (clases *-area en input.css)
   const claseBoton = (marcado) =>
@@ -72,7 +74,12 @@
         <%- include('logo', { tamano: 'h-8 w-8' }) %>
         <span class="leading-tight">
           <span class="block text-[15px] font-semibold tracking-tight text-slate-900"><%= producto.nombre %></span>
-          <span class="block text-[11px] font-medium tracking-wide text-slate-500">RGPD · ENS</span>
+          <% if (empresaCabecera) { %>
+            <span class="block max-w-[11rem] truncate text-[11px] font-medium text-slate-500 lg:hidden"><%= empresaCabecera.nombre %></span>
+            <span class="hidden text-[11px] font-medium tracking-wide text-slate-500 lg:block">RGPD · ENS</span>
+          <% } else { %>
+            <span class="block text-[11px] font-medium tracking-wide text-slate-500">RGPD · ENS</span>
+          <% } %>
         </span>
       </a>
 
@@ -114,6 +121,21 @@
       </div>
     </div>
 
+    <div class="flex items-center gap-3">
+    <%# Escritorio: empresa (enlace a sus datos) %>
+    <% if (empresaCabecera) { %>
+      <a href="/empresa" title="<%= empresaCabecera.nombre %> · Datos de la empresa"
+         class="hidden max-w-[17rem] items-center gap-2 rounded-lg border border-slate-200/80 bg-slate-50/70 px-3 py-1.5 transition hover:border-slate-300 hover:bg-white lg:flex <%= activo('/empresa') ? 'border-slate-300 bg-white' : '' %>">
+        <%- icono('building-2', 'h-4 w-4 shrink-0 text-slate-400') %>
+        <span class="min-w-0 leading-tight">
+          <span class="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">Organización</span>
+          <span class="block truncate text-xs font-semibold text-slate-700"><%= empresaCabecera.nombre %></span>
+        </span>
+      </a>
+    <% } else if (esAdmin) { %>
+      <a href="/empresa" class="hidden items-center gap-1.5 rounded-lg border border-dashed border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-50 lg:flex"><%- icono('building-2', 'h-4 w-4') %>Configurar empresa</a>
+    <% } %>
+
     <%# Escritorio: desplegable de usuario %>
     <div class="relative hidden md:block" @click.outside="menu === 'usuario' && cerrar(false)">
       <button type="button" x-ref="btn-usuario" @click="alternar('usuario')"
@@ -136,6 +158,9 @@
           <span class="badge mt-2 bg-marca-50 text-indigo-700 ring-indigo-600/15"><%- icono(esAdmin ? 'shield-check' : 'user-round', 'h-3 w-3') %><%= roles[user.rol] %></span>
         </div>
         <div class="my-1 border-t border-slate-100"></div>
+        <a href="/empresa" class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm <%= activo('/empresa') ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:bg-slate-50' %>" <%- activo('/empresa') ? 'aria-current="page"' : '' %>>
+          <%- icono('building-2', 'h-4 w-4 text-slate-500') %>Datos de la empresa
+        </a>
         <% if (esAdmin) { %>
           <a href="/registro" class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm <%= activo('/registro') ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:bg-slate-50' %>" <%- activo('/registro') ? 'aria-current="page"' : '' %>>
             <%- icono('user-plus', 'h-4 w-4 text-slate-500') %>Registrar usuario
@@ -147,6 +172,7 @@
           </button>
         </form>
       </div>
+    </div>
     </div>
 
     <%# Móvil: botón hamburguesa %>
@@ -182,6 +208,7 @@
         </span>
       </div>
       <div class="mt-2 space-y-0.5">
+        <a href="/empresa" class="<%= claseMovil(activo('/empresa')) %>" <%- activo('/empresa') ? 'aria-current="page"' : '' %>><%- icono('building-2', 'h-4 w-4 text-slate-500') %>Datos de la empresa</a>
         <% if (esAdmin) { %>
           <a href="/registro" class="<%= claseMovil(activo('/registro')) %>" <%- activo('/registro') ? 'aria-current="page"' : '' %>><%- icono('user-plus', 'h-4 w-4 text-slate-500') %>Registrar usuario</a>
         <% } %>

@@ -1,0 +1,112 @@
+<%
+  const e = empresa;
+  const esAdminUsuario = user.rol === 'ADMIN';
+  const campo = (etiqueta, valor, vacio, completo) => ({ etiqueta, valor, vacio, completo });
+  const direccionCompleta = [e.direccion, [e.codigo_postal, e.localidad].filter(Boolean).join(' '), e.provincia ? '(' + e.provincia + ')' : ''].filter(Boolean).join(', ');
+  const secciones = [
+    { titulo: 'Identificación', icono: 'building-2', campos: [
+      campo('Nombre o razón social', e.nombre, 'Sin definir', true),
+      campo('CIF', e.cif, 'No indicado'),
+      campo('Sector de actividad', e.sector, 'No indicado'),
+      campo('Categoría ENS de la organización', e.categoria_ens ? categorias[e.categoria_ens] : null, 'Sin definir'),
+    ] },
+    { titulo: 'Dirección y contacto', icono: 'map-pin', campos: [
+      campo('Dirección', direccionCompleta, 'No indicada', true),
+      campo('Teléfono', e.telefono, 'No indicado'),
+      campo('Email de contacto', e.email, 'No indicado'),
+      campo('Sitio web', e.web, 'No indicado'),
+    ] },
+    { titulo: 'Roles de cumplimiento', icono: 'user-check', campos: [
+      campo('Delegado de Protección de Datos (DPD)', e.dpd_nombre ? e.dpd_nombre + (e.dpd_email ? ' · ' + e.dpd_email : '') : null, 'Sin designar', true),
+      campo('Responsable de la Información', e.responsable_informacion, 'Sin designar'),
+      campo('Responsable de Seguridad', e.responsable_seguridad, 'Sin designar'),
+      campo('Responsable del Sistema', e.responsable_sistema, 'Sin designar'),
+    ] },
+  ];
+  const valor = (c) => (e[c] === null || e[c] === undefined ? '' : e[c]);
+  const input = (c, extra = {}) => ({ c, etiqueta: campos[c], ...extra });
+  const bloques = [
+    { titulo: 'Identificación', icono: 'building-2', filas: [
+      [input('nombre', { requerido: true, completo: true, placeholder: 'Ej.: Laboratorios Farmacéuticos Reunidos, S.A.' })],
+      [input('cif', { placeholder: 'A12345678' }), input('sector', { placeholder: 'Ej.: Industria farmacéutica' })],
+    ], categoria: true },
+    { titulo: 'Dirección y contacto', icono: 'map-pin', filas: [
+      [input('direccion', { completo: true })],
+      [input('codigo_postal', { placeholder: '28760', patron: '\\d{5}' }), input('localidad')],
+      [input('provincia'), input('telefono', { tipo: 'tel' })],
+      [input('email', { tipo: 'email' }), input('web', { placeholder: 'https://' })],
+    ] },
+    { titulo: 'Roles de cumplimiento', icono: 'user-check', filas: [
+      [input('dpd_nombre'), input('dpd_email', { tipo: 'email' })],
+      [input('responsable_informacion'), input('responsable_seguridad')],
+      [input('responsable_sistema')],
+    ] },
+  ];
+%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body class="min-h-screen bg-fondo">
+  <%- include('../partials/nav') %>
+
+  <main data-area="<%= areaNormativa %>" class="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+    <%- include('../partials/migas', { migas: [{ texto: 'Datos de la empresa' }] }) %>
+    <%- include('../partials/flash') %>
+
+    <div>
+      <p class="eyebrow">Organización</p>
+      <h1 class="mt-1 titulo-pagina">Datos de la empresa</h1>
+      <p class="subtitulo-pagina">Identificación de la organización responsable del tratamiento y titular de los sistemas. El nombre aparece en la cabecera de todas las pantallas.</p>
+    </div>
+
+    <% if (errores.length) { %>
+      <ul class="mt-6 list-inside list-disc space-y-0.5 rounded-xl border border-red-200 bg-red-50/60 px-4 py-3 text-sm text-red-800" role="alert">
+        <% errores.forEach((m) => { %><li><%= m %></li><% }) %>
+      </ul>
+    <% } %>
+
+    <% if (esAdminUsuario) { %>
+      <form action="/empresa" method="POST" class="mt-6 space-y-6">
+        <% bloques.forEach((b) => { %>
+          <fieldset class="card space-y-4 p-6">
+            <legend class="float-left mb-4 flex w-full items-center gap-2 text-base font-semibold text-slate-900"><%- icono(b.icono, 'h-4 w-4 text-slate-400') %><%= b.titulo %></legend>
+            <% b.filas.forEach((fila, i) => { %>
+              <div class="<%= i === 0 ? 'clear-both ' : '' %>grid gap-4 <%= fila.length > 1 ? 'sm:grid-cols-2' : '' %>">
+                <% fila.forEach((f) => { %>
+                  <div>
+                    <label for="<%= f.c %>" class="label"><%= f.etiqueta %><% if (!f.requerido) { %> <span class="font-normal text-slate-400">(opcional)</span><% } %></label>
+                    <input id="<%= f.c %>" name="<%= f.c %>" type="<%= f.tipo || 'text' %>" value="<%= valor(f.c) %>" class="input" maxlength="150"
+                           <%= f.requerido ? 'required' : '' %> <%- f.placeholder ? 'placeholder="' + f.placeholder + '"' : '' %> <%- f.patron ? 'pattern="' + f.patron + '"' : '' %>>
+                  </div>
+                <% }) %>
+              </div>
+            <% }) %>
+            <% if (b.categoria) { %>
+              <div>
+                <label for="categoria_ens" class="label">Categoría ENS de la organización <span class="font-normal text-slate-400">(opcional)</span></label>
+                <select id="categoria_ens" name="categoria_ens" class="input sm:w-64">
+                  <option value="">Sin definir</option>
+                  <% Object.entries(categorias).forEach(([v, etiqueta]) => { %>
+                    <option value="<%= v %>" <%= e.categoria_ens === v ? 'selected' : '' %>><%= etiqueta %></option>
+                  <% }) %>
+                </select>
+                <p class="ayuda">Categoría global según el RD 311/2022. Cada sistema tiene además la suya en su ficha.</p>
+              </div>
+            <% } %>
+          </fieldset>
+        <% }) %>
+        <div class="flex justify-end">
+          <button type="submit" class="btn btn-primary"><%- icono('check', 'h-4 w-4') %>Guardar datos</button>
+        </div>
+      </form>
+    <% } else { %>
+      <div class="mt-6 space-y-6">
+        <% secciones.forEach((s) => { %><%- include('../partials/ficha-seccion', { s }) %><% }) %>
+        <p class="text-xs text-slate-500">Solo un administrador puede modificar estos datos.</p>
+      </div>
+    <% } %>
+  </main>
+</body>
+</html>
