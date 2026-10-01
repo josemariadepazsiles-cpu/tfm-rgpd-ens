@@ -109,16 +109,6 @@
             <% } %>
           </section>
         </div>
-
-        <section class="card p-5 sm:p-6">
-          <h2 class="flex items-center gap-2 text-sm font-semibold text-slate-900"><%- icono('plus', 'h-4 w-4 text-slate-400') %>Registrar información de este sistema</h2>
-          <p class="mt-1 text-sm text-slate-500">El formulario se abre con «<%= sistema.nombre %>» ya seleccionado como sistema asociado.</p>
-          <div class="mt-4 flex flex-wrap gap-2">
-            <% accesos.forEach((a) => { %>
-              <a href="<%= a.ruta %>" class="btn btn-secondary btn-sm"><%- icono(a.icono, 'h-3.5 w-3.5') %><%= a.texto %></a>
-            <% }) %>
-          </div>
-        </section>
       </div>
 
       <%# ---------------- Checklist ENS (evaluaciones) ---------------- %>
