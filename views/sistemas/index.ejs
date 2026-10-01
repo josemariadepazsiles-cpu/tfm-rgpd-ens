@@ -28,7 +28,6 @@
       <% } else { %>
         <%
           const plural = (n, uno, varios) => n + ' ' + (n === 1 ? uno : varios);
-          const iconoBtn = 'inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:border-indigo-200 hover:text-indigo-600';
         %>
         <table class="tabla">
           <thead>
@@ -45,7 +44,7 @@
             <% sistemas.forEach((s) => { %>
               <tr class="hover:bg-slate-50">
                 <td class="px-4 py-3">
-                  <a href="/sistemas/<%= s.id %>" class="font-medium text-slate-800 hover:text-indigo-600 hover:underline"><%= s.nombre %></a>
+                  <a href="/sistemas/<%= s.id %>" class="font-medium text-slate-800 hover:text-indigo-600 hover:underline" title="Ver la información del sistema"><%= s.nombre %></a>
                   <% if (s.tipo_sistema) { %><p class="text-xs font-medium text-indigo-600"><%= s.tipo_sistema %></p><% } %>
                   <% if (s.descripcion) { %><p class="text-xs text-slate-500 line-clamp-1 max-w-xs"><%= s.descripcion %></p><% } %>
                 </td>
@@ -76,12 +75,12 @@
                   <span class="block text-xs text-slate-400">de <%= plural(s.rgpd.incidentes, 'incidente', 'incidentes') %></span>
                 </td>
                 <td class="px-4 py-3 text-right whitespace-nowrap">
-                  <span class="inline-flex items-center gap-1">
-                    <a href="/sistemas/<%= s.id %>" class="btn btn-primary btn-sm"><%- icono('layout-dashboard', 'h-3.5 w-3.5') %>Ficha</a>
-                    <% if (s.ultima) { %>
-                      <a href="/evaluaciones/<%= s.ultima.id %>" class="<%= iconoBtn %>" title="Checklist de la última evaluación" aria-label="Checklist de la última evaluación de <%= s.nombre %>"><%- icono('list-checks', 'h-4 w-4') %></a>
-                    <% } %>
-                    <a href="/sistemas/<%= s.id %>#ens" class="<%= iconoBtn %>" title="Evaluaciones" aria-label="Evaluaciones de <%= s.nombre %>"><%- icono('layers', 'h-4 w-4') %></a>                  </span>
+                  <%# La información del sistema se abre desde su nombre; aquí, el checklist de la última evaluación %>
+                  <% if (s.ultima) { %>
+                    <a href="/evaluaciones/<%= s.ultima.id %>" class="btn btn-secondary btn-sm" aria-label="Última evaluación de <%= s.nombre %>"><%- icono('list-checks', 'h-3.5 w-3.5') %>Última evaluación</a>
+                  <% } else { %>
+                    <a href="/sistemas/<%= s.id %>#ens" class="btn btn-secondary btn-sm" aria-label="Evaluar <%= s.nombre %>"><%- icono('plus', 'h-3.5 w-3.5') %>Evaluar</a>
+                  <% } %>
                 </td>
               </tr>
             <% }) %>
