@@ -2,11 +2,11 @@
   const esAdminUsuario = user.rol === 'ADMIN';
   const pestanas = [
     { id: 'resumen', texto: 'Resumen', icono: 'layout-dashboard' },
-    { id: 'ens', texto: 'Checklist ENS', icono: 'list-checks', contador: evaluaciones.length },
     { id: 'rat', texto: 'Actividades RAT', icono: 'clipboard-list', contador: actividades.length },
     { id: 'riesgos', texto: 'Riesgos', icono: 'gauge', contador: riesgos.length },
     { id: 'incidentes', texto: 'Incidentes', icono: 'siren', contador: incidentes.length },
     { id: 'derechos', texto: 'Derechos', icono: 'users', contador: solicitudes.length },
+    { id: 'ens', texto: 'Checklist ENS', icono: 'list-checks', contador: evaluaciones.length },
     { id: 'bia', texto: 'Continuidad (BIA)', icono: 'life-buoy', contador: procesos.length },
   ];
   const ens = resumen.ens;
@@ -73,22 +73,6 @@
       <%# ---------------- Resumen ---------------- %>
       <div x-show="tab === 'resumen'" role="tabpanel" id="panel-resumen" aria-labelledby="tab-resumen" class="mt-6 space-y-6">
         <div class="grid gap-4 lg:grid-cols-3">
-          <section class="card p-5 sm:p-6">
-            <div class="flex items-center justify-between gap-3">
-              <h2 class="flex items-center gap-2 text-sm font-semibold text-slate-900"><%- icono('shield-check', 'h-4 w-4 text-slate-400') %>Cumplimiento ENS</h2>
-              <button type="button" class="enlace text-sm" @click="ir('ens')">Ver checklist</button>
-            </div>
-            <% if (ens) { %>
-              <p class="mt-4 text-4xl font-semibold tracking-tight text-slate-900 tabular-nums"><%= ens.porcentaje %><span class="text-2xl text-slate-400"> %</span></p>
-              <p class="mt-1 text-sm text-slate-500"><%= ens.implementados %> de <%= ens.aplicables %> controles aplicables implementados</p>
-              <div class="mt-4 progreso"><span style="width: <%= ens.porcentaje %>%" class="<%= ens.porcentaje >= 80 ? 'bg-green-500' : ens.porcentaje >= 50 ? 'bg-amber-500' : 'bg-red-500' %>"></span></div>
-              <p class="mt-3 text-xs text-slate-500">Según la última evaluación: <a href="/evaluaciones/<%= evaluaciones[0].id %>" class="enlace"><%= evaluaciones[0].nombre %></a></p>
-            <% } else { %>
-              <p class="mt-4 text-2xl font-semibold text-slate-400">Sin evaluar</p>
-              <p class="mt-1 text-sm text-slate-500">Este sistema todavía no tiene ninguna evaluación ENS.</p>
-            <% } %>
-          </section>
-
           <section class="card p-5 sm:p-6 lg:col-span-2">
             <h2 class="flex items-center gap-2 text-sm font-semibold text-slate-900"><%- icono('scale', 'h-4 w-4 text-slate-400') %>Estado RGPD del sistema</h2>
             <div class="mt-4 grid gap-3 sm:grid-cols-2">
@@ -106,6 +90,22 @@
             </div>
             <% if (ambitoRestringido) { %>
               <p class="mt-3 text-xs text-slate-500">Las actividades RAT y los riesgos incluyen solo aquellos de los que eres responsable.</p>
+            <% } %>
+          </section>
+
+          <section class="card p-5 sm:p-6">
+            <div class="flex items-center justify-between gap-3">
+              <h2 class="flex items-center gap-2 text-sm font-semibold text-slate-900"><%- icono('shield-check', 'h-4 w-4 text-slate-400') %>Cumplimiento ENS</h2>
+              <button type="button" class="enlace text-sm" @click="ir('ens')">Ver checklist</button>
+            </div>
+            <% if (ens) { %>
+              <p class="mt-4 text-4xl font-semibold tracking-tight text-slate-900 tabular-nums"><%= ens.porcentaje %><span class="text-2xl text-slate-400"> %</span></p>
+              <p class="mt-1 text-sm text-slate-500"><%= ens.implementados %> de <%= ens.aplicables %> controles aplicables implementados</p>
+              <div class="mt-4 progreso"><span style="width: <%= ens.porcentaje %>%" class="<%= ens.porcentaje >= 80 ? 'bg-green-500' : ens.porcentaje >= 50 ? 'bg-amber-500' : 'bg-red-500' %>"></span></div>
+              <p class="mt-3 text-xs text-slate-500">Según la última evaluación: <a href="/evaluaciones/<%= evaluaciones[0].id %>" class="enlace"><%= evaluaciones[0].nombre %></a></p>
+            <% } else { %>
+              <p class="mt-4 text-2xl font-semibold text-slate-400">Sin evaluar</p>
+              <p class="mt-1 text-sm text-slate-500">Este sistema todavía no tiene ninguna evaluación ENS.</p>
             <% } %>
           </section>
         </div>
