@@ -37,9 +37,6 @@
         </div>
       </div>
       <div class="flex flex-wrap gap-2">
-        <% if (vigente) { %>
-          <a href="<%= urlArchivo(vigente) %>" target="_blank" rel="noopener" class="btn btn-secondary"><%- icono('eye', 'h-4 w-4') %>Ver documento</a>
-        <% } %>
         <% if (esAdmin) { %>
           <a href="/politicas/<%= p.id %>/editar" class="btn btn-primary"><%- icono('pencil', 'h-4 w-4') %>Editar</a>
           <form action="/politicas/<%= p.id %>/eliminar" method="POST" data-nombre="<%= p.titulo %>"
