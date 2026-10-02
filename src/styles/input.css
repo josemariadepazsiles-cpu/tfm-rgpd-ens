@@ -306,6 +306,11 @@
   .tabla-contenedor {
     @apply overflow-x-auto rounded-2xl border border-slate-200/80 bg-white;
   }
+  /* Nombre de un registro en los listados: es el acceso a su ficha (no hay columna de acciones) */
+  .enlace-registro {
+    @apply font-semibold text-indigo-700 decoration-indigo-300 underline-offset-2 transition-colors duration-150 hover:text-indigo-900 hover:underline;
+  }
+
   /* Botón cuadrado solo con icono (acciones de los listados). Lleva title y aria-label */
   .btn-icono {
     @apply inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition duration-150 hover:border-indigo-200 hover:bg-marca-50 hover:text-indigo-700;

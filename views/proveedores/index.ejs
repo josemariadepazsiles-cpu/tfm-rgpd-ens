@@ -73,14 +73,13 @@
               <th>Nivel ENS</th>
               <th>Estado</th>
               <th>Alertas</th>
-              <th class="text-right">Acciones</th>
             </tr>
           </thead>
           <tbody>
             <% proveedores.forEach((p) => { %>
               <tr class="hover:bg-slate-50 <%= p.estado === 'BAJA' ? 'opacity-60' : '' %>">
                 <td class="px-4 py-3">
-                  <a href="/proveedores/<%= p.id %>" class="block min-w-[9rem] font-medium text-slate-800 hover:text-indigo-600 hover:underline"><%= p.nombre_empresa %></a>
+                  <a href="/proveedores/<%= p.id %>" class="enlace-registro block min-w-[9rem]"><%= p.nombre_empresa %></a>
                   <span class="block text-xs text-slate-500"><%= p.pais_tratamiento %><%= p._count.documentos ? ' · ' + p._count.documentos + ' doc.' : '' %></span>
                 </td>
                 <td class="px-4 py-3 text-slate-600 max-w-xs"><p class="line-clamp-2"><%= p.servicio_prestado %></p></td>
@@ -107,9 +106,6 @@
                   <span class="badge <%= estadoProveedorClases[p.estado] %>"><%= ESTADOS_PROVEEDOR[p.estado] %></span>
                 </td>
                 <td class="px-4 py-3"><div class="flex max-w-[13rem] flex-wrap gap-1 [&_.badge]:whitespace-normal"><%- include('../partials/alertas-proveedor', { lista: p.alertas }) %></div></td>
-                <td class="px-4 py-3 text-right whitespace-nowrap">
-                  <a href="/proveedores/<%= p.id %>" class="btn btn-secondary btn-sm" aria-label="Abrir <%= p.nombre_empresa %>"><%- icono('arrow-right', 'h-3.5 w-3.5') %>Abrir</a>
-                </td>
               </tr>
             <% }) %>
           </tbody>

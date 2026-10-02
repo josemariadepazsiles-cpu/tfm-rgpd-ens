@@ -48,31 +48,26 @@
         <table class="tabla">
           <thead>
             <tr>
-              <th>Actividad</th>
               <th>Amenaza</th>
+              <th>Actividad</th>
               <th>Sistema</th>
               <th>Probabilidad</th>
               <th>Impacto</th>
               <th>Nivel de riesgo</th>
-              <th class="text-right">Acciones</th>
             </tr>
           </thead>
           <tbody>
             <% riesgos.forEach((r) => { %>
               <tr class="hover:bg-slate-50">
+                <td class="px-4 py-3"><a href="/riesgos/<%= r.id %>" class="enlace-registro line-clamp-2 max-w-xs"><%= r.amenaza %></a></td>
                 <td class="px-4 py-3">
-                  <a href="/rat/<%= r.actividad.id %>" class="text-indigo-600 hover:underline"><%= r.actividad.nombre %></a>
+                  <a href="/rat/<%= r.actividad.id %>" class="text-slate-700 hover:text-indigo-700 hover:underline"><%= r.actividad.nombre %></a>
                   <span class="block text-xs text-slate-400"><%= r.actividad.responsable.nombre %></span>
                 </td>
-                <td class="px-4 py-3 text-slate-800 max-w-xs"><p class="line-clamp-2"><%= r.amenaza %></p></td>
                 <td class="px-4 py-3"><%- include('../partials/sistema-celda', { s: r.sistema }) %></td>
                 <td class="px-4 py-3 text-slate-600"><%= probabilidades[r.probabilidad] %></td>
                 <td class="px-4 py-3 text-slate-600"><%= impactos[r.impacto] %></td>
                 <td class="px-4 py-3"><%- include('../partials/nivel-badge', { nivel: r.nivel_riesgo, nivelEtiquetas: niveles }) %></td>
-                <td class="px-4 py-3 text-right whitespace-nowrap">
-                  <a href="/riesgos/<%= r.id %>" class="btn-icono" title="Ver detalle" aria-label="Ver detalle"><%- icono('eye', 'h-4 w-4') %></a>
-                  <a href="/riesgos/<%= r.id %>/editar" class="ml-1 btn-icono-primario" title="Editar" aria-label="Editar"><%- icono('pencil', 'h-4 w-4') %></a>
-                </td>
               </tr>
             <% }) %>
           </tbody>

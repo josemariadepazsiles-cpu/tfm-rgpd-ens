@@ -56,23 +56,18 @@
               <th>Base legal</th>
               <th>Sistema</th>
               <th>Responsable</th>
-              <th class="text-right">Acciones</th>
             </tr>
           </thead>
           <tbody>
             <% actividades.forEach((a) => { %>
               <tr class="hover:bg-slate-50">
-                <td class="px-4 py-3 font-medium text-slate-800"><%= a.nombre %></td>
+                <td class="px-4 py-3"><a href="/rat/<%= a.id %>" class="enlace-registro"><%= a.nombre %></a></td>
                 <td class="px-4 py-3 text-slate-600 max-w-xs"><p class="line-clamp-2"><%= a.finalidad %></p></td>
                 <td class="px-4 py-3 text-slate-600"><%= basesLegales[a.base_legal] %></td>
                 <td class="px-4 py-3"><%- include('../partials/sistema-celda', { s: a.sistema }) %></td>
                 <td class="px-4 py-3 text-slate-600">
                   <%= a.responsable.nombre %>
                   <% if (a.responsable.area) { %><span class="block text-xs text-slate-400"><%= a.responsable.area %></span><% } %>
-                </td>
-                <td class="px-4 py-3 text-right whitespace-nowrap">
-                  <a href="/rat/<%= a.id %>" class="btn-icono" title="Ver detalle" aria-label="Ver detalle"><%- icono('eye', 'h-4 w-4') %></a>
-                  <a href="/rat/<%= a.id %>/editar" class="ml-1 btn-icono-primario" title="Editar" aria-label="Editar"><%- icono('pencil', 'h-4 w-4') %></a>
                 </td>
               </tr>
             <% }) %>

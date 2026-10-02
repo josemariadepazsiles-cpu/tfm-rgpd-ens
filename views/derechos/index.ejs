@@ -80,14 +80,13 @@
               <th>Fecha límite</th>
               <th>Estado</th>
               <th>Responsable</th>
-              <th class="text-right">Acciones</th>
             </tr>
           </thead>
           <tbody>
             <% solicitudes.forEach((s) => { %>
               <tr class="hover:bg-slate-50">
                 <td class="px-4 py-3">
-                  <a href="/derechos/<%= s.id %>" class="font-medium text-slate-800 hover:text-indigo-600 hover:underline"><%= s.nombre_solicitante %></a>
+                  <a href="/derechos/<%= s.id %>" class="enlace-registro"><%= s.nombre_solicitante %></a>
                   <span class="block text-xs text-slate-500"><%= s.email_solicitante %></span>
                 </td>
                 <td class="px-4 py-3 text-slate-700"><%= TIPOS_DERECHO[s.tipo_derecho] %></td>
@@ -104,12 +103,6 @@
                     <span class="text-slate-400 italic">Sin asignar</span>
                   <% } else { %>
                     <%= s.responsable.nombre %><% if (s.responsable.id === user.id) { %> <strong>(tú)</strong><% } %>
-                  <% } %>
-                </td>
-                <td class="px-4 py-3 text-right whitespace-nowrap">
-                  <a href="/derechos/<%= s.id %>" class="btn-icono" title="Ver detalle" aria-label="Ver detalle"><%- icono('eye', 'h-4 w-4') %></a>
-                  <% if (s.gestionable) { %>
-                    <a href="/derechos/<%= s.id %>/editar" class="ml-1 btn-icono-primario" title="Tramitar" aria-label="Tramitar"><%- icono('pencil', 'h-4 w-4') %></a>
                   <% } %>
                 </td>
               </tr>

@@ -22,14 +22,14 @@
           <span class="text-xs text-slate-500">Creado el <%= fechaHora(r.created_at) %> · Última modificación el <%= fechaHora(r.updated_at) %></span>
         </div>
       </div>
-      <div class="flex flex-wrap gap-2">
+      <div class="flex shrink-0 flex-wrap items-start gap-2">
+        <a href="/riesgos/<%= r.id %>/editar" class="btn btn-primary"><%- icono('pencil', 'h-4 w-4') %>Editar</a>
         <% if (user.rol === 'ADMIN') { %>
           <form action="/riesgos/<%= r.id %>/eliminar" method="POST"
                 onsubmit="return confirm('¿Eliminar este riesgo? Esta acción no se puede deshacer.')">
             <button type="submit" class="btn btn-danger"><%- icono('trash-2', 'h-4 w-4') %>Eliminar</button>
           </form>
         <% } %>
-        <a href="/riesgos/<%= r.id %>/editar" class="btn btn-primary"><%- icono('pencil', 'h-4 w-4') %>Editar</a>
       </div>
     </div>
 
