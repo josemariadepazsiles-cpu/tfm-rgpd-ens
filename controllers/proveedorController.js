@@ -11,8 +11,9 @@ const {
 
 // Cualquier usuario autenticado puede consultar proveedores y sus documentos. Crear y
 // editar proveedores es solo para el Administrador (estructura general); subir y eliminar
-// documentos, para el Administrador o el responsable asignado. Los proveedores no se
-// eliminan: se dan de baja (estado "Baja") para conservar el registro.
+// documentos, para el Administrador o el responsable asignado. Lo habitual es dar de baja
+// al proveedor (estado "Baja") para conservar el registro; el Administrador también puede
+// eliminarlo definitivamente, junto con sus documentos.
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const usuarioSelect = { select: { id: true, nombre: true } };
@@ -280,6 +281,18 @@ const eliminarDocumento = async (req, res) => {
   res.redirect(`/proveedores/${documento.proveedor_id}#documentos`);
 };
 
+// Solo administradores (la ruta usa ensureAdmin). Borra el proveedor, sus documentos (en cascada)
+// y los archivos del servidor
+const remove = async (req, res) => {
+  const proveedor = await buscar(req, { documentos: { select: { ruta_archivo: true } } });
+  if (!proveedor) return noEncontrado(res);
+
+  await prisma.proveedor.delete({ where: { id: proveedor.id } });
+  await Promise.all(proveedor.documentos.map((d) => borrarArchivo(d.ruta_archivo)));
+  req.session.flash = { tipo: 'exito', mensaje: `Proveedor "${proveedor.nombre_empresa}" eliminado.` };
+  res.redirect('/proveedores');
+};
+
 module.exports = {
-  list, show, newForm, create, editForm, update, subirDocumento, verDocumento, eliminarDocumento,
+  list, show, newForm, create, editForm, update, remove, subirDocumento, verDocumento, eliminarDocumento,
 };

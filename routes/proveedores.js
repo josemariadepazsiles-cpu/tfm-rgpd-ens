@@ -12,6 +12,7 @@ router.post('/', ensureAdmin, proveedorController.create);
 router.get('/:id', proveedorController.show);
 router.get('/:id/editar', ensureAdmin, proveedorController.editForm);
 router.post('/:id', ensureAdmin, proveedorController.update);
+router.post('/:id/eliminar', ensureAdmin, proveedorController.remove);
 
 // Documentos: subir y eliminar lo controla el propio controlador (Administrador o responsable)
 router.post('/:id/documentos', proveedorController.subirDocumento);

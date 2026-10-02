@@ -43,7 +43,13 @@
         </div>
       </div>
       <% if (user.rol === 'ADMIN') { %>
-        <a href="/proveedores/<%= p.id %>/editar" class="btn btn-primary"><%- icono('pencil', 'h-4 w-4') %>Editar</a>
+        <div class="flex shrink-0 items-start gap-2">
+          <a href="/proveedores/<%= p.id %>/editar" class="btn btn-primary"><%- icono('pencil', 'h-4 w-4') %>Editar</a>
+          <form action="/proveedores/<%= p.id %>/eliminar" method="POST" data-nombre="<%= p.nombre_empresa %>"
+                onsubmit="return confirm('¿Eliminar definitivamente el proveedor «' + this.dataset.nombre + '»?<%= p.documentos.length ? ' Se borrarán también sus ' + p.documentos.length + ' documentos.' : '' %> Si solo ha dejado de prestar el servicio, puedes marcarlo como «Baja» para conservar el registro. Esta acción no se puede deshacer.')">
+            <button type="submit" class="btn btn-danger"><%- icono('trash-2', 'h-4 w-4') %>Eliminar</button>
+          </form>
+        </div>
       <% } %>
     </div>
 
