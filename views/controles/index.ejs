@@ -22,7 +22,6 @@
         <section class="card overflow-hidden">
           <header class="flex items-center justify-between border-b px-6 py-3 <%= categoriaClases[g.categoria].cabecera %>">
             <h2 class="flex items-center gap-2.5 font-semibold"><span class="punto <%= categoriaClases[g.categoria].punto %>" aria-hidden="true"></span>Categoría <%= categorias[g.categoria] %> <span class="font-normal text-slate-400">(<%= g.controles.length %>)</span></h2>
-            <a href="/controles/nuevo?categoria=<%= g.categoria %>" class="text-sm hover:underline">Añadir</a>
           </header>
           <ul class="divide-y divide-slate-100">
             <% g.controles.forEach((c) => { %>
