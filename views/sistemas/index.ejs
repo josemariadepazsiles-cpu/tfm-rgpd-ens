@@ -77,9 +77,9 @@
                 <td class="px-4 py-3 text-right whitespace-nowrap">
                   <%# La información del sistema se abre desde su nombre; aquí, el checklist de la última evaluación %>
                   <% if (s.ultima) { %>
-                    <a href="/evaluaciones/<%= s.ultima.id %>" class="btn btn-secondary btn-sm" aria-label="Última evaluación de <%= s.nombre %>"><%- icono('list-checks', 'h-3.5 w-3.5') %>Última evaluación</a>
+                    <a href="/evaluaciones/<%= s.ultima.id %>" class="btn btn-secondary btn-sm" aria-label="Última evaluación ENS de <%= s.nombre %>"><%- icono('list-checks', 'h-3.5 w-3.5') %>Última evaluación ENS</a>
                   <% } else { %>
-                    <a href="/sistemas/<%= s.id %>#ens" class="btn btn-secondary btn-sm" aria-label="Evaluar <%= s.nombre %>"><%- icono('plus', 'h-3.5 w-3.5') %>Evaluar</a>
+                    <a href="/sistemas/<%= s.id %>#ens" class="btn btn-secondary btn-sm" aria-label="Evaluar ENS de <%= s.nombre %>"><%- icono('plus', 'h-3.5 w-3.5') %>Evaluar ENS</a>
                   <% } %>
                 </td>
               </tr>
