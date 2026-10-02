@@ -39,8 +39,9 @@
     <%- include('../partials/migas', { migas: [{ texto: 'Sistemas de información', href: '/sistemas' }, { texto: sistema.nombre }] }) %>
     <%- include('../partials/flash') %>
 
-    <div class="flex flex-wrap items-start justify-between gap-4">
-      <div class="min-w-0">
+    <%# Cabecera: datos del sistema a la izquierda; Editar y Eliminar arriba a la derecha %>
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div class="min-w-0 flex-1">
         <p class="eyebrow">Ficha del sistema<%= sistema.tipo_sistema ? ' · ' + sistema.tipo_sistema : '' %></p>
         <h1 class="mt-1 titulo-pagina"><%= sistema.nombre %></h1>
         <div class="mt-2.5 flex flex-wrap items-center gap-2">
@@ -54,17 +55,15 @@
         </div>
         <% if (sistema.descripcion) { %><p class="mt-3 max-w-3xl whitespace-pre-line text-slate-600"><%= sistema.descripcion %></p><% } %>
       </div>
-      <div class="flex flex-wrap gap-2">
-        <a href="/sistemas/<%= sistema.id %>/historial" class="btn btn-secondary"><%- icono('history', 'h-4 w-4') %>Ver histórico</a>
-        <a href="/declaraciones?sistema=<%= sistema.id %>" class="btn btn-secondary"><%- icono('file-badge', 'h-4 w-4') %>Declaraciones (<%= declaraciones %>)</a>
-        <% if (esAdminUsuario) { %>
+      <% if (esAdminUsuario) { %>
+      <div class="flex shrink-0 items-start gap-2">
           <a href="/sistemas/<%= sistema.id %>/editar" class="btn btn-secondary"><%- icono('pencil', 'h-4 w-4') %>Editar</a>
           <form action="/sistemas/<%= sistema.id %>/eliminar" method="POST" data-nombre="<%= sistema.nombre %>"
                 onsubmit="return confirm('¿Eliminar el sistema «' + this.dataset.nombre + '»? Se borrarán sus <%= evaluaciones.length %> evaluaciones y todo su histórico. Las actividades, riesgos, incidentes, solicitudes y procesos asociados no se borran: quedarán sin sistema (transversales). Esta acción no se puede deshacer.')">
             <button type="submit" class="btn btn-danger"><%- icono('trash-2', 'h-4 w-4') %>Eliminar</button>
           </form>
-        <% } %>
       </div>
+      <% } %>
     </div>
 
     <div class="mt-8" x-data='pestanas("resumen", <%= JSON.stringify(pestanas.map((t) => t.id)) %>)'>
@@ -311,6 +310,12 @@
           <% } %>
         </div>
       </div>
+    </div>
+
+    <%# Accesos secundarios al final de la ficha %>
+    <div class="mt-8 flex flex-wrap gap-2 border-t border-slate-200/80 pt-6">
+      <a href="/sistemas/<%= sistema.id %>/historial" class="btn btn-secondary"><%- icono('history', 'h-4 w-4') %>Ver histórico</a>
+      <a href="/declaraciones?sistema=<%= sistema.id %>" class="btn btn-secondary"><%- icono('file-badge', 'h-4 w-4') %>Declaraciones (<%= declaraciones %>)</a>
     </div>
   </main>
 </body>
