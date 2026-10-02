@@ -2,8 +2,11 @@ const prisma = require('../lib/prisma');
 const { esAdmin, esAdminOResponsable, idValido } = require('../lib/permisos');
 const { desdeInputFechaHora, finPlazoMeses, fecha } = require('../lib/formato');
 const {
-  TIPOS_DERECHO, ARTICULOS_DERECHO, CANALES, ESTADOS_SOLICITUD, DIAS_AVISO, MESES_AMPLIACION, estaResuelta, calcularFechaLimite, urgencia, guardarSolicitud,
+  TIPOS_DOCUMENTO_SOLICITUD, TIPOS_DERECHO, ARTICULOS_DERECHO, CANALES, ESTADOS_SOLICITUD, DIAS_AVISO, MESES_AMPLIACION, estaResuelta, calcularFechaLimite, urgencia, guardarSolicitud,
 } = require('../lib/derechos');
+const {
+  TAMANO_MAXIMO, procesarSubida, validarPdf, guardarArchivo, rutaAbsoluta, borrarArchivo, cabeceraDisposicion, formatoTamano,
+} = require('../lib/subidas');
 const { listaSistemas, sistemaSelect, leerSistemaId, validarSistema, filtroSistema } = require('../lib/sistemas');
 
 // Cualquier usuario autenticado puede ver y registrar solicitudes. Tramitarlas (editar,
@@ -188,11 +191,15 @@ const show = async (req, res) => {
     responsable: usuarioSelect,
     creado_por: usuarioSelect,
     sistema: sistemaSelect,
+    documentos: { orderBy: { fecha_subida: 'desc' }, include: { subido_por: usuarioSelect } },
     _count: { select: { historial: true } },
   });
   if (!solicitud) return noEncontrada(res);
 
   res.render('derechos/show', {
+    TIPOS_DOCUMENTO_SOLICITUD,
+    tamanoMaximoMb: TAMANO_MAXIMO / 1024 / 1024,
+    formatoTamano,
     title: `Solicitud de ${solicitud.nombre_solicitante}`,
     solicitud,
     urgencia: urgencia(solicitud),
@@ -303,4 +310,94 @@ const historial = async (req, res) => {
   });
 };
 
-module.exports = { list, show, newForm, create, editForm, update, cambiarEstado, historial };
+// --- Documentos de la solicitud (copia del DNI, escrito, respuesta…) ---
+// Cualquier usuario autenticado puede verlos; subirlos y eliminarlos, el Administrador o el
+// responsable asignado (los mismos que tramitan la solicitud).
+
+const buscarDocumento = async (req) => {
+  const solicitudId = idValido(req.params.id);
+  const docId = idValido(req.params.docId);
+  if (!solicitudId || !docId) return null;
+  const documento = await prisma.documentoSolicitudDerecho.findUnique({ where: { id: docId }, include: { solicitud: true } });
+  return documento && documento.solicitud_id === solicitudId ? documento : null;
+};
+
+const subirDocumento = async (req, res) => {
+  const solicitud = await buscar(req);
+  if (!solicitud) return noEncontrada(res);
+  if (!esAdminOResponsable(req.user, solicitud)) return sinPermiso(res);
+
+  const volverA = (tipo, mensaje) => {
+    req.session.flash = { tipo, mensaje };
+    res.redirect(`/derechos/${solicitud.id}#documentos`);
+  };
+
+  const errorSubida = await procesarSubida(req, res);
+  if (errorSubida) return volverA('error', errorSubida);
+
+  const nombre = texto(req.body.nombre_documento);
+  const tipo = req.body.tipo_documento;
+  const errorPdf = validarPdf(req.file);
+  if (errorPdf) return volverA('error', errorPdf);
+  if (!nombre) return volverA('error', 'Indica un nombre para el documento.');
+  if (!esOpcion(TIPOS_DOCUMENTO_SOLICITUD, tipo)) return volverA('error', 'El tipo de documento no es válido.');
+
+  const ruta = await guardarArchivo(`derechos/${solicitud.id}`, req.file.buffer);
+  try {
+    await prisma.documentoSolicitudDerecho.create({
+      data: {
+        solicitud_id: solicitud.id,
+        nombre_documento: nombre.slice(0, 200),
+        tipo_documento: tipo,
+        ruta_archivo: ruta,
+        nombre_archivo_original: req.file.originalname.slice(0, 255),
+        tamano_bytes: req.file.size,
+        subido_por_id: req.user.id,
+      },
+    });
+  } catch (err) {
+    await borrarArchivo(ruta); // no dejar archivos huérfanos
+    throw err;
+  }
+  volverA('exito', `Documento "${nombre}" subido (${formatoTamano(req.file.size)}).`);
+};
+
+const verDocumento = async (req, res, next) => {
+  const documento = await buscarDocumento(req);
+  if (!documento) return noEncontrada(res);
+
+  const tipo = req.query.descargar ? 'attachment' : 'inline';
+  res.set({
+    'Content-Type': 'application/pdf',
+    'Content-Disposition': cabeceraDisposicion(tipo, documento.nombre_archivo_original),
+    'X-Content-Type-Options': 'nosniff',
+    'Cache-Control': 'private, no-store',
+  });
+  res.sendFile(rutaAbsoluta(documento.ruta_archivo), (err) => {
+    if (!err) return;
+    if (err.code === 'ENOENT' && !res.headersSent) {
+      res.removeHeader('Content-Disposition');
+      res.set('Content-Type', 'text/html; charset=utf-8');
+      return res.status(404).render('error', {
+        title: 'Archivo no disponible',
+        mensaje: 'El documento está registrado pero su archivo no se encuentra en el servidor.',
+      });
+    }
+    next(err);
+  });
+};
+
+const eliminarDocumento = async (req, res) => {
+  const documento = await buscarDocumento(req);
+  if (!documento) return noEncontrada(res);
+  if (!esAdminOResponsable(req.user, documento.solicitud)) return sinPermiso(res);
+
+  await prisma.documentoSolicitudDerecho.delete({ where: { id: documento.id } });
+  await borrarArchivo(documento.ruta_archivo);
+  req.session.flash = { tipo: 'exito', mensaje: `Documento "${documento.nombre_documento}" eliminado.` };
+  res.redirect(`/derechos/${documento.solicitud_id}#documentos`);
+};
+
+module.exports = {
+  list, show, newForm, create, editForm, update, cambiarEstado, historial, subirDocumento, verDocumento, eliminarDocumento,
+};

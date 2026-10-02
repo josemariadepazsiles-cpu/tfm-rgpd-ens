@@ -206,6 +206,7 @@ model Usuario {
   proveedoresResponsable Proveedor[]                 @relation("ProveedorResponsable")
   proveedoresCreados     Proveedor[]                 @relation("ProveedorCreador")
   documentosSubidos      DocumentoProveedor[]
+  documentosSolicitudes  DocumentoSolicitudDerecho[]
   declaracionesGeneradas DeclaracionConformidad[]    @relation("DeclaracionGenerador")
   declaracionesEmitidas  DeclaracionConformidad[]    @relation("DeclaracionEmisor")
   politicasAprobadas     Politica[]                  @relation("PoliticaAprobador")
@@ -439,6 +440,7 @@ model SolicitudDerecho {
   responsable Usuario?                    @relation("SolicitudResponsable", fields: [responsable_id], references: [id], onDelete: SetNull)
   creado_por  Usuario?                    @relation("SolicitudCreador", fields: [creado_por_id], references: [id], onDelete: SetNull)
   historial   HistorialSolicitudDerecho[]
+  documentos  DocumentoSolicitudDerecho[]
   sistema     Sistema?                    @relation(fields: [sistema_id], references: [id], onDelete: SetNull)
 
   @@index([estado])
@@ -711,4 +713,31 @@ model Organizacion {
   updated_at              DateTime      @updatedAt
 
   @@map("organizacion")
+}
+
+enum TipoDocumentoSolicitud {
+  IDENTIFICACION
+  ESCRITO_SOLICITUD
+  RESPUESTA
+  JUSTIFICANTE_ENVIO
+  OTRO
+}
+
+// Documentos asociados a una solicitud de derechos (copia del DNI, escrito, respuesta…)
+model DocumentoSolicitudDerecho {
+  id                      Int                    @id @default(autoincrement())
+  solicitud_id            Int
+  nombre_documento        String
+  tipo_documento          TipoDocumentoSolicitud
+  ruta_archivo            String                 @unique
+  nombre_archivo_original String
+  tamano_bytes            Int
+  subido_por_id           Int?
+  fecha_subida            DateTime               @default(now())
+
+  solicitud  SolicitudDerecho @relation(fields: [solicitud_id], references: [id], onDelete: Cascade)
+  subido_por Usuario?         @relation(fields: [subido_por_id], references: [id], onDelete: SetNull)
+
+  @@index([solicitud_id])
+  @@map("documentos_solicitudes_derechos")
 }

@@ -17,4 +17,9 @@ router.get('/:id/editar', derechoController.editForm);
 router.post('/:id', derechoController.update);
 router.post('/:id/estado', derechoController.cambiarEstado);
 
+// Documentos: subir y eliminar lo controla el propio controlador (Administrador o responsable)
+router.post('/:id/documentos', derechoController.subirDocumento);
+router.get('/:id/documentos/:docId', derechoController.verDocumento);
+router.post('/:id/documentos/:docId/eliminar', derechoController.eliminarDocumento);
+
 module.exports = router;

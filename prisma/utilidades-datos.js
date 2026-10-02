@@ -18,6 +18,7 @@ const MODELOS = [
   ['historialIncidente', 'historial_incidentes'],
   ['solicitudDerecho', 'solicitudes_derechos'],
   ['historialSolicitudDerecho', 'historial_solicitudes_derechos'],
+  ['documentoSolicitudDerecho', 'documentos_solicitudes_derechos'],
   ['proveedor', 'proveedores'],
   ['documentoProveedor', 'documentos_proveedores'],
   ['declaracionConformidad', 'declaraciones_conformidad'],
