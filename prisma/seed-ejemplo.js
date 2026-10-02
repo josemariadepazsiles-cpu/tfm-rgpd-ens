@@ -12,6 +12,7 @@ const { calcularNivel } = require('../lib/riesgo');
 const { calcularFechaLimite } = require('../lib/derechos');
 const { generarDeclaracion, emitirDeclaracion } = require('../lib/declaraciones');
 const { rellenarDescripciones } = require('./descripciones-ens');
+const { adjuntarPdfsEjemplo } = require('./pdfs-politicas');
 
 if (!process.argv.includes('--confirmar')) {
   console.error('Este script BORRA los datos actuales. Ejecútalo con: npm run db:ejemplo -- --confirmar');
@@ -302,6 +303,9 @@ async function main() {
       await prisma.aceptacionPolitica.create({ data: { politica_id: pol.id, version_aceptada: p.version, usuario_id: us.id, fecha_aceptacion: hace(Math.max(1, p.aprob - 3 - i * 4), 9 + (i % 6)) } });
     }
   }
+
+  // PDF de ejemplo de cada política (sin él no se puede leer ni aceptar)
+  await adjuntarPdfsEjemplo(prisma);
 
   // 7) Proveedores / encargados del tratamiento (nombres ficticios)
   const PROVEEDORES = [

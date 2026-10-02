@@ -15,7 +15,8 @@
     "db:copia": "node prisma/copia-seguridad.js",
     "db:restaurar": "node prisma/restaurar-copia.js",
     "db:ejemplo": "node prisma/seed-ejemplo.js",
-    "db:descripciones": "node prisma/rellenar-descripciones.js"
+    "db:descripciones": "node prisma/rellenar-descripciones.js",
+    "db:pdfs-politicas": "node prisma/pdfs-politicas.js"
   },
   "keywords": [],
   "author": "",
