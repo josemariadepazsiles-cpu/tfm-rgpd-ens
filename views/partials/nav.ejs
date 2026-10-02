@@ -24,10 +24,10 @@
       icono: 'shield-check',
       rutas: ['/evaluaciones', '/controles', '/declaraciones', '/politicas', '/bia'],
       enlaces: [
+        ...(esAdmin ? [{ href: '/controles', texto: 'Catálogo de controles', detalle: 'Controles evaluados en cada sistema', icono: 'list-todo' }] : []),
         { href: '/declaraciones', texto: 'Declaraciones de Conformidad', detalle: 'Informes formales de adecuación', icono: 'file-badge' },
         { href: '/politicas', texto: 'Políticas y Documentación', detalle: 'PSI, procedimientos y aceptaciones', icono: 'book-open-check' },
         { href: '/bia', texto: 'BIA y Continuidad', detalle: 'Impacto en el negocio, RTO y RPO', icono: 'life-buoy' },
-        ...(esAdmin ? [{ href: '/controles', texto: 'Catálogo de controles', detalle: 'Controles evaluados en cada sistema', icono: 'list-todo' }] : []),
       ],
     },
   ];
