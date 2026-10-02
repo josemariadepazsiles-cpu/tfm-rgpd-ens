@@ -108,10 +108,7 @@
                 </td>
                 <td class="px-4 py-3"><div class="flex max-w-[13rem] flex-wrap gap-1 [&_.badge]:whitespace-normal"><%- include('../partials/alertas-proveedor', { lista: p.alertas }) %></div></td>
                 <td class="px-4 py-3 text-right whitespace-nowrap">
-                  <a href="/proveedores/<%= p.id %>" class="btn-icono" title="Ver detalle" aria-label="Ver detalle"><%- icono('eye', 'h-4 w-4') %></a>
-                  <% if (user.rol === 'ADMIN') { %>
-                    <a href="/proveedores/<%= p.id %>/editar" class="ml-1 btn-icono-primario" title="Editar" aria-label="Editar"><%- icono('pencil', 'h-4 w-4') %></a>
-                  <% } %>
+                  <a href="/proveedores/<%= p.id %>" class="btn btn-secondary btn-sm" aria-label="Abrir <%= p.nombre_empresa %>"><%- icono('arrow-right', 'h-3.5 w-3.5') %>Abrir</a>
                 </td>
               </tr>
             <% }) %>

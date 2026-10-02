@@ -19,10 +19,6 @@
   ];
   const estiloAlerta = { rojo: 'alerta-error', amarillo: 'alerta-aviso', naranja: 'alerta-aviso', naranjaFuerte: 'alerta-error' };
   const iconoAlerta = { rojo: 'file-x', amarillo: 'calendar-clock', naranja: 'globe', naranjaFuerte: 'globe' };
-  const pestanas = [
-    { id: 'informacion', texto: 'Información', icono: 'info' },
-    { id: 'documentos', texto: 'Documentos', icono: 'files', contador: p.documentos.length },
-  ];
 %>
 <!DOCTYPE html>
 <html lang="es">
@@ -59,11 +55,9 @@
       </ul>
     <% } %>
 
-    <div class="mt-8" x-data='pestanas("informacion", <%= JSON.stringify(pestanas.map((t) => t.id)) %>)'>
-      <%- include('../partials/pestanas', { pestanas }) %>
-
-      <%# --- Información --- %>
-      <div x-show="tab === 'informacion'" role="tabpanel" id="panel-informacion" aria-labelledby="tab-informacion" class="mt-6 grid items-start gap-6 lg:grid-cols-3">
+    <%# Datos y documentos en una sola página (sin pestañas) %>
+    <div class="mt-8 space-y-6">
+      <div class="grid items-start gap-6 lg:grid-cols-3">
         <div class="space-y-6 lg:col-span-2">
           <% secciones.forEach((s) => { %><%- include('../partials/ficha-seccion', { s }) %><% }) %>
         </div>
@@ -97,7 +91,7 @@
               </div>
               <div class="flex items-center justify-between gap-3">
                 <dt class="text-slate-500">Documentos</dt>
-                <dd><button type="button" class="enlace" @click="ir('documentos')"><%= p.documentos.length %> adjuntos</button></dd>
+                <dd><a href="#documentos" class="enlace"><%= p.documentos.length %> adjuntos</a></dd>
               </div>
               <div class="flex items-center justify-between gap-3">
                 <dt class="text-slate-500">Última modificación</dt>
@@ -108,9 +102,12 @@
         </aside>
       </div>
 
-      <%# --- Documentos --- %>
-      <div x-show="tab === 'documentos'" x-cloak role="tabpanel" id="panel-documentos" aria-labelledby="tab-documentos" class="mt-6 space-y-6">
-        <p class="text-sm text-slate-500">Contrato de encargado, anexos, certificados ENS/ISO, cláusulas de transferencia…</p>
+      <%# --- Documentos (los enlaces y redirecciones a #documentos llegan aquí) --- %>
+      <section id="documentos" class="scroll-mt-24 space-y-4" aria-labelledby="t-documentos">
+        <div>
+          <h2 id="t-documentos" class="flex items-center gap-2 text-base font-semibold text-slate-900"><%- icono('files', 'h-4 w-4 text-slate-400') %>Documentos <span class="font-normal text-slate-400">(<%= p.documentos.length %>)</span></h2>
+          <p class="mt-1 text-sm text-slate-500">Contrato de encargado, anexos, certificados ENS/ISO, cláusulas de transferencia…</p>
+        </div>
         <div class="tabla-contenedor">
           <% if (p.documentos.length === 0) { %>
             <div class="vacio"><%- icono('files', 'h-6 w-6 text-slate-300') %>No se ha adjuntado ningún documento.</div>
@@ -130,12 +127,12 @@
                     <td class="whitespace-nowrap text-slate-600"><%= fechaHora(d.fecha_subida) %></td>
                     <td class="text-slate-600"><%= d.subido_por ? d.subido_por.nombre : '—' %></td>
                     <td class="whitespace-nowrap text-right">
-                      <a href="<%= url %>" target="_blank" rel="noopener" class="btn btn-secondary btn-sm"><%- icono('eye', 'h-3.5 w-3.5') %>Ver</a>
-                      <a href="<%= url %>?descargar=1" class="ml-1 btn btn-secondary btn-sm"><%- icono('download', 'h-3.5 w-3.5') %>Descargar</a>
+                      <a href="<%= url %>" target="_blank" rel="noopener" class="btn-icono" title="Ver documento" aria-label="Ver <%= d.nombre_documento %>"><%- icono('eye', 'h-4 w-4') %></a>
+                      <a href="<%= url %>?descargar=1" class="ml-1 btn-icono" title="Descargar" aria-label="Descargar <%= d.nombre_documento %>"><%- icono('download', 'h-4 w-4') %></a>
                       <% if (gestionaDocumentos) { %>
                         <form action="<%= url %>/eliminar" method="POST" class="inline" data-nombre="<%= d.nombre_documento %>"
                               onsubmit="return confirm('¿Eliminar el documento «' + this.dataset.nombre + '»? Se borrará el archivo del servidor.')">
-                          <button type="submit" class="ml-1 btn btn-danger btn-sm"><%- icono('trash-2', 'h-3.5 w-3.5') %>Eliminar</button>
+                          <button type="submit" class="ml-1 btn-icono hover:border-red-200 hover:bg-red-50 hover:text-red-600" title="Eliminar documento" aria-label="Eliminar <%= d.nombre_documento %>"><%- icono('trash-2', 'h-4 w-4') %></button>
                         </form>
                       <% } %>
                     </td>
@@ -173,7 +170,7 @@
             </div>
           </form>
         <% } %>
-      </div>
+      </section>
     </div>
   </main>
 </body>
