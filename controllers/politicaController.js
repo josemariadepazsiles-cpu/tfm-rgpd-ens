@@ -2,16 +2,19 @@ const prisma = require('../lib/prisma');
 const { esAdmin, idValido } = require('../lib/permisos');
 const { desdeInputFecha } = require('../lib/formato');
 const {
-  TIPOS_POLITICA, ESTADOS_POLITICA, DIAS_AVISO_REVISION, VERSION_REGEX, alertaRevision, registrarVersion,
+  TIPOS_POLITICA, ESTADOS_POLITICA, DIAS_AVISO_REVISION, VERSION_REGEX, TIPOS_ADJUNTO_POLITICA, alertaRevision, registrarVersion,
 } = require('../lib/politicas');
 const {
   TAMANO_MAXIMO, procesarSubida, validarPdf, guardarArchivo, rutaAbsoluta, borrarArchivo,
   cabeceraDisposicion, formatoTamano,
 } = require('../lib/subidas');
+const { listaSistemas, sistemaSelect, leerSistemaId, validarSistema } = require('../lib/sistemas');
 
 // El Administrador crea políticas, sube versiones y cambia su estado. El resto de usuarios
 // solo ve las políticas Aprobadas (las vigentes), descarga sus documentos y registra su
-// aceptación. Las políticas no se eliminan: se marcan como Obsoletas.
+// aceptación. Cada política puede aplicar a un sistema concreto o ser general (sin sistema).
+// Lo habitual es marcar como Obsoleta la que deja de estar vigente; el Administrador también
+// puede eliminarla.
 
 const usuarioSelect = { select: { id: true, nombre: true } };
 const opciones = { TIPOS_POLITICA, ESTADOS_POLITICA, DIAS_AVISO_REVISION };
@@ -42,6 +45,7 @@ const leerFormulario = (body, actual) => {
     descripcion: texto(body.descripcion) || null,
     requiere_aceptacion: body.requiere_aceptacion === 'on',
     fecha_proxima_revision: null,
+    sistema_id: leerSistemaId(body.sistema_id),
   };
   // La versión solo se fija a mano mientras no se haya subido ningún PDF
   if (!actual || !actual.tieneArchivos) datos.version = texto(body.version);
@@ -58,11 +62,12 @@ const leerFormulario = (body, actual) => {
   return { datos, errores };
 };
 
-const renderFormulario = (res, { politica, errores = [], status = 200 }) =>
+const renderFormulario = async (res, { politica, errores = [], status = 200 }) =>
   res.status(status).render('politicas/form', {
     title: politica.id ? 'Editar documento' : 'Nuevo documento normativo',
     politica,
     errores,
+    sistemas: await listaSistemas(),
     ...opciones,
   });
 
@@ -79,7 +84,7 @@ const list = async (req, res) => {
       ...(tipo && { tipo_documento: tipo }),
       ...(admin ? estado && { estado } : { estado: 'APROBADA' }),
     },
-    include: { aceptaciones: { where: { usuario_id: req.user.id }, select: { version_aceptada: true } } },
+    include: { sistema: sistemaSelect, aceptaciones: { where: { usuario_id: req.user.id }, select: { version_aceptada: true } } },
     orderBy: [{ tipo_documento: 'asc' }, { titulo: 'asc' }],
   });
   const ahora = new Date();
@@ -106,6 +111,8 @@ const show = async (req, res) => {
     creado_por: usuarioSelect,
     aprobado_por: usuarioSelect,
     archivos: { orderBy: { fecha_subida: 'desc' }, include: { subido_por: usuarioSelect } },
+    documentos: { orderBy: { fecha_subida: 'desc' }, include: { subido_por: usuarioSelect } },
+    sistema: sistemaSelect,
   });
   if (!visible(req.user, politica)) return noEncontrada(res);
 
@@ -140,6 +147,7 @@ const show = async (req, res) => {
     alerta: alertaRevision(politica),
     tamanoMaximoMb: TAMANO_MAXIMO / 1024 / 1024,
     formatoTamano,
+    TIPOS_ADJUNTO_POLITICA,
     ...opciones,
   });
 };
@@ -148,6 +156,8 @@ const newForm = (req, res) => renderFormulario(res, { politica: { version: '1.0'
 
 const create = async (req, res) => {
   const { datos, errores } = leerFormulario(req.body, null);
+  const errorSistema = await validarSistema(datos.sistema_id);
+  if (errorSistema) errores.push(errorSistema);
   if (errores.length) return renderFormulario(res, { politica: datos, errores, status: 400 });
 
   const politica = await prisma.politica.create({ data: { ...datos, estado: 'BORRADOR', creado_por_id: req.user.id } });
@@ -170,6 +180,8 @@ const update = async (req, res) => {
   if (!actual) return noEncontrada(res);
 
   const { datos, errores } = leerFormulario(req.body, actual);
+  const errorSistema = await validarSistema(datos.sistema_id);
+  if (errorSistema) errores.push(errorSistema);
   if (errores.length) {
     return renderFormulario(res, { politica: { ...actual, ...datos }, errores, status: 400 });
   }
@@ -281,12 +293,87 @@ const verArchivo = async (req, res, next) => {
 // Solo administradores (la ruta usa ensureAdmin). Borra la política, sus versiones y
 // aceptaciones (en cascada) y los PDF del servidor
 const remove = async (req, res) => {
-  const politica = await buscar(req, { archivos: { select: { ruta_archivo: true } } });
+  const politica = await buscar(req, { archivos: { select: { ruta_archivo: true } }, documentos: { select: { ruta_archivo: true } } });
   if (!politica) return noEncontrada(res);
   await prisma.politica.delete({ where: { id: politica.id } });
-  await Promise.all(politica.archivos.map((a) => borrarArchivo(a.ruta_archivo)));
+  await Promise.all([...politica.archivos, ...politica.documentos].map((a) => borrarArchivo(a.ruta_archivo)));
   req.session.flash = { tipo: 'exito', mensaje: `Documento "${politica.titulo}" eliminado.` };
   res.redirect('/politicas');
 };
 
-module.exports = { list, show, newForm, create, editForm, update, remove, subirVersion, cambiarEstado, aceptar, verArchivo };
+// --- Documentos adjuntos (anexos, plantillas, registros…). Los ve quien puede ver la política;
+// los sube y elimina el Administrador.
+const buscarAdjunto = async (req) => {
+  const politicaId = idValido(req.params.id);
+  const docId = idValido(req.params.docId);
+  if (!politicaId || !docId) return null;
+  const documento = await prisma.documentoPolitica.findUnique({ where: { id: docId }, include: { politica: true } });
+  return documento && documento.politica_id === politicaId ? documento : null;
+};
+
+// Solo administradores (la ruta usa ensureAdmin)
+const subirAdjunto = async (req, res) => {
+  const politica = await buscar(req);
+  if (!politica) return noEncontrada(res);
+  const volverA = (tipo, mensaje) => {
+    req.session.flash = { tipo, mensaje };
+    res.redirect(`/politicas/${politica.id}#adjuntos`);
+  };
+  const errorSubida = await procesarSubida(req, res);
+  if (errorSubida) return volverA('error', errorSubida);
+  const nombre = texto(req.body.nombre_documento);
+  const tipo = req.body.tipo_documento;
+  const errorPdf = validarPdf(req.file);
+  if (errorPdf) return volverA('error', errorPdf);
+  if (!nombre) return volverA('error', 'Indica un nombre para el documento.');
+  if (!esOpcion(TIPOS_ADJUNTO_POLITICA, tipo)) return volverA('error', 'El tipo de documento no es válido.');
+
+  const ruta = await guardarArchivo(`politicas/${politica.id}/adjuntos`, req.file.buffer);
+  try {
+    await prisma.documentoPolitica.create({
+      data: {
+        politica_id: politica.id, nombre_documento: nombre.slice(0, 200), tipo_documento: tipo, ruta_archivo: ruta,
+        nombre_archivo_original: req.file.originalname.slice(0, 255), tamano_bytes: req.file.size, subido_por_id: req.user.id,
+      },
+    });
+  } catch (err) {
+    await borrarArchivo(ruta); // no dejar archivos huérfanos
+    throw err;
+  }
+  volverA('exito', `Documento "${nombre}" adjuntado (${formatoTamano(req.file.size)}).`);
+};
+
+const verAdjunto = async (req, res, next) => {
+  const documento = await buscarAdjunto(req);
+  if (!documento || !visible(req.user, documento.politica)) return noEncontrada(res);
+  res.set({
+    'Content-Type': 'application/pdf',
+    'Content-Disposition': cabeceraDisposicion(req.query.descargar ? 'attachment' : 'inline', documento.nombre_archivo_original),
+    'X-Content-Type-Options': 'nosniff',
+    'Cache-Control': 'private, no-store',
+  });
+  res.sendFile(rutaAbsoluta(documento.ruta_archivo), (err) => {
+    if (!err) return;
+    if (err.code === 'ENOENT' && !res.headersSent) {
+      res.removeHeader('Content-Disposition');
+      res.set('Content-Type', 'text/html; charset=utf-8');
+      return res.status(404).render('error', { title: 'Archivo no disponible', mensaje: 'El documento está registrado pero su archivo no se encuentra en el servidor.' });
+    }
+    next(err);
+  });
+};
+
+// Solo administradores (la ruta usa ensureAdmin)
+const eliminarAdjunto = async (req, res) => {
+  const documento = await buscarAdjunto(req);
+  if (!documento) return noEncontrada(res);
+  await prisma.documentoPolitica.delete({ where: { id: documento.id } });
+  await borrarArchivo(documento.ruta_archivo);
+  req.session.flash = { tipo: 'exito', mensaje: `Documento "${documento.nombre_documento}" eliminado.` };
+  res.redirect(`/politicas/${documento.politica_id}#adjuntos`);
+};
+
+module.exports = {
+  list, show, newForm, create, editForm, update, remove, subirVersion, cambiarEstado, aceptar, verArchivo,
+  subirAdjunto, verAdjunto, eliminarAdjunto,
+};

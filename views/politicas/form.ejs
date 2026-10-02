@@ -41,6 +41,7 @@
             <% }) %>
           </select>
         </div>
+        <%- include('../partials/campo-sistema', { sistemas, valor: politica.sistema_id, textoNinguno: 'General (toda la organización)', ayuda: 'Sistema al que se aplica esta política. Déjala como General si afecta a toda la organización.' }) %>
         <div>
           <% if (politica.tieneArchivos) { %>
             <span class="label">Versión vigente</span>

@@ -70,6 +70,7 @@
             <tr>
               <th>Documento</th>
               <th>Tipo</th>
+              <th>Sistema</th>
               <th>Versión vigente</th>
               <th>Estado</th>
               <th>Próxima revisión</th>
@@ -83,6 +84,7 @@
                   <a href="/politicas/<%= p.id %>" class="enlace-registro"><%= p.titulo %></a>
                 </td>
                 <td class="px-4 py-3 text-slate-600"><%= TIPOS_POLITICA[p.tipo_documento] %></td>
+                <td class="px-4 py-3"><%- include('../partials/sistema-celda', { s: p.sistema, textoVacio: 'General' }) %></td>
                 <td class="px-4 py-3 tabular-nums text-slate-700"><%= p.version %></td>
                 <td class="px-4 py-3">
                   <span class="badge <%= estadoPoliticaClases[p.estado] %>"><%= ESTADOS_POLITICA[p.estado] %></span>

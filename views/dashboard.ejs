@@ -378,7 +378,7 @@
             <h3 class="flex items-center gap-2 font-semibold text-slate-900"><%- icono('book-open-check', 'h-4 w-4 text-slate-400') %>Políticas y documentación</h3>
             <a href="/politicas" class="zona-enlace">Ver módulo<%- icono('arrow-right', 'h-3.5 w-3.5') %></a>
           </div>
-          <% if (!esTodos) { %><p class="mt-1 text-xs text-slate-500">No se asocian a sistemas: datos de toda la organización.</p><% } %>
+          <% if (!esTodos) { %><p class="mt-1 text-xs text-slate-500">Recuento de toda la organización (generales y de cada sistema).</p><% } %>
           <div class="mt-2 divide-y divide-slate-100"><% filasPol.forEach((k) => { %><%- include('partials/metrica', { k }) %><% }) %></div>
         </div>
       </div>

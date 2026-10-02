@@ -5,7 +5,7 @@
 <div>
   <label for="sistema_id" class="label">Sistema asociado <span class="font-normal text-slate-400">(opcional)</span></label>
   <select id="sistema_id" name="sistema_id" class="input">
-    <option value="">— Ninguno / Transversal —</option>
+    <option value=""><%= typeof textoNinguno !== 'undefined' ? textoNinguno : '— Ninguno / Transversal —' %></option>
     <% sistemas.forEach((s) => { %>
       <option value="<%= s.id %>" <%= Number(valor) === s.id ? 'selected' : '' %>><%= s.nombre %><%= s.tipo_sistema ? ' · ' + s.tipo_sistema : '' %></option>
     <% }) %>

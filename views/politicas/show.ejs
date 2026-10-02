@@ -5,6 +5,7 @@
   const urlArchivo = (a) => '/politicas/' + p.id + '/archivos/' + a.id;
   const pestanas = [
     { id: 'documento', texto: 'Documento', icono: 'file-text' },
+    { id: 'adjuntos', texto: 'Adjuntos', icono: 'paperclip', contador: p.documentos.length },
     { id: 'versiones', texto: 'Versiones anteriores', icono: 'history', contador: historicos.length },
     ...(aceptaciones ? [{ id: 'aceptaciones', texto: 'Aceptaciones', icono: 'signature', contador: aceptaciones.aceptado.length + '/' + (aceptaciones.aceptado.length + aceptaciones.pendiente.length) }] : []),
     ...(esAdmin ? [{ id: 'gestion', texto: 'Gestión', icono: 'settings-2' }] : []),
@@ -29,6 +30,7 @@
         <div class="mt-2.5 flex flex-wrap items-center gap-2">
           <span class="badge bg-white text-slate-700 ring-slate-200 tabular-nums">Versión <%= p.version %></span>
           <span class="badge <%= estadoPoliticaClases[p.estado] %>"><%= ESTADOS_POLITICA[p.estado] %></span>
+          <span class="badge bg-slate-50 text-slate-600 ring-slate-500/20"><%- icono(p.sistema ? 'server' : 'building-2', 'h-3 w-3') %><%= p.sistema ? p.sistema.nombre : 'General' %></span>
           <% if (alerta) { %>
             <span class="badge <%= revisionClases[alerta.nivel] %>"><%- icono(alerta.nivel === 'vencida' ? 'triangle-alert' : 'calendar-clock', 'h-3 w-3') %><%= alerta.texto %></span>
           <% } %>
@@ -41,7 +43,7 @@
         <% if (esAdmin) { %>
           <a href="/politicas/<%= p.id %>/editar" class="btn btn-primary"><%- icono('pencil', 'h-4 w-4') %>Editar</a>
           <form action="/politicas/<%= p.id %>/eliminar" method="POST" data-nombre="<%= p.titulo %>"
-                onsubmit="return confirm('¿Eliminar definitivamente «' + this.dataset.nombre + '»? Se borrarán también sus versiones en PDF y el registro de aceptaciones. Si el documento ya no está vigente, puedes marcarlo como «Obsoleta» para conservarlo. Esta acción no se puede deshacer.')">
+                onsubmit="return confirm('¿Eliminar definitivamente «' + this.dataset.nombre + '»? Se borrarán también sus versiones en PDF, sus documentos adjuntos y el registro de aceptaciones. Si el documento ya no está vigente, puedes marcarlo como «Obsoleta» para conservarlo. Esta acción no se puede deshacer.')">
             <button type="submit" class="btn btn-danger"><%- icono('trash-2', 'h-4 w-4') %>Eliminar</button>
           </form>
         <% } %>
@@ -110,6 +112,8 @@
         <section class="card p-5">
           <h2 class="text-sm font-semibold text-slate-900">Datos generales</h2>
           <dl class="mt-3 space-y-3 text-sm">
+            <div><dt class="text-slate-500">Se aplica a</dt>
+              <dd class="mt-0.5"><% if (p.sistema) { %><a href="/sistemas/<%= p.sistema.id %>" class="enlace"><%= p.sistema.nombre %></a><% } else { %><span class="text-slate-800">General (toda la organización)</span><% } %></dd></div>
             <div><dt class="text-slate-500">Aprobación</dt>
               <dd class="mt-0.5 <%= p.fecha_aprobacion ? 'text-slate-800' : 'italic text-slate-400' %>"><%= p.fecha_aprobacion ? fechaHora(p.fecha_aprobacion) + (p.aprobado_por ? ' · ' + p.aprobado_por.nombre : '') : 'Sin aprobar' %></dd></div>
             <div><dt class="text-slate-500">Próxima revisión</dt>
@@ -120,6 +124,70 @@
               <dd class="mt-0.5 text-slate-800"><%= fechaHora(p.created_at) %><%= p.creado_por ? ' · ' + p.creado_por.nombre : '' %></dd></div>
           </dl>
         </section>
+      </div>
+
+      <%# --- Adjuntos: anexos, plantillas, registros… (las redirecciones llegan a #adjuntos) --- %>
+      <div x-show="tab === 'adjuntos'" x-cloak role="tabpanel" id="panel-adjuntos" aria-labelledby="tab-adjuntos" class="mt-6 space-y-6">
+        <p class="text-sm text-slate-500">Anexos, plantillas, registros y evidencias relacionados con esta política. El texto de la política se gestiona en sus versiones.</p>
+        <div class="tabla-contenedor">
+          <% if (p.documentos.length === 0) { %>
+            <div class="vacio"><%- icono('paperclip', 'h-6 w-6 text-slate-300') %>No hay documentos adjuntos.</div>
+          <% } else { %>
+            <table class="tabla">
+              <thead>
+                <tr><th>Documento</th><th>Tipo</th><th>Subido</th><th>Por</th><th class="text-right">Acciones</th></tr>
+              </thead>
+              <tbody>
+                <% p.documentos.forEach((d) => { const url = '/politicas/' + p.id + '/adjuntos/' + d.id; %>
+                  <tr>
+                    <td>
+                      <span class="flex items-center gap-2 font-medium text-slate-800"><%- icono('file-text', 'h-4 w-4 text-red-500') %><%= d.nombre_documento %></span>
+                      <span class="block text-xs text-slate-500"><%= d.nombre_archivo_original %> · <%= formatoTamano(d.tamano_bytes) %></span>
+                    </td>
+                    <td class="text-slate-600"><%= TIPOS_ADJUNTO_POLITICA[d.tipo_documento] %></td>
+                    <td class="whitespace-nowrap text-slate-600"><%= fechaHora(d.fecha_subida) %></td>
+                    <td class="text-slate-600"><%= d.subido_por ? d.subido_por.nombre : '—' %></td>
+                    <td class="whitespace-nowrap text-right">
+                      <a href="<%= url %>" target="_blank" rel="noopener" class="btn-icono" title="Ver documento" aria-label="Ver <%= d.nombre_documento %>"><%- icono('eye', 'h-4 w-4') %></a>
+                      <a href="<%= url %>?descargar=1" class="ml-1 btn-icono" title="Descargar" aria-label="Descargar <%= d.nombre_documento %>"><%- icono('download', 'h-4 w-4') %></a>
+                      <% if (esAdmin) { %>
+                        <form action="<%= url %>/eliminar" method="POST" class="inline" data-nombre="<%= d.nombre_documento %>"
+                              onsubmit="return confirm('¿Eliminar el documento «' + this.dataset.nombre + '»? Se borrará el archivo del servidor.')">
+                          <button type="submit" class="ml-1 btn-icono hover:border-red-200 hover:bg-red-50 hover:text-red-600" title="Eliminar documento" aria-label="Eliminar <%= d.nombre_documento %>"><%- icono('trash-2', 'h-4 w-4') %></button>
+                        </form>
+                      <% } %>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          <% } %>
+        </div>
+        <% if (esAdmin) { %>
+          <form action="/politicas/<%= p.id %>/adjuntos" method="POST" enctype="multipart/form-data" class="card p-5 sm:p-6">
+            <h2 class="flex items-center gap-2 text-base font-semibold text-slate-900"><%- icono('upload', 'h-4 w-4 text-slate-400') %>Adjuntar documento</h2>
+            <div class="mt-4 grid gap-4 sm:grid-cols-4 sm:items-end">
+              <div class="sm:col-span-2">
+                <label for="adjunto-archivo" class="label">Archivo PDF (máx. <%= tamanoMaximoMb %> MB)</label>
+                <input id="adjunto-archivo" name="archivo" type="file" accept="application/pdf,.pdf" required
+                       class="block w-full rounded-lg border border-slate-200 bg-white text-sm text-slate-600 file:mr-3 file:border-0 file:bg-marca-50 file:px-3 file:py-2.5 file:font-medium file:text-indigo-700 hover:file:bg-marca-100">
+              </div>
+              <div>
+                <label for="adjunto-nombre" class="label">Nombre</label>
+                <input id="adjunto-nombre" name="nombre_documento" type="text" required maxlength="200" placeholder="Ej.: Anexo I · Roles" class="<%= inputClase %>">
+              </div>
+              <div>
+                <label for="adjunto-tipo" class="label">Tipo</label>
+                <select id="adjunto-tipo" name="tipo_documento" class="<%= inputClase %>">
+                  <% Object.entries(TIPOS_ADJUNTO_POLITICA).forEach(([v, etiqueta]) => { %><option value="<%= v %>"><%= etiqueta %></option><% }) %>
+                </select>
+              </div>
+            </div>
+            <div class="mt-4 flex justify-end">
+              <button type="submit" class="btn btn-primary"><%- icono('upload', 'h-4 w-4') %>Adjuntar documento</button>
+            </div>
+          </form>
+        <% } %>
       </div>
 
       <%# --- Versiones anteriores --- %>

@@ -18,4 +18,9 @@ router.post('/:id/estado', ensureAdmin, politicaController.cambiarEstado);
 router.post('/:id/aceptar', politicaController.aceptar);
 router.get('/:id/archivos/:archivoId', politicaController.verArchivo);
 
+// Documentos adjuntos (anexos, plantillas, registros…)
+router.post('/:id/adjuntos', ensureAdmin, politicaController.subirAdjunto);
+router.get('/:id/adjuntos/:docId', politicaController.verAdjunto);
+router.post('/:id/adjuntos/:docId/eliminar', ensureAdmin, politicaController.eliminarAdjunto);
+
 module.exports = router;

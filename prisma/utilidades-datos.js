@@ -26,6 +26,7 @@ const MODELOS = [
   ['politica', 'politicas'],
   ['archivoPolitica', 'archivos_politicas'],
   ['aceptacionPolitica', 'aceptaciones_politicas'],
+  ['documentoPolitica', 'documentos_politicas'],
   ['procesoNegocio', 'procesos_negocio'],
   ['pruebaContinuidad', 'pruebas_continuidad'],
 ];
