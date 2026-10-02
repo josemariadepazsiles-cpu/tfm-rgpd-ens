@@ -36,6 +36,11 @@
                 onsubmit="return confirm('¿Emitir la declaración versión <%= d.version %>? Una vez emitida no se podrá modificar.')">
             <button type="submit" class="btn btn-success"><%- icono('badge-check', 'h-4 w-4') %>Marcar como Emitida</button>
           </form>
+          <%# Solo los borradores se pueden eliminar: las emitidas son registros formales %>
+          <form action="/declaraciones/<%= d.id %>/eliminar" method="POST"
+                onsubmit="return confirm('¿Eliminar el borrador versión <%= d.version %>? Si sustituía a una versión anterior, esta vuelve a quedar vigente.')">
+            <button type="submit" class="btn btn-danger"><%- icono('trash-2', 'h-4 w-4') %>Eliminar</button>
+          </form>
         <% } %>
       </div>
     </div>

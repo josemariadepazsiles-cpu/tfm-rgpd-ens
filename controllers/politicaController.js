@@ -278,4 +278,15 @@ const verArchivo = async (req, res, next) => {
   });
 };
 
-module.exports = { list, show, newForm, create, editForm, update, subirVersion, cambiarEstado, aceptar, verArchivo };
+// Solo administradores (la ruta usa ensureAdmin). Borra la política, sus versiones y
+// aceptaciones (en cascada) y los PDF del servidor
+const remove = async (req, res) => {
+  const politica = await buscar(req, { archivos: { select: { ruta_archivo: true } } });
+  if (!politica) return noEncontrada(res);
+  await prisma.politica.delete({ where: { id: politica.id } });
+  await Promise.all(politica.archivos.map((a) => borrarArchivo(a.ruta_archivo)));
+  req.session.flash = { tipo: 'exito', mensaje: `Documento "${politica.titulo}" eliminado.` };
+  res.redirect('/politicas');
+};
+
+module.exports = { list, show, newForm, create, editForm, update, remove, subirVersion, cambiarEstado, aceptar, verArchivo };

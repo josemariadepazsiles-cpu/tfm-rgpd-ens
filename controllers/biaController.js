@@ -258,4 +258,13 @@ const registrarPrueba = async (req, res) => {
   res.redirect(`/bia/${proceso.id}#pruebas`);
 };
 
-module.exports = { list, show, newForm, create, editForm, update, registrarPrueba };
+// Solo administradores (la ruta usa ensureAdmin). Borra el proceso y sus pruebas (en cascada)
+const remove = async (req, res) => {
+  const proceso = await buscar(req);
+  if (!proceso) return noEncontrado(res);
+  await prisma.procesoNegocio.delete({ where: { id: proceso.id } });
+  req.session.flash = { tipo: 'exito', mensaje: `Proceso "${proceso.nombre}" eliminado.` };
+  res.redirect('/bia');
+};
+
+module.exports = { list, show, newForm, create, editForm, update, remove, registrarPrueba };

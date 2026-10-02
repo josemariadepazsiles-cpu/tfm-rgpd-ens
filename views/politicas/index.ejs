@@ -74,14 +74,13 @@
               <th>Estado</th>
               <th>Próxima revisión</th>
               <th>Aceptación</th>
-              <th class="text-right">Acciones</th>
             </tr>
           </thead>
           <tbody>
             <% politicas.forEach((p) => { %>
               <tr class="hover:bg-slate-50 <%= p.estado === 'OBSOLETA' ? 'opacity-60' : '' %>">
                 <td class="px-4 py-3 max-w-sm">
-                  <a href="/politicas/<%= p.id %>" class="font-medium text-slate-800 hover:text-indigo-600 hover:underline"><%= p.titulo %></a>
+                  <a href="/politicas/<%= p.id %>" class="enlace-registro"><%= p.titulo %></a>
                 </td>
                 <td class="px-4 py-3 text-slate-600"><%= TIPOS_POLITICA[p.tipo_documento] %></td>
                 <td class="px-4 py-3 tabular-nums text-slate-700"><%= p.version %></td>
@@ -103,12 +102,6 @@
                     <span class="text-xs font-medium text-green-700">Aceptada por ti</span>
                   <% } else { %>
                     <span class="text-xs text-slate-500">Requiere aceptación</span>
-                  <% } %>
-                </td>
-                <td class="px-4 py-3 text-right whitespace-nowrap">
-                  <a href="/politicas/<%= p.id %>" class="btn-icono" title="Ver detalle" aria-label="Ver detalle"><%- icono('eye', 'h-4 w-4') %></a>
-                  <% if (esAdmin) { %>
-                    <a href="/politicas/<%= p.id %>/editar" class="ml-1 btn-icono-primario" title="Editar" aria-label="Editar"><%- icono('pencil', 'h-4 w-4') %></a>
                   <% } %>
                 </td>
               </tr>

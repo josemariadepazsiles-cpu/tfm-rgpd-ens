@@ -46,14 +46,13 @@
               <th>Implementación</th>
               <th>Generada</th>
               <th>Estado</th>
-              <th class="text-right">Acciones</th>
             </tr>
           </thead>
           <tbody>
             <% declaraciones.forEach((d) => { const pct = Number(d.porcentaje_implementacion); %>
               <tr class="hover:bg-slate-50 <%= d.estado === 'SUPERADA' ? 'opacity-60' : '' %>">
                 <td class="px-4 py-3">
-                  <a href="/declaraciones/<%= d.id %>" class="font-medium text-slate-800 hover:text-indigo-600 hover:underline"><%= d.sistema_nombre %></a>
+                  <a href="/declaraciones/<%= d.id %>" class="enlace-registro"><%= d.sistema_nombre %></a>
                   <span class="block text-xs text-slate-500"><%= d.evaluacion_nombre %></span>
                 </td>
                 <td class="px-4 py-3">
@@ -71,10 +70,6 @@
                 <td class="px-4 py-3 text-slate-600 whitespace-nowrap"><%= fechaHora(d.fecha_generacion) %></td>
                 <td class="px-4 py-3">
                   <span class="badge <%= estadoDeclaracionClases[d.estado] %>"><%= ESTADOS_DECLARACION[d.estado] %></span>
-                </td>
-                <td class="px-4 py-3 text-right whitespace-nowrap">
-                  <a href="/declaraciones/<%= d.id %>" class="btn btn-secondary btn-sm"><%- icono('eye', 'h-3.5 w-3.5') %>Ver</a>
-                  <a href="/declaraciones/<%= d.id %>/pdf" class="ml-1 btn btn-secondary btn-sm"><%- icono('download', 'h-3.5 w-3.5') %>PDF</a>
                 </td>
               </tr>
             <% }) %>

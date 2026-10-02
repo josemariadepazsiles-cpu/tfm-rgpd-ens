@@ -13,6 +13,7 @@ router.post('/', ensureAdmin, biaController.create);
 router.get('/:id', biaController.show);
 router.get('/:id/editar', biaController.editForm);
 router.post('/:id', biaController.update);
+router.post('/:id/eliminar', ensureAdmin, biaController.remove);
 router.post('/:id/pruebas', biaController.registrarPrueba);
 
 module.exports = router;

@@ -47,7 +47,15 @@
         </div>
       </div>
       <% if (editable) { %>
-        <a href="/bia/<%= p.id %>/editar" class="btn btn-primary"><%- icono('pencil', 'h-4 w-4') %>Editar ficha</a>
+        <div class="flex shrink-0 items-start gap-2">
+          <a href="/bia/<%= p.id %>/editar" class="btn btn-primary"><%- icono('pencil', 'h-4 w-4') %>Editar</a>
+          <% if (user.rol === 'ADMIN') { %>
+            <form action="/bia/<%= p.id %>/eliminar" method="POST" data-nombre="<%= p.nombre %>"
+                  onsubmit="return confirm('¿Eliminar el proceso «' + this.dataset.nombre + '»?<%= p.pruebas.length ? ' Se borrarán también sus ' + p.pruebas.length + ' pruebas de continuidad.' : '' %> Esta acción no se puede deshacer.')">
+              <button type="submit" class="btn btn-danger"><%- icono('trash-2', 'h-4 w-4') %>Eliminar</button>
+            </form>
+          <% } %>
+        </div>
       <% } %>
     </div>
 

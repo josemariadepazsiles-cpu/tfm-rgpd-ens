@@ -39,7 +39,11 @@
           <a href="<%= urlArchivo(vigente) %>" target="_blank" rel="noopener" class="btn btn-secondary"><%- icono('eye', 'h-4 w-4') %>Ver documento</a>
         <% } %>
         <% if (esAdmin) { %>
-          <a href="/politicas/<%= p.id %>/editar" class="btn btn-secondary"><%- icono('pencil', 'h-4 w-4') %>Editar datos</a>
+          <a href="/politicas/<%= p.id %>/editar" class="btn btn-primary"><%- icono('pencil', 'h-4 w-4') %>Editar</a>
+          <form action="/politicas/<%= p.id %>/eliminar" method="POST" data-nombre="<%= p.titulo %>"
+                onsubmit="return confirm('¿Eliminar definitivamente «' + this.dataset.nombre + '»? Se borrarán también sus versiones en PDF y el registro de aceptaciones. Si el documento ya no está vigente, puedes marcarlo como «Obsoleta» para conservarlo. Esta acción no se puede deshacer.')">
+            <button type="submit" class="btn btn-danger"><%- icono('trash-2', 'h-4 w-4') %>Eliminar</button>
+          </form>
         <% } %>
       </div>
     </div>

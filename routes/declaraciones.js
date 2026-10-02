@@ -11,5 +11,6 @@ router.get('/:id', declaracionController.show);
 router.get('/:id/pdf', declaracionController.pdf);
 router.post('/:id', ensureAdmin, declaracionController.actualizarObservaciones);
 router.post('/:id/emitir', ensureAdmin, declaracionController.emitir);
+router.post('/:id/eliminar', ensureAdmin, declaracionController.remove);
 
 module.exports = router;

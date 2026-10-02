@@ -28,18 +28,11 @@
             <% g.controles.forEach((c) => { %>
               <li class="flex flex-wrap items-center justify-between gap-3 px-6 py-3">
                 <div class="min-w-0 flex-1">
-                  <span class="text-slate-800"><%= c.nombre %></span>
+                  <a href="/controles/<%= c.id %>/editar" class="enlace-registro"><%= c.nombre %></a>
                   <span class="ml-2 text-xs text-slate-400">evaluado en <%= c._count.evaluaciones %> evaluación(es)</span>
                   <% if (c.descripcion) { %>
                     <p class="mt-0.5 line-clamp-2 max-w-3xl text-xs text-slate-500" title="<%= c.descripcion %>"><%= c.descripcion %></p>
                   <% } %>
-                </div>
-                <div class="flex shrink-0 gap-2 text-sm">
-                  <a href="/controles/<%= c.id %>/editar" class="btn btn-secondary btn-sm"><%- icono('pencil', 'h-3.5 w-3.5') %>Editar</a>
-                  <form action="/controles/<%= c.id %>/eliminar" method="POST" data-nombre="<%= c.nombre %>"
-                        onsubmit="return confirm('¿Eliminar «' + this.dataset.nombre + '» del catálogo?')">
-                    <button type="submit" class="btn btn-danger btn-sm"><%- icono('trash-2', 'h-3.5 w-3.5') %>Eliminar</button>
-                  </form>
                 </div>
               </li>
             <% }) %>

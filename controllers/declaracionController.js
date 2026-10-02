@@ -142,4 +142,30 @@ const pdf = async (req, res) => {
   escribirPdf(declaracion, res);
 };
 
-module.exports = { list, show, generar, actualizarObservaciones, emitir, pdf };
+// Solo administradores y solo borradores (las declaraciones emitidas son registros formales).
+// Si el borrador era la última versión, la versión anterior que había superado recupera su
+// estado (Emitida si tenía fecha de emisión; si no, Borrador).
+const remove = async (req, res) => {
+  const declaracion = await buscar(req);
+  if (!declaracion) return noEncontrada(res);
+  if (declaracion.estado !== 'BORRADOR') {
+    req.session.flash = { tipo: 'error', mensaje: 'Solo se pueden eliminar declaraciones en Borrador.' };
+    return res.redirect(`/declaraciones/${declaracion.id}`);
+  }
+  await prisma.$transaction(async (tx) => {
+    await tx.declaracionConformidad.delete({ where: { id: declaracion.id } });
+    const posterior = await tx.declaracionConformidad.findFirst({ where: { sistema_id: declaracion.sistema_id, version: { gt: declaracion.version } } });
+    if (posterior) return;
+    const anterior = await tx.declaracionConformidad.findFirst({
+      where: { sistema_id: declaracion.sistema_id, version: { lt: declaracion.version } },
+      orderBy: { version: 'desc' },
+    });
+    if (anterior && anterior.estado === 'SUPERADA') {
+      await tx.declaracionConformidad.update({ where: { id: anterior.id }, data: { estado: anterior.fecha_emision ? 'EMITIDA' : 'BORRADOR' } });
+    }
+  });
+  req.session.flash = { tipo: 'exito', mensaje: `Borrador v${declaracion.version} de ${declaracion.sistema_nombre} eliminado.` };
+  res.redirect('/declaraciones');
+};
+
+module.exports = { list, show, generar, actualizarObservaciones, emitir, pdf, remove };

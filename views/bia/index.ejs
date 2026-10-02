@@ -71,14 +71,13 @@
               <th>RPO</th>
               <th>Estado de revisión</th>
               <th>Alertas</th>
-              <th class="text-right">Acciones</th>
             </tr>
           </thead>
           <tbody>
             <% procesos.forEach((p) => { %>
               <tr class="hover:bg-slate-50">
                 <td class="px-4 py-3">
-                  <a href="/bia/<%= p.id %>" class="font-medium text-slate-800 hover:text-indigo-600 hover:underline"><%= p.nombre %></a>
+                  <a href="/bia/<%= p.id %>" class="enlace-registro"><%= p.nombre %></a>
                   <% if (p.sistema) { %><span class="block text-xs text-slate-500">Sistema: <%= p.sistema.nombre %></span><% } %>
                 </td>
                 <td class="px-4 py-3 text-slate-600"><%= p.departamento_responsable %></td>
@@ -97,12 +96,6 @@
                       <span class="badge <%= alertaBiaClases[a.nivel] %>" title="<%= a.detalle %>"><%= a.nivel === 'rojo' ? '⚠ ' : '' %><%= a.texto %></span>
                     <% }) %>
                   </div>
-                </td>
-                <td class="px-4 py-3 text-right whitespace-nowrap">
-                  <a href="/bia/<%= p.id %>" class="btn btn-secondary btn-sm"><%- icono('eye', 'h-3.5 w-3.5') %>Ver</a>
-                  <% if (p.editable) { %>
-                    <a href="/bia/<%= p.id %>/editar" class="ml-1 btn btn-primary btn-sm"><%- icono('pencil', 'h-3.5 w-3.5') %>Editar</a>
-                  <% } %>
                 </td>
               </tr>
             <% }) %>

@@ -46,13 +46,21 @@
           <span class="shrink-0 tabular-nums" x-text="n + ' / <%= maxDescripcion %>'"><%= (control.descripcion || '').length %> / <%= maxDescripcion %></span>
         </p>
       </div>
-      <div class="flex justify-end gap-3 pt-2">
+      <div class="flex flex-wrap items-center justify-end gap-3 pt-2">
+        <% if (control.id) { %>
+          <%# Formulario de borrado fuera de este (ver más abajo), enlazado con el atributo form %>
+          <button type="submit" form="form-eliminar" class="btn btn-danger mr-auto"><%- icono('trash-2', 'h-4 w-4') %>Eliminar</button>
+        <% } %>
         <a href="/controles" class="btn btn-secondary">Cancelar</a>
         <button type="submit" class="btn btn-primary">
           <%= control.id ? 'Guardar cambios' : 'Crear control' %>
         </button>
       </div>
     </form>
+    <% if (control.id) { %>
+      <form id="form-eliminar" action="/controles/<%= control.id %>/eliminar" method="POST" data-nombre="<%= control.nombre %>"
+            onsubmit="return confirm('¿Eliminar «' + this.dataset.nombre + '» del catálogo? Si ya se ha evaluado en algún sistema no se podrá eliminar, para no perder su histórico.')"></form>
+    <% } %>
   </main>
 </body>
 </html>

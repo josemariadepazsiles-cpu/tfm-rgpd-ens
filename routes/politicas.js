@@ -12,6 +12,7 @@ router.post('/', ensureAdmin, politicaController.create);
 router.get('/:id', politicaController.show);
 router.get('/:id/editar', ensureAdmin, politicaController.editForm);
 router.post('/:id', ensureAdmin, politicaController.update);
+router.post('/:id/eliminar', ensureAdmin, politicaController.remove);
 router.post('/:id/versiones', ensureAdmin, politicaController.subirVersion);
 router.post('/:id/estado', ensureAdmin, politicaController.cambiarEstado);
 router.post('/:id/aceptar', politicaController.aceptar);
