@@ -1,3 +1,5 @@
+// Rutas del Registro de Actividades de Tratamiento (/rat). Un Usuario solo ve y edita las
+// actividades de las que es responsable (lo filtra el controlador); eliminar es del Administrador.
 const express = require('express');
 const ratController = require('../controllers/ratController');
 const { ensureAuthenticated, ensureAdmin } = require('../middlewares/auth');

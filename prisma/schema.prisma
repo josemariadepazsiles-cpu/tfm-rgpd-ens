@@ -9,6 +9,7 @@ datasource db {
 }
 
 // Bases de licitud del art. 6.1 RGPD
+/// Base de licitud del tratamiento (art. 6.1 RGPD) de una actividad del RAT.
 enum BaseLegal {
   CONSENTIMIENTO
   CONTRATO
@@ -18,12 +19,14 @@ enum BaseLegal {
   INTERES_LEGITIMO
 }
 
+/// Probabilidad de que se materialice una amenaza (eje vertical de la matriz de riesgo).
 enum Probabilidad {
   BAJA
   MEDIA
   ALTA
 }
 
+/// Impacto si se materializa la amenaza (eje horizontal de la matriz de riesgo).
 enum Impacto {
   BAJO
   MEDIO
@@ -31,6 +34,7 @@ enum Impacto {
 }
 
 // Calculado a partir de probabilidad x impacto (ver lib/riesgo.js)
+/// Nivel de riesgo resultante; lo calcula siempre el servidor (probabilidad × impacto).
 enum NivelRiesgo {
   BAJO
   MEDIO
@@ -38,12 +42,14 @@ enum NivelRiesgo {
 }
 
 // Categoría del sistema según el ENS (RD 311/2022)
+/// Categoría ENS (Básica/Media/Alta) de un sistema o de un control del catálogo.
 enum CategoriaEns {
   BAJA
   MEDIA
   ALTA
 }
 
+/// Estado de un control en una evaluación; «No aplicable» no cuenta en el % de cumplimiento.
 enum EstadoControl {
   IMPLEMENTADO
   PENDIENTE
@@ -51,12 +57,14 @@ enum EstadoControl {
 }
 
 // Dimensión de seguridad afectada por la brecha (Dictamen 9/2022 EDPB)
+/// Dimensión de seguridad afectada: confidencialidad, integridad o disponibilidad.
 enum TipoIncidente {
   CONFIDENCIALIDAD
   INTEGRIDAD
   DISPONIBILIDAD
 }
 
+/// Gravedad de un incidente (Baja a Crítica).
 enum GravedadIncidente {
   BAJA
   MEDIA
@@ -64,6 +72,7 @@ enum GravedadIncidente {
   CRITICA
 }
 
+/// Ciclo de vida de un incidente; todos menos Cerrado cuentan como activos.
 enum EstadoIncidente {
   ABIERTO
   EN_INVESTIGACION
@@ -73,6 +82,7 @@ enum EstadoIncidente {
 }
 
 // Derechos de los interesados (arts. 15 a 22 RGPD)
+/// Derecho ejercido por el interesado (acceso, rectificación, supresión…).
 enum TipoDerecho {
   ACCESO
   RECTIFICACION
@@ -82,6 +92,7 @@ enum TipoDerecho {
   PORTABILIDAD
 }
 
+/// Canal por el que llegó la solicitud de derechos.
 enum CanalEntrada {
   EMAIL
   FORMULARIO_WEB
@@ -90,6 +101,7 @@ enum CanalEntrada {
   OTRO
 }
 
+/// Estado de tramitación de una solicitud; Estimada y Denegada son estados resueltos.
 enum EstadoSolicitud {
   RECIBIDA
   VERIFICACION_IDENTIDAD
@@ -100,6 +112,7 @@ enum EstadoSolicitud {
 }
 
 // Encargados del tratamiento / proveedores (art. 28 RGPD)
+/// Garantía para transferencias fuera del EEE (arts. 44-49 RGPD); NO_APLICA si no hay transferencia.
 enum MecanismoTransferencia {
   NO_APLICA
   CLAUSULAS_TIPO
@@ -108,6 +121,7 @@ enum MecanismoTransferencia {
   OTRO
 }
 
+/// Nivel de certificación ENS declarado por el proveedor.
 enum NivelEnsProveedor {
   NO_APLICA
   BASICO
@@ -116,12 +130,14 @@ enum NivelEnsProveedor {
   NO_ACREDITADO
 }
 
+/// Situación del proveedor; los dados de baja no generan avisos.
 enum EstadoProveedor {
   ACTIVO
   EN_REVISION
   BAJA
 }
 
+/// Tipo de documento adjunto a un proveedor.
 enum TipoDocumentoProveedor {
   CONTRATO
   ANEXO
@@ -130,6 +146,7 @@ enum TipoDocumentoProveedor {
   OTRO
 }
 
+/// Borrador (editable), Emitida (definitiva) o Superada (por una versión posterior).
 enum EstadoDeclaracion {
   BORRADOR
   EMITIDA
@@ -137,6 +154,7 @@ enum EstadoDeclaracion {
 }
 
 // Políticas y documentación normativa de seguridad (ENS, marco organizativo)
+/// Tipo de documento normativo.
 enum TipoPolitica {
   POLITICA
   PROCEDIMIENTO
@@ -145,6 +163,7 @@ enum TipoPolitica {
   OTRO
 }
 
+/// Ciclo de vida de una política; solo las Aprobadas las ven y aceptan los usuarios.
 enum EstadoPolitica {
   BORRADOR
   PENDIENTE_APROBACION
@@ -153,6 +172,7 @@ enum EstadoPolitica {
 }
 
 // Análisis de Impacto en el Negocio (BIA) y continuidad (ENS, op.cont)
+/// Criticidad de un proceso de negocio; Alta y Crítica activan los avisos de continuidad.
 enum CriticidadProceso {
   BAJA
   MEDIA
@@ -160,6 +180,7 @@ enum CriticidadProceso {
   CRITICA
 }
 
+/// Avance del análisis BIA de un proceso, hasta tener plan de contingencia definido.
 enum EstadoRevisionBia {
   PENDIENTE_ANALISIS
   ANALIZADO
@@ -167,23 +188,27 @@ enum EstadoRevisionBia {
   PLAN_DEFINIDO
 }
 
+/// Alcance de una prueba de continuidad.
 enum TipoPruebaContinuidad {
   SIMULACRO_DOCUMENTAL
   PRUEBA_PARCIAL
   PRUEBA_COMPLETA
 }
 
+/// Resultado de una prueba de continuidad.
 enum ResultadoPrueba {
   SATISFACTORIO
   CON_INCIDENCIAS
   FALLIDO
 }
 
+/// Rol de un usuario: Administrador o Usuario.
 enum Rol {
   ADMIN
   USUARIO
 }
 
+/// Persona con acceso a la aplicación; se desactiva en lugar de borrarse para conservar su historial.
 model Usuario {
   id            Int     @id @default(autoincrement())
   nombre        String
@@ -224,6 +249,7 @@ model Usuario {
   @@map("usuarios")
 }
 
+/// Actividad de tratamiento del Registro de Actividades (art. 30 RGPD).
 model ActividadRat {
   id                     Int       @id @default(autoincrement())
   nombre                 String
@@ -250,6 +276,7 @@ model ActividadRat {
   @@map("actividades_rat")
 }
 
+/// Riesgo de una actividad de tratamiento con su nivel calculado.
 model Riesgo {
   id                  Int          @id @default(autoincrement())
   actividad_id        Int
@@ -272,6 +299,7 @@ model Riesgo {
 }
 
 // Catálogo de controles ENS; se evalúan todos en cada evaluación de cada sistema
+/// Control del catálogo ENS. FALLO DETECTADO: el comentario «//» de arriba quedó desactualizado; cada evaluación tiene ahora su propia foto de controles.
 model ControlEns {
   id          Int          @id @default(autoincrement())
   nombre      String       @unique
@@ -288,6 +316,7 @@ model ControlEns {
 }
 
 // Sistema de información de la organización que se evalúa frente al ENS
+/// Sistema de información: eje al que se asocian evaluaciones ENS e información RGPD y BIA.
 model Sistema {
   id                Int           @id @default(autoincrement())
   nombre            String        @unique
@@ -315,6 +344,7 @@ model Sistema {
   @@map("sistemas")
 }
 
+/// Evaluación ENS de un sistema en un momento dado (foto de los controles al crearla).
 model Evaluacion {
   id            Int      @id @default(autoincrement())
   sistema_id    Int
@@ -332,6 +362,7 @@ model Evaluacion {
 }
 
 // Estado de un control dentro de una evaluación. Si no existe la fila, el control está Pendiente
+/// Estado de un control en una evaluación. FALLO DETECTADO: el comentario «//» de arriba quedó desactualizado; ahora toda evaluación tiene una fila por control.
 model EvaluacionControl {
   id             Int           @id @default(autoincrement())
   evaluacion_id  Int
@@ -352,6 +383,7 @@ model EvaluacionControl {
 }
 
 // Registro de cada cambio de estado (trazabilidad)
+/// Cambio de estado de un control en una evaluación: quién, cuándo, de qué a qué.
 model HistorialEstado {
   id                    Int           @id @default(autoincrement())
   evaluacion_control_id Int
@@ -368,6 +400,7 @@ model HistorialEstado {
 }
 
 // Incidentes de seguridad y brechas de datos personales (arts. 33 y 34 RGPD)
+/// Incidente de seguridad o brecha de datos personales; la notificación a la AEPD vence 72 h después de la detección.
 model Incidente {
   id                              Int               @id @default(autoincrement())
   titulo                          String
@@ -403,6 +436,7 @@ model Incidente {
 }
 
 // Registro de cada cambio de estado de un incidente (trazabilidad)
+/// Cambio de estado de un incidente.
 model HistorialIncidente {
   id              Int             @id @default(autoincrement())
   incidente_id    Int
@@ -419,6 +453,7 @@ model HistorialIncidente {
 }
 
 // Solicitudes de ejercicio de derechos de los interesados (art. 12 RGPD)
+/// Solicitud de un interesado; la fecha límite es 1 mes desde la recepción (3 si se amplía).
 model SolicitudDerecho {
   id                   Int             @id @default(autoincrement())
   nombre_solicitante   String
@@ -458,6 +493,7 @@ model SolicitudDerecho {
 }
 
 // Registro de cada cambio de estado de una solicitud (y de la ampliación del plazo)
+/// Cambio de estado (o de plazo) de una solicitud de derechos.
 model HistorialSolicitudDerecho {
   id              Int             @id @default(autoincrement())
   solicitud_id    Int
@@ -476,6 +512,7 @@ model HistorialSolicitudDerecho {
 }
 
 // Encargados del tratamiento: proveedores con acceso a datos personales (art. 28 RGPD)
+/// Proveedor o encargado del tratamiento.
 model Proveedor {
   id                        Int                    @id @default(autoincrement())
   nombre_empresa            String
@@ -509,6 +546,7 @@ model Proveedor {
 }
 
 // PDF adjuntos a un proveedor. El archivo se guarda en uploads/ (fuera del repositorio)
+/// Documento PDF de un proveedor (contrato, anexo, certificado…).
 model DocumentoProveedor {
   id                      Int                    @id @default(autoincrement())
   proveedor_id            Int
@@ -529,6 +567,7 @@ model DocumentoProveedor {
 }
 
 // Declaración de Conformidad ENS: foto fija del checklist de una evaluación del sistema
+/// Declaración de Conformidad ENS de un sistema: versión con la foto fija de una evaluación.
 model DeclaracionConformidad {
   id                             Int               @id @default(autoincrement())
   sistema_id                     Int
@@ -568,6 +607,7 @@ model DeclaracionConformidad {
 }
 
 // Estado de cada control en el momento de generar la declaración (no cambia después)
+/// Copia congelada de un control en una declaración.
 model DetalleDeclaracionControl {
   id                Int           @id @default(autoincrement())
   declaracion_id    Int
@@ -585,6 +625,7 @@ model DetalleDeclaracionControl {
 }
 
 // Documento normativo (PSI, procedimientos, instrucciones técnicas, normativas internas)
+/// Política o documento normativo de seguridad, general o de un sistema.
 model Politica {
   id                     Int            @id @default(autoincrement())
   titulo                 String
@@ -616,6 +657,7 @@ model Politica {
 }
 
 // PDF de cada versión de una política; las anteriores quedan como históricas
+/// PDF de una versión de una política.
 model ArchivoPolitica {
   id                      Int      @id @default(autoincrement())
   politica_id             Int
@@ -635,6 +677,7 @@ model ArchivoPolitica {
 }
 
 // Registro de lectura y aceptación de una versión concreta por un usuario
+/// Aceptación de una versión concreta de una política por un usuario.
 model AceptacionPolitica {
   id               Int      @id @default(autoincrement())
   politica_id      Int
@@ -651,6 +694,7 @@ model AceptacionPolitica {
 }
 
 // Proceso de negocio evaluado en el BIA
+/// Proceso de negocio del BIA con su impacto, RTO, RPO y plan de continuidad.
 model ProcesoNegocio {
   id                          Int               @id @default(autoincrement())
   sistema_id                  Int?
@@ -684,6 +728,7 @@ model ProcesoNegocio {
 }
 
 // Simulacros y pruebas periódicas del plan de continuidad de un proceso
+/// Prueba del plan de continuidad de un proceso; la última debe tener menos de 12 meses.
 model PruebaContinuidad {
   id               Int                   @id @default(autoincrement())
   proceso_id       Int
@@ -702,6 +747,7 @@ model PruebaContinuidad {
 }
 
 // Datos de la organización (una sola fila): se muestran en la cabecera de todas las pantallas
+/// Ficha de la empresa (una sola fila).
 model Organizacion {
   id                      Int           @id @default(autoincrement())
   nombre                  String
@@ -726,6 +772,7 @@ model Organizacion {
   @@map("organizacion")
 }
 
+/// Tipo de documento adjunto a una solicitud de derechos.
 enum TipoDocumentoSolicitud {
   IDENTIFICACION
   ESCRITO_SOLICITUD
@@ -735,6 +782,7 @@ enum TipoDocumentoSolicitud {
 }
 
 // Documentos asociados a una solicitud de derechos (copia del DNI, escrito, respuesta…)
+/// Documento PDF de una solicitud de derechos.
 model DocumentoSolicitudDerecho {
   id                      Int                    @id @default(autoincrement())
   solicitud_id            Int
@@ -753,6 +801,7 @@ model DocumentoSolicitudDerecho {
   @@map("documentos_solicitudes_derechos")
 }
 
+/// Tipo de documento adjunto a una política.
 enum TipoDocumentoPolitica {
   ANEXO
   PLANTILLA
@@ -763,6 +812,7 @@ enum TipoDocumentoPolitica {
 
 // Documentos adjuntos a una política (anexos, plantillas, registros, evidencias…),
 // distintos de las versiones del propio documento (ArchivoPolitica)
+/// Documento adjunto a una política (anexo, plantilla, registro…).
 model DocumentoPolitica {
   id                      Int                   @id @default(autoincrement())
   politica_id             Int
@@ -783,6 +833,7 @@ model DocumentoPolitica {
 
 // Sistemas en los que trabaja cada usuario: determina qué políticas de sistema debe aceptar
 // (las políticas generales las aceptan todos los usuarios activos)
+/// Sistemas en los que trabaja cada usuario: deciden qué políticas de sistema debe aceptar.
 model UsuarioSistema {
   id         Int @id @default(autoincrement())
   usuario_id Int

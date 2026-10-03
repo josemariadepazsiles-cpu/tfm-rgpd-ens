@@ -1,3 +1,5 @@
+// Rutas de incidentes y brechas de seguridad (/incidentes): alta, edición, cambios de estado e
+// historial.
 const express = require('express');
 const incidenteController = require('../controllers/incidenteController');
 const { ensureAuthenticated } = require('../middlewares/auth');

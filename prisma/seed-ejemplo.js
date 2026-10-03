@@ -30,14 +30,28 @@ if (!process.argv.includes('--confirmar')) {
 const DIA = 24 * 3600 * 1000;
 const AHORA = new Date();
 // Fecha de hace `dias` días a la hora indicada (hora local)
+/**
+ * @param {number} dias Negativo = en el futuro
+ * @param {number} [hora]
+ * @param {number} [min]
+ * @returns {Date}
+ */
 const hace = (dias, hora = 10, min = 0) => {
   const d = new Date(AHORA.getTime() - dias * DIA);
   d.setHours(hora, min, 0, 0);
   return d;
 };
+/**
+ * @param {number} dias
+ * @returns {Date} Dentro de «dias» días, a las 12:00
+ */
 const enDias = (dias) => hace(-dias, 12);
 // Generador pseudoaleatorio con semilla: el ejemplo sale siempre igual
 let semilla = 20260601;
+/**
+ * Mulberry32: con la misma semilla genera siempre la misma secuencia.
+ * @returns {number} Entre 0 (incluido) y 1 (excluido)
+ */
 const azar = () => {
   semilla = (semilla + 0x6d2b79f5) | 0;
   let t = Math.imul(semilla ^ (semilla >>> 15), 1 | semilla);
@@ -73,6 +87,7 @@ const USUARIOS = {
   finanzas: { nombre: 'Carmen Vidal Ochoa', area: 'Área financiera', rol: 'USUARIO', cargo: 'Directora financiera' },
   nominas: { nombre: 'Sergio Navas Prieto', area: 'Área financiera', rol: 'USUARIO', cargo: 'Técnico de nóminas y administración' },
 };
+// Contraseña común de la plantilla ficticia (conocida a propósito, para la demostración)
 const CLAVE_EJEMPLO = 'Ejemplo2026';
 
 // ---------------------------------------------------------------------------
@@ -134,6 +149,10 @@ const EVIDENCIAS = {
   'mp.info.6': 'Copias diarias 3-2-1 con prueba de restauración trimestral',
   'mp.si.2': 'Cifrado AES-256 de discos y bases de datos',
 };
+/**
+ * @param {string} nombre p. ej. 'op.acc.3 Segregación de funciones'
+ * @returns {string} Código de la medida ('op.acc.3')
+ */
 const codigo = (nombre) => nombre.split(' ')[0];
 
 // ---------------------------------------------------------------------------
@@ -155,6 +174,11 @@ const SISTEMAS = [
 ];
 
 // ---------------------------------------------------------------------------
+/**
+ * Carga completa del ejemplo, por pasos numerados (1 a 12). Usa la lógica real de la app donde
+ * importa (p. ej. generarDeclaracion) para que los datos sean coherentes.
+ * @returns {Promise<void>}
+ */
 async function main() {
   // 1) Vaciar datos conservando las cuentas de usuario existentes (salvo las de ejemplo anteriores)
   const tablas = MODELOS.filter(([m]) => m !== 'usuario').map(([, t]) => `"${t}"`).join(', ');
@@ -162,6 +186,7 @@ async function main() {
   for (const d of [DOMINIO, ...DOMINIOS_ANTERIORES]) await prisma.usuario.deleteMany({ where: { email: { endsWith: '@' + d } } });
 
   // 2) Usuarios: administrador de acceso garantizado + plantilla ficticia de la empresa
+  // Cuenta de acceso garantizado de la demo; el script se niega a ejecutarse en producción
   const hashAdmin = await bcrypt.hash('admin1234', 12);
   const admin = await prisma.usuario.upsert({
     where: { email: 'admin@test.com' },

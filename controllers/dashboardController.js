@@ -1,3 +1,5 @@
+// Panel de control: tarjetas de resumen, acciones pendientes, bloques RGPD y ENS y actividad
+// reciente, para toda la organización o para un sistema concreto.
 const { obtenerMetricas } = require('../lib/dashboard');
 const { recomendaciones, NIVEL_ESTILO } = require('../lib/asistente');
 const { CATEGORIAS, ESTADOS } = require('../lib/ens');
@@ -14,7 +16,17 @@ const { diasNaturalesEntre } = require('../lib/formato');
 
 const PRIORIDAD = { critico: 0, atencion: 1, info: 2 };
 const DIA = 24 * 3600 * 1000;
+/**
+ * @param {number} n
+ * @param {string} uno
+ * @param {string} varios
+ * @returns {string}
+ */
 const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
+/**
+ * @param {string} [href]
+ * @returns {string} Área (rgpd, ens o neutro) del módulo al que apunta el enlace
+ */
 const areaDeEnlace = (href = '') => areaDeRuta(href.split(/[?#]/)[0]);
 
 // Recomendaciones del asistente que ya cubren, con más detalle, las alertas de cada módulo
@@ -31,6 +43,12 @@ const CUBIERTAS_POR_ALERTAS = {
 // Ámbito de cada acción (se muestra junto al título):
 //   { sistema: { id, nombre } } · { transversal: true } (no depende de un sistema) · { organizacion: true } (recuento de varios)
 const MODULOS_TRANSVERSALES = ['/proveedores', '/politicas'];
+/**
+ * @param {string} href Enlace de la recomendación
+ * @param {object} m Métricas
+ * @param {object|null} sistemaSel Sistema elegido en el panel
+ * @returns {object} Ámbito a mostrar junto al título
+ */
 const ambitoRecomendacion = (href, m, sistemaSel) => {
   const ruta = href.split(/[?#]/)[0];
   if (MODULOS_TRANSVERSALES.some((t) => ruta === t || ruta.startsWith(t + '/'))) return { transversal: true };
@@ -42,6 +60,13 @@ const ambitoRecomendacion = (href, m, sistemaSel) => {
   return sistemaSel ? { sistema: { id: sistemaSel.id, nombre: sistemaSel.nombre } } : { organizacion: true };
 };
 
+/**
+ * @param {object} vista Vista del panel (todos los sistemas o uno)
+ * @param {object[]} recs Recomendaciones del asistente
+ * @param {object} m Métricas
+ * @param {object|null} sistemaSel
+ * @returns {object[]} Acciones ordenadas por urgencia
+ */
 const construirAcciones = (vista, recs, m, sistemaSel) => {
   const modulosConAlertas = new Set(vista.alertas.map((a) => a.modulo));
   const acciones = [
@@ -71,6 +96,13 @@ const construirAcciones = (vista, recs, m, sistemaSel) => {
 };
 
 // Próximo plazo que vence (aún no vencido): alertas con fecha límite y próxima solicitud de derechos
+/**
+ * @param {object} vista
+ * @param {object} m
+ * @param {object} TIPOS Etiquetas de los tipos de derecho
+ * @param {Date} [ahora]
+ * @returns {object|null} { fecha, texto, href, plazo, area }
+ */
 const proximoVencimiento = (vista, m, TIPOS, ahora = new Date()) => {
   const candidatos = vista.alertas
     .filter((a) => a.vence && new Date(a.vence) > ahora)
@@ -86,6 +118,10 @@ const proximoVencimiento = (vista, m, TIPOS, ahora = new Date()) => {
 };
 
 // "José María de Paz Siles" → "José María" (hasta la primera partícula, máximo dos palabras)
+/**
+ * @param {string} [nombre]
+ * @returns {string}
+ */
 const nombrePila = (nombre = '') => {
   const partes = [];
   for (const p of nombre.split(/\s+/)) {
@@ -97,6 +133,11 @@ const nombrePila = (nombre = '') => {
 
 // Panel de control ejecutivo. Arriba, la visión global de la organización; debajo, «Ver por
 // sistema»: con ?sistema=ID todo el resto del panel se limita a ese sistema.
+/**
+ * GET /dashboard · cualquier usuario con sesión (RAT, riesgos y políticas según sus permisos). Con ?sistema=ID el panel se limita a ese sistema.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const index = async (req, res) => {
   const id = idValido(req.query.sistema);
   // El panel por sistema se calcula para todos los sistemas a la vez (consultas agregadas);

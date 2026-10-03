@@ -1,3 +1,5 @@
+// Rutas de proveedores / encargados del tratamiento (/proveedores) y sus documentos.
+// Alta, edición y baja: Administrador; documentos: Administrador o responsable del proveedor.
 const express = require('express');
 const proveedorController = require('../controllers/proveedorController');
 const { ensureAuthenticated, ensureAdmin } = require('../middlewares/auth');

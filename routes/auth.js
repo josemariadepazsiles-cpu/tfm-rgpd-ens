@@ -1,3 +1,4 @@
+// Rutas de sesión: login, logout y la dirección antigua /registro (montadas en «/», ver app.js).
 const express = require('express');
 const authController = require('../controllers/authController');
 const { ensureAuthenticated, ensureAdmin, ensureGuest } = require('../middlewares/auth');

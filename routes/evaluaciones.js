@@ -1,3 +1,5 @@
+// Rutas de las evaluaciones ENS (/evaluaciones): checklist de controles de una evaluación,
+// cambios por control y generación de la Declaración de Conformidad. Se crean desde /sistemas.
 const express = require('express');
 const evaluacionController = require('../controllers/evaluacionController');
 const declaracionController = require('../controllers/declaracionController');

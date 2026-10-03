@@ -1,3 +1,6 @@
+// Catálogo de bases de legitimación del RGPD usado por el Registro de Actividades (RAT):
+// relaciona cada valor guardado en la base de datos con el texto que se muestra al usuario.
+
 // Valores del enum BaseLegal de Prisma (art. 6.1 RGPD) y su etiqueta
 const BASES_LEGALES = {
   CONSENTIMIENTO: 'Consentimiento del interesado (art. 6.1.a)',

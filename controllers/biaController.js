@@ -1,3 +1,4 @@
+// BIA y continuidad: procesos de negocio con su impacto, RTO/RPO, plan de continuidad y pruebas.
 const prisma = require('../lib/prisma');
 const { esAdmin, esAdminOResponsable, idValido, idDeFormulario } = require('../lib/permisos');
 const { desdeInputFecha, desdeInputFechaHora } = require('../lib/formato');
@@ -11,35 +12,68 @@ const { LIMITES, excesos } = require('../lib/validacion');
 // Cualquier usuario autenticado puede consultar el BIA. Crear procesos es solo para el
 // Administrador; editar la ficha y registrar pruebas, para el Administrador o el
 // responsable asignado; asignar el responsable, solo para el Administrador.
+// FALLO DETECTADO (comentario desactualizado): la línea siguiente ya no es cierta; existe la
+// acción «remove», que borra el proceso y sus pruebas (ver al final del archivo).
 // Procesos y pruebas no se eliminan (registro de auditoría).
 
 const usuarioSelect = { select: { id: true, nombre: true } };
 const opciones = { CRITICIDADES, ESTADOS_REVISION_BIA, TIPOS_PRUEBA, RESULTADOS_PRUEBA, formatoHoras };
 const HORAS_MAXIMAS = 99999; // límite de Decimal(8, 2)
 
+/**
+ * @param {import('express').Response} res
+ */
 const noEncontrado = (res) =>
   res.status(404).render('error', { title: 'Proceso no encontrado', mensaje: 'El proceso de negocio no existe.' });
 
+/**
+ * Responde 403: solo el Administrador o el responsable asignado.
+ * @param {import('express').Response} res
+ */
 const sinPermiso = (res) =>
   res.status(403).render('error', {
     title: 'Acceso denegado',
     mensaje: 'Solo el Administrador o el responsable asignado pueden modificar este proceso.',
   });
 
+/**
+ * @param {import('express').Request} req
+ * @param {object} [include]
+ * @returns {Promise<object|null>|null} Registro de :id, o null
+ */
 const buscar = (req, include = {}) => {
   const id = idValido(req.params.id);
   return id ? prisma.procesoNegocio.findUnique({ where: { id }, include }) : null;
 };
 
+/**
+ * @param {unknown} valor
+ * @returns {string}
+ */
 const texto = (valor) => (typeof valor === 'string' ? valor.trim() : '');
+/**
+ * @param {object} mapa Valores válidos (claves)
+ * @param {unknown} valor
+ * @returns {boolean}
+ */
 const esOpcion = (mapa, valor) => Object.hasOwn(mapa, valor ?? '');
 
 // "4", "0,5" o "72.25" → número de horas, o NaN
+/**
+ * Admite coma o punto decimal y hasta 2 decimales.
+ * @param {unknown} valor
+ * @returns {number|null} null si está vacío; NaN si no es válido
+ */
 const leerHoras = (valor) => {
   const t = texto(valor).replace(',', '.');
   return /^\d+(\.\d{1,2})?$/.test(t) ? Number(t) : NaN;
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {object|null} actual
+ * @returns {Promise<{ datos: object, errores: string[] }>}
+ */
 const leerFormulario = async (req, actual) => {
   const largos = excesos(req.body, LIMITES.bia);
   const { body, user } = req;
@@ -59,6 +93,8 @@ const leerFormulario = async (req, actual) => {
     sistema_id: idDeFormulario(body.sistema_id),
     fecha_ultimo_analisis: null,
   };
+// FALLO DETECTADO (menor): el responsable solo se valida que exista; puede asignarse un usuario
+// desactivado (los desplegables de responsable tampoco filtran por activo).
   if (esAdmin(user)) datos.responsable_id = idDeFormulario(body.responsable_id);
 
   if (!datos.nombre) errores.push('El nombre del proceso es obligatorio.');
@@ -93,6 +129,11 @@ const leerFormulario = async (req, actual) => {
   return { datos, errores };
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {{ proceso: object, errores?: string[], status?: number }} opciones
+ */
 const renderFormulario = async (req, res, { proceso, errores = [], status = 200 }) => {
   const [sistemas, usuarios] = await Promise.all([
     prisma.sistema.findMany({ select: { id: true, nombre: true }, orderBy: { nombre: 'asc' } }),
@@ -111,6 +152,10 @@ const renderFormulario = async (req, res, { proceso, errores = [], status = 200 
 };
 
 // Fecha de la prueba más reciente de cada proceso
+/**
+ * @param {number[]} ids Procesos
+ * @returns {Promise<Map<number, Date>>}
+ */
 const ultimasPruebas = async (ids) => {
   const filas = await prisma.pruebaContinuidad.groupBy({
     by: ['proceso_id'],
@@ -132,6 +177,11 @@ const FILTROS = {
   },
 };
 
+/**
+ * GET /bia · con sesión. Filtros ?criticidad=, ?estado=, ?sistema= y ?filtro=sin_plan|sin_prueba.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const list = async (req, res) => {
   const criticidad = esOpcion(CRITICIDADES, req.query.criticidad) ? req.query.criticidad : '';
   const estado = esOpcion(ESTADOS_REVISION_BIA, req.query.estado) ? req.query.estado : '';
@@ -171,6 +221,11 @@ const list = async (req, res) => {
   });
 };
 
+/**
+ * GET /bia/:id · con sesión. Ficha con avisos y pruebas de continuidad.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const show = async (req, res) => {
   const proceso = await buscar(req, {
     responsable: usuarioSelect,
@@ -191,9 +246,19 @@ const show = async (req, res) => {
   });
 };
 
+/**
+ * GET /bia/nuevo · Administrador.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const newForm = (req, res) =>
   renderFormulario(req, res, { proceso: { criticidad: 'MEDIA', estado_revision: 'PENDIENTE_ANALISIS' } });
 
+/**
+ * POST /bia · Administrador.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const create = async (req, res) => {
   const { datos, errores } = await leerFormulario(req, null);
   if (errores.length) return renderFormulario(req, res, { proceso: datos, errores, status: 400 });
@@ -203,6 +268,11 @@ const create = async (req, res) => {
   res.redirect(`/bia/${proceso.id}`);
 };
 
+/**
+ * GET /bia/:id/editar · Administrador o responsable.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const editForm = async (req, res) => {
   const proceso = await buscar(req, { responsable: usuarioSelect });
   if (!proceso) return noEncontrado(res);
@@ -210,6 +280,11 @@ const editForm = async (req, res) => {
   renderFormulario(req, res, { proceso });
 };
 
+/**
+ * POST /bia/:id · Administrador o responsable.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const update = async (req, res) => {
   const actual = await buscar(req, { responsable: usuarioSelect });
   if (!actual) return noEncontrado(res);
@@ -224,6 +299,11 @@ const update = async (req, res) => {
   res.redirect(`/bia/${actual.id}`);
 };
 
+/**
+ * POST /bia/:id/pruebas · Administrador o responsable. La fecha no puede ser futura; con ella se renueva el plazo de 12 meses.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const registrarPrueba = async (req, res) => {
   const proceso = await buscar(req);
   if (!proceso) return noEncontrado(res);
@@ -263,6 +343,11 @@ const registrarPrueba = async (req, res) => {
 };
 
 // Solo administradores (la ruta usa ensureAdmin). Borra el proceso y sus pruebas (en cascada)
+/**
+ * POST /bia/:id/eliminar · Administrador.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const remove = async (req, res) => {
   const proceso = await buscar(req);
   if (!proceso) return noEncontrado(res);

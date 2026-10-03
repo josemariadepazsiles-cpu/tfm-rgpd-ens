@@ -1,3 +1,5 @@
+// Middlewares de seguridad que se aplican a toda la aplicación (ver app.js): cabeceras HTTP,
+// protección CSRF de los formularios y límite de intentos de inicio de sesión.
 const crypto = require('crypto');
 
 // Medidas de seguridad transversales: cabeceras HTTP, protección CSRF y límite de intentos
@@ -22,6 +24,14 @@ const CSP = [
   "frame-ancestors 'none'",
 ].join('; ');
 
+/**
+ * Añade las cabeceras de seguridad a todas las respuestas.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {Function} next
+ */
+// FALLO DETECTADO: Alpine se carga del CDN con versión flotante (alpinejs@3.x.x, en
+// partials/head.ejs) y sin integridad (SRI): un cambio en el CDN llega sin control a la app.
 const cabecerasSeguridad = (req, res, next) => {
   res.setHeader('Content-Security-Policy', CSP);
   res.setHeader('X-Frame-Options', 'DENY');
@@ -44,11 +54,23 @@ const METODOS_SEGUROS = new Set(['GET', 'HEAD', 'OPTIONS']);
 // Únicas rutas que reciben archivos (multipart): POST …/documentos, …/versiones, …/adjuntos
 const RUTA_SUBIDA = /^\/(derechos|proveedores|politicas)\/\d+\/(documentos|versiones|adjuntos)\/?$/;
 
+/**
+ * Token CSRF de la sesión; se crea la primera vez y dura lo que dure la sesión.
+ * @param {import('express').Request} req
+ * @returns {string}
+ */
 const tokenDeSesion = (req) => {
   if (!req.session.csrfToken) req.session.csrfToken = crypto.randomBytes(32).toString('base64url');
   return req.session.csrfToken;
 };
 
+/**
+ * Compara el token recibido con el de la sesión en tiempo constante (no revela por tiempos
+ * cuántos caracteres coinciden).
+ * @param {import('express').Request} req
+ * @param {unknown} recibido Valor del campo _csrf
+ * @returns {boolean}
+ */
 const tokenValido = (req, recibido) => {
   const esperado = req.session && req.session.csrfToken;
   if (!esperado || typeof recibido !== 'string') return false;
@@ -57,6 +79,11 @@ const tokenValido = (req, recibido) => {
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 };
 
+/**
+ * Indica si la petición procede de la propia aplicación según Origin o, si falta, Referer.
+ * @param {import('express').Request} req
+ * @returns {boolean}
+ */
 const mismoOrigen = (req) => {
   const fuente = req.get('origin') || req.get('referer');
   if (!fuente) return true; // clientes sin cabecera (no navegadores): decide el token
@@ -67,6 +94,10 @@ const mismoOrigen = (req) => {
   }
 };
 
+/**
+ * Responde 403 con la página de error de formulario caducado.
+ * @param {import('express').Response} res
+ */
 const rechazar = (res) =>
   res.status(403).render('error', {
     title: 'Formulario caducado',
@@ -75,6 +106,11 @@ const rechazar = (res) =>
 
 // Inserta el token en cada <form method="POST"> del HTML generado
 const FORM_POST = /<form\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi;
+/**
+ * @param {string} html HTML ya renderizado
+ * @param {string} token Token CSRF de la sesión
+ * @returns {string} HTML con un campo oculto _csrf tras cada etiqueta <form method="POST">
+ */
 const insertarToken = (html, token) =>
   html.replace(FORM_POST, (etiqueta) =>
     /\bmethod\s*=\s*["']?post\b/i.test(etiqueta)
@@ -82,11 +118,19 @@ const insertarToken = (html, token) =>
       : etiqueta
   );
 
+/**
+ * Protección CSRF. Con sesión iniciada, envuelve res.render para inyectar el token en los
+ * formularios; en las peticiones que modifican datos comprueba el origen y el token.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {Function} next
+ */
 const proteccionCsrf = (req, res, next) => {
   if (req.isAuthenticated()) {
     const token = tokenDeSesion(req);
     res.locals.csrfToken = token;
     const render = res.render.bind(res);
+    // Sin callback, Express enviaría el HTML directamente; se intercepta para añadir el token
     res.render = (vista, opciones, callback) => {
       if (typeof opciones === 'function') [opciones, callback] = [{}, opciones];
       if (callback) return render(vista, opciones, callback);
@@ -96,6 +140,7 @@ const proteccionCsrf = (req, res, next) => {
 
   if (METODOS_SEGUROS.has(req.method)) return next();
   if (!mismoOrigen(req)) return rechazar(res);
+  // El login (sin sesión) solo se protege con la comprobación de origen
   if (!req.isAuthenticated()) return next();
   if (req.is('multipart/form-data')) {
     // Solo las rutas de subida leen un cuerpo multipart; en cualquier otra se rechaza
@@ -111,12 +156,25 @@ const proteccionCsrf = (req, res, next) => {
 // Límite de intentos de inicio de sesión (en memoria): 5 fallos por IP y email en 15 minutos
 // bloquean ese par durante el resto de la ventana. Un inicio de sesión correcto lo reinicia.
 // ---------------------------------------------------------------------------------------
+// FALLO DETECTADO (limitación): el contador es por IP y email, así que probar una misma
+// contraseña contra muchos emails distintos no se frena; además vive en memoria y se pierde
+// al reiniciar el servidor (o no se comparte si hay varias instancias).
 const MAX_FALLOS = 5;
 const VENTANA_MS = 15 * 60 * 1000;
 const fallos = new Map(); // clave → { cuenta, desde }
 
+/**
+ * @param {import('express').Request} req
+ * @returns {string} Clave «ip|email» con la que se cuentan los fallos
+ */
 const claveIntento = (req) => `${req.ip}|${String((req.body && req.body.email) || '').trim().toLowerCase()}`;
 
+/**
+ * Registro de fallos de una clave si sigue dentro de la ventana (si ha caducado, lo borra).
+ * @param {string} clave
+ * @param {number} [ahora]
+ * @returns {{ cuenta: number, desde: number } | null}
+ */
 const vigente = (clave, ahora = Date.now()) => {
   const r = fallos.get(clave);
   if (r && ahora - r.desde > VENTANA_MS) {
@@ -126,6 +184,12 @@ const vigente = (clave, ahora = Date.now()) => {
   return r || null;
 };
 
+/**
+ * Contador de intentos de login que usa controllers/authController.js.
+ * - bloqueado(req): minutos que faltan para poder reintentar (0 si no está bloqueado).
+ * - fallo(req): suma un intento fallido.
+ * - exito(req): reinicia el contador tras un acceso correcto.
+ */
 const intentosLogin = {
   bloqueado(req) {
     const r = vigente(claveIntento(req));

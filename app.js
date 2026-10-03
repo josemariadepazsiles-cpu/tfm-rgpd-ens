@@ -1,3 +1,5 @@
+// Punto de entrada del servidor: configura Express (vistas EJS, seguridad, sesión, autenticación),
+// monta las rutas de cada módulo y arranca la escucha en PORT (3000 por defecto).
 require('dotenv').config();
 
 const path = require('path');
@@ -37,6 +39,7 @@ const { CATEGORIA_CLASES, ESTADO_CLASES } = require('./lib/ens');
 const { GRAVEDAD_CLASES, ESTADO_INCIDENTE_CLASES } = require('./lib/incidentes');
 const { URGENCIA_CLASES, ESTADO_SOLICITUD_CLASES } = require('./lib/derechos');
 
+// Sin secreto de sesión no se puede firmar la cookie: mejor no arrancar que usar uno inventado
 if (!process.env.SESSION_SECRET) {
   throw new Error('Falta SESSION_SECRET en el .env');
 }
@@ -47,6 +50,7 @@ app.disable('x-powered-by');
 const PORT = process.env.PORT || 3000;
 const isProduction = process.env.NODE_ENV === 'production';
 
+// Helpers y tablas de etiquetas/colores disponibles en todas las vistas (app.locals)
 // Vistas
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -81,6 +85,10 @@ app.locals.areasNormativas = AREAS;
 app.locals.producto = { nombre: 'Compliance AI', lema: 'AI Compliance Platform' };
 // Iniciales para el avatar: "José María de Paz" → "JM" (sin partículas como "de" o "la")
 const PARTICULAS = new Set(['de', 'del', 'la', 'las', 'los', 'y', 'i', 'da', 'do', 'van', 'von']);
+/**
+ * @param {string} [nombre]
+ * @returns {string} Hasta dos iniciales, o «?»
+ */
 app.locals.iniciales = (nombre = '') =>
   nombre.split(/\s+/).filter((p) => p && !PARTICULAS.has(p.toLowerCase())).slice(0, 2)
     .map((p) => p[0].toUpperCase()).join('') || '?';
@@ -88,6 +96,8 @@ app.locals.iniciales = (nombre = '') =>
 // Middlewares
 app.use(cabecerasSeguridad);
 app.use(express.urlencoded({ extended: false }));
+// FALLO DETECTADO (menor): la aplicación no tiene ninguna ruta que reciba JSON; este parser
+// sobra (amplía sin necesidad los formatos de entrada aceptados).
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 // Pestañas sin <link rel="icon"> (p. ej. el visor de PDF del navegador) piden /favicon.ico
@@ -98,8 +108,12 @@ app.use('/fuentes', express.static(
   { maxAge: '30d', immutable: true }
 ));
 
+// Detrás de un proxy (HTTPS terminado fuera): necesario para la cookie «secure» y para req.ip
 if (isProduction) app.set('trust proxy', 1);
 
+// FALLO DETECTADO: no se indica almacén de sesiones, así que express-session usa MemoryStore,
+// que no está pensado para producción (crece sin límite, no se comparte entre instancias y
+// todas las sesiones se pierden al reiniciar). Convendría un almacén en PostgreSQL.
 app.use(
   session({
     name: 'sid',
@@ -125,6 +139,8 @@ app.use((req, res, next) => {
   res.locals.user = req.user || null;
   res.locals.currentPath = req.path;
   res.locals.areaNormativa = areaDeRuta(req.path);
+  // FALLO DETECTADO (menor): fs.statSync se ejecuta en cada petición (lectura síncrona del disco);
+  // bastaría con calcularlo al arrancar o cachearlo.
   // Versión del CSS compilado (fecha de modificación): cambia la URL de la hoja de estilos al
   // recompilarla, para que el navegador no siga usando la versión antigua de su caché
   try {
@@ -168,6 +184,7 @@ app.use('/usuarios', usuarioRoutes);
 // El checklist global se sustituyó por evaluaciones por sistema
 app.get('/checklist', (req, res) => res.redirect(301, '/sistemas'));
 
+// Orden importante: el 404 y el manejador de errores van después de todas las rutas
 // 404
 app.use((req, res) => {
   res.status(404).render('error', {

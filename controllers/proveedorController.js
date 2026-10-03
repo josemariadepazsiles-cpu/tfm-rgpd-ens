@@ -1,3 +1,5 @@
+// Proveedores / encargados del tratamiento: listado con avisos, ficha, alta, edición, baja
+// y documentos (contratos, certificados…).
 const prisma = require('../lib/prisma');
 const { esAdmin, esAdminOResponsable, idValido, idDeFormulario } = require('../lib/permisos');
 const { desdeInputFecha } = require('../lib/formato');
@@ -20,23 +22,48 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const usuarioSelect = { select: { id: true, nombre: true } };
 const opciones = { MECANISMOS, NIVELES_ENS, ESTADOS_PROVEEDOR, TIPOS_DOCUMENTO, DIAS_AVISO_REVISION };
 
+/**
+ * @param {import('express').Response} res
+ */
 const noEncontrado = (res) =>
   res.status(404).render('error', { title: 'No encontrado', mensaje: 'El proveedor o el documento no existen.' });
 
+/**
+ * Responde 403: solo el Administrador o el responsable asignado.
+ * @param {import('express').Response} res
+ */
 const sinPermiso = (res) =>
   res.status(403).render('error', {
     title: 'Acceso denegado',
     mensaje: 'Solo el Administrador o el responsable asignado pueden gestionar los documentos de este proveedor.',
   });
 
+/**
+ * @param {import('express').Request} req
+ * @param {object} [include]
+ * @returns {Promise<object|null>|null} Registro de :id, o null
+ */
 const buscar = (req, include = {}) => {
   const id = idValido(req.params.id);
   return id ? prisma.proveedor.findUnique({ where: { id }, include }) : null;
 };
 
+/**
+ * @param {unknown} valor
+ * @returns {string}
+ */
 const texto = (valor) => (typeof valor === 'string' ? valor.trim() : '');
+/**
+ * @param {object} mapa Valores válidos (claves)
+ * @param {unknown} valor
+ * @returns {boolean}
+ */
 const esOpcion = (mapa, valor) => Object.hasOwn(mapa, valor ?? '');
 
+/**
+ * @param {object} body
+ * @returns {Promise<{ datos: object, errores: string[] }>}
+ */
 const leerFormulario = async (body) => {
   const errores = [...excesos(body, LIMITES.proveedor)];
   const fechaCampo = (campo, etiqueta) => {
@@ -66,6 +93,7 @@ const leerFormulario = async (body) => {
     responsable_id: idDeFormulario(body.responsable_id),
   };
   // El mecanismo de transferencia solo tiene sentido si hay transferencia fuera del EEE
+  // Fuera del EEE sin mecanismo se permite guardar a propósito: queda como aviso «sin garantías»
   if (!datos.fuera_ue) datos.mecanismo_transferencia = 'NO_APLICA';
   if (!datos.tiene_contrato_encargado) datos.fecha_firma_contrato = null;
 
@@ -89,6 +117,10 @@ const leerFormulario = async (body) => {
   return { datos, errores };
 };
 
+/**
+ * @param {import('express').Response} res
+ * @param {{ proveedor: object, errores?: string[], status?: number }} opciones
+ */
 const renderFormulario = async (res, { proveedor, errores = [], status = 200 }) => {
   const usuarios = await prisma.usuario.findMany({
     select: { id: true, nombre: true, cargo: true },
@@ -115,6 +147,11 @@ const ALERTAS = {
   },
 };
 
+/**
+ * GET /proveedores · con sesión. Filtros ?estado=, ?contrato= y ?alerta=sin_contrato|sin_garantias.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const list = async (req, res) => {
   const estado = esOpcion(ESTADOS_PROVEEDOR, req.query.estado) ? req.query.estado : '';
   const contrato = ['si', 'no'].includes(req.query.contrato) ? req.query.contrato : '';
@@ -144,6 +181,11 @@ const list = async (req, res) => {
   });
 };
 
+/**
+ * GET /proveedores/:id · con sesión. Datos, avisos y documentos.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const show = async (req, res) => {
   const proveedor = await buscar(req, {
     responsable: usuarioSelect,
@@ -163,11 +205,21 @@ const show = async (req, res) => {
   });
 };
 
+/**
+ * GET /proveedores/nuevo · Administrador.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const newForm = (req, res) =>
   renderFormulario(res, {
     proveedor: { estado: 'ACTIVO', mecanismo_transferencia: 'NO_APLICA', nivel_cumplimiento_ens: 'NO_APLICA', pais_tratamiento: 'España' },
   });
 
+/**
+ * POST /proveedores · Administrador.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const create = async (req, res) => {
   const { datos, errores } = await leerFormulario(req.body);
   if (errores.length) return renderFormulario(res, { proveedor: datos, errores, status: 400 });
@@ -177,12 +229,22 @@ const create = async (req, res) => {
   res.redirect(`/proveedores/${proveedor.id}`);
 };
 
+/**
+ * GET /proveedores/:id/editar · Administrador.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const editForm = async (req, res) => {
   const proveedor = await buscar(req);
   if (!proveedor) return noEncontrado(res);
   renderFormulario(res, { proveedor });
 };
 
+/**
+ * POST /proveedores/:id · Administrador.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const update = async (req, res) => {
   const actual = await buscar(req);
   if (!actual) return noEncontrado(res);
@@ -197,6 +259,11 @@ const update = async (req, res) => {
 
 // --- Documentos ---
 
+/**
+ * POST /proveedores/:id/documentos · Administrador o responsable del proveedor.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const subirDocumento = async (req, res) => {
   const proveedor = await buscar(req);
   if (!proveedor) return noEncontrado(res);
@@ -237,6 +304,10 @@ const subirDocumento = async (req, res) => {
   volver('exito', `Documento "${nombre}" subido (${formatoTamano(req.file.size)}).`);
 };
 
+/**
+ * @param {import('express').Request} req
+ * @returns {Promise<{ proveedor: object, documento: object }|null>} El documento solo si pertenece a ese proveedor
+ */
 const buscarDocumento = async (req) => {
   const proveedorId = idValido(req.params.id);
   const docId = idValido(req.params.docId);
@@ -246,6 +317,12 @@ const buscarDocumento = async (req) => {
 };
 
 // Ver en el navegador (por defecto) o descargar (?descargar=1)
+/**
+ * GET /proveedores/:id/documentos/:docId · con sesión.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {Function} next
+ */
 const verDocumento = async (req, res, next) => {
   const documento = await buscarDocumento(req);
   if (!documento) return noEncontrado(res);
@@ -271,6 +348,11 @@ const verDocumento = async (req, res, next) => {
   });
 };
 
+/**
+ * POST /proveedores/:id/documentos/:docId/eliminar · Administrador o responsable.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const eliminarDocumento = async (req, res) => {
   const documento = await buscarDocumento(req);
   if (!documento) return noEncontrado(res);
@@ -284,6 +366,11 @@ const eliminarDocumento = async (req, res) => {
 
 // Solo administradores (la ruta usa ensureAdmin). Borra el proveedor, sus documentos (en cascada)
 // y los archivos del servidor
+/**
+ * POST /proveedores/:id/eliminar · Administrador.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const remove = async (req, res) => {
   const proveedor = await buscar(req, { documentos: { select: { ruta_archivo: true } } });
   if (!proveedor) return noEncontrado(res);

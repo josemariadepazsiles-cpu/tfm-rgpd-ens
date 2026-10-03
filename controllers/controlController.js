@@ -1,3 +1,4 @@
+// Catálogo de controles ENS: alta, edición y baja de los controles que se evalúan en los sistemas.
 const prisma = require('../lib/prisma');
 const { idValido } = require('../lib/permisos');
 const { CATEGORIAS, esCategoria } = require('../lib/ens');
@@ -8,9 +9,16 @@ const { LIMITES, excesos } = require('../lib/validacion');
 // Cada evaluación guarda la foto de los controles que existían al crearla; un control nuevo
 // se incorpora solo a la evaluación vigente (la última) de cada sistema.
 
+/**
+ * @param {import('express').Response} res
+ */
 const noEncontrado = (res) =>
   res.status(404).render('error', { title: 'Control no encontrado', mensaje: 'El control ENS no existe.' });
 
+/**
+ * @param {import('express').Request} req
+ * @returns {Promise<object|null>|null} Control de :id, o null
+ */
 const buscar = (req) => {
   const id = idValido(req.params.id);
   return id ? prisma.controlEns.findUnique({ where: { id } }) : null;
@@ -21,6 +29,10 @@ const MAX_DESCRIPCION = 2000;
 
 // Datos del formulario. La descripción vacía se guarda como null; el escapado HTML lo hace la
 // vista (<%= %>), por lo que el texto se guarda tal cual lo escribe el administrador.
+/**
+ * @param {object} body
+ * @returns {{ nombre: string, categoria: string, descripcion: string|null }}
+ */
 const leerFormulario = (body) => ({
   nombre: texto(body.nombre),
   categoria: body.categoria,
@@ -28,6 +40,10 @@ const leerFormulario = (body) => ({
   descripcion: texto(body.descripcion).replace(/\r\n/g, '\n') || null,
 });
 
+/**
+ * @param {import('express').Response} res
+ * @param {{ control: object, errores?: string[], status?: number }} opciones
+ */
 const renderFormulario = (res, { control, errores = [], status = 200 }) =>
   res.status(status).render('controles/form', {
     title: control.id ? 'Editar control' : 'Nuevo control',
@@ -37,6 +53,10 @@ const renderFormulario = (res, { control, errores = [], status = 200 }) =>
     maxDescripcion: MAX_DESCRIPCION,
   });
 
+/**
+ * @param {object} datos
+ * @returns {string[]}
+ */
 const validar = (datos) => {
   const errores = [...excesos(datos, LIMITES.control)];
   if (!datos.nombre) errores.push('El nombre es obligatorio.');
@@ -47,6 +67,13 @@ const validar = (datos) => {
   return errores;
 };
 
+/**
+ * Valida y ejecuta la operación; si el nombre ya existe (P2002) vuelve al formulario con 409.
+ * @param {import('express').Response} res
+ * @param {object} control Datos del formulario
+ * @param {() => Promise<object>} operacion
+ * @returns {Promise<object|null>} El control guardado, o null si ya se ha respondido con el formulario
+ */
 const guardar = async (res, control, operacion) => {
   const errores = validar(control);
   if (errores.length) {
@@ -62,6 +89,11 @@ const guardar = async (res, control, operacion) => {
   }
 };
 
+/**
+ * GET /controles · Administrador. Catálogo agrupado por categoría.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const list = async (req, res) => {
   const controles = await prisma.controlEns.findMany({
     orderBy: [{ categoria: 'asc' }, { nombre: 'asc' }],
@@ -77,8 +109,18 @@ const list = async (req, res) => {
   });
 };
 
+/**
+ * GET /controles/nuevo · Administrador. Admite ?categoria= para preseleccionarla.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const newForm = (req, res) => renderFormulario(res, { control: { categoria: req.query.categoria } });
 
+/**
+ * POST /controles · Administrador. Crea el control y lo añade, Pendiente, a la evaluación vigente de cada sistema.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const create = async (req, res) => {
   const datos = leerFormulario(req.body);
   let vigentes = 0;
@@ -97,12 +139,22 @@ const create = async (req, res) => {
   res.redirect('/controles');
 };
 
+/**
+ * GET /controles/:id/editar · Administrador.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const editForm = async (req, res) => {
   const control = await buscar(req);
   if (!control) return noEncontrado(res);
   renderFormulario(res, { control });
 };
 
+/**
+ * POST /controles/:id · Administrador. Cambiar nombre o categoría afecta también a las evaluaciones pasadas (no guardan copia del nombre); las declaraciones sí la guardan.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const update = async (req, res) => {
   const actual = await buscar(req);
   if (!actual) return noEncontrado(res);
@@ -118,6 +170,11 @@ const update = async (req, res) => {
 };
 
 // Un control ya evaluado no se puede borrar, para no perder el histórico de las evaluaciones
+/**
+ * POST /controles/:id/eliminar · Administrador. Solo si nadie lo ha trabajado en ninguna evaluación.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const remove = async (req, res) => {
   const control = await buscar(req);
   if (!control) return noEncontrado(res);

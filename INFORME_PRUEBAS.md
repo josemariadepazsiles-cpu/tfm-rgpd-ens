@@ -569,3 +569,25 @@ Antes de las pruebas se hizo una copia (`backups/copia-20261003-114237.json`, ya
 | `NODE_ENV=production npm run db:ejemplo -- --confirmar` | Se niega a ejecutarse |
 
 **No ejecutado:** `npm run prisma:seed`, porque añadiría al catálogo los 12 controles genéricos del seed básico. Solo se comprobó su sintaxis. Los scripts de prueba anteriores del anexo no se han actualizado para enviar el token CSRF, así que sus POST ahora reciben 403 (es el comportamiento esperado).
+
+## 6. Pruebas dentro del repositorio (03/10/2026)
+
+La batería principal de este informe está ahora en el repositorio:
+- `tests/pruebas-funcionales.js`: las pruebas;
+- `tests/ejecutar.js`: el lanzador.
+
+Se ejecuta con `npm test`, con la app en marcha y los datos de ejemplo cargados:
+1. hace una copia de la base de datos;
+2. ejecuta las pruebas;
+3. siempre restaura los datos y borra de `uploads/` los archivos que hayan creado las pruebas.
+
+Primera ejecución desde el repositorio: **262 pruebas · 260 OK · 0 FALLO · 2 no aplicables**,
+con los datos restaurados al terminar. El detalle de cada ejecución queda en `tests/resultados.json`
+(no se versiona).
+
+Los scripts auxiliares que se usaron durante la revisión (`repeticion.js`, `xss.js`, `navegador.js` con
+Chrome sin ventana) no se han incorporado. Sus comprobaciones están descritas en la sección 5:
+XSS por módulo, borrado de controles del catálogo y prueba en navegador real.
+
+Después, en el paso de documentación del código, solo se añadieron comentarios. Un script comparó
+los tokens de cada archivo con el commit anterior para confirmar que la lógica no había cambiado.

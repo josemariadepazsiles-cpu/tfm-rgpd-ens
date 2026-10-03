@@ -1,3 +1,4 @@
+// Evaluación de riesgos RGPD de las actividades del RAT: listado, ficha, alta, edición y baja.
 const prisma = require('../lib/prisma');
 const { ambitoActividad, ambitoRiesgo, idValido } = require('../lib/permisos');
 const { PROBABILIDADES, IMPACTOS, NIVELES, MATRIZ, calcularNivel } = require('../lib/riesgo');
@@ -6,6 +7,9 @@ const { LIMITES, excesos } = require('../lib/validacion');
 
 const actividadSelect = { select: { id: true, nombre: true, usuario_id: true } };
 
+/**
+ * @param {import('express').Response} res
+ */
 const noEncontrado = (res) =>
   res.status(404).render('error', {
     title: 'Riesgo no encontrado',
@@ -13,6 +17,10 @@ const noEncontrado = (res) =>
   });
 
 // Devuelve el riesgo solo si el usuario puede verlo
+/**
+ * @param {import('express').Request} req
+ * @returns {Promise<object|null>|null}
+ */
 const buscarVisible = (req) => {
   const id = idValido(req.params.id);
   if (!id) return null;
@@ -23,6 +31,10 @@ const buscarVisible = (req) => {
 };
 
 // Actividades que el usuario puede asociar a un riesgo
+/**
+ * @param {object} user
+ * @returns {Promise<object[]>} Actividades a las que el usuario puede asociar riesgos
+ */
 const actividadesVisibles = (user) =>
   prisma.actividadRat.findMany({
     where: ambitoActividad(user),
@@ -30,8 +42,16 @@ const actividadesVisibles = (user) =>
     orderBy: { nombre: 'asc' },
   });
 
+/**
+ * @param {unknown} valor
+ * @returns {string} Texto sin espacios a los lados («» si no es texto)
+ */
 const texto = (valor) => (typeof valor === 'string' ? valor.trim() : '');
 
+/**
+ * @param {object} body
+ * @returns {object}
+ */
 const leerFormulario = (body) => ({
   actividad_id: idValido(body.actividad_id) ?? NaN,
   amenaza: texto(body.amenaza),
@@ -41,6 +61,12 @@ const leerFormulario = (body) => ({
   sistema_id: leerSistemaId(body.sistema_id),
 });
 
+/**
+ * La actividad debe ser visible para el usuario: un Usuario no puede colgar riesgos de actividades ajenas.
+ * @param {object} datos
+ * @param {object} user
+ * @returns {Promise<string[]>}
+ */
 const validar = async (datos, user) => {
   const errores = [...excesos(datos, LIMITES.riesgo)];
   const actividadValida =
@@ -57,6 +83,11 @@ const validar = async (datos, user) => {
   return errores;
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {{ riesgo: object, errores?: string[], status?: number }} opciones
+ */
 const renderFormulario = async (req, res, { riesgo, errores = [], status = 200 }) => {
   res.status(status).render('riesgos/form', {
     title: riesgo.id ? 'Editar riesgo' : 'Nuevo riesgo',
@@ -71,6 +102,11 @@ const renderFormulario = async (req, res, { riesgo, errores = [], status = 200 }
   });
 };
 
+/**
+ * GET /riesgos · con sesión (un Usuario solo los de sus actividades). Filtros ?nivel=, ?sistema=, ?actividad=.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const list = async (req, res) => {
   const filtro = filtroSistema(req.query.sistema);
   // Los contadores por nivel respetan el sistema elegido
@@ -107,6 +143,11 @@ const list = async (req, res) => {
   });
 };
 
+/**
+ * GET /riesgos/:id · con sesión; 404 si no es visible para el usuario.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const show = async (req, res) => {
   const riesgo = await buscarVisible(req);
   if (!riesgo) return noEncontrado(res);
@@ -121,6 +162,11 @@ const show = async (req, res) => {
 
 // Admite ?actividad=ID para llegar desde el detalle de una actividad con ella preseleccionada
 // (y su sistema como sistema asociado por defecto) o ?sistema=ID desde la ficha de un sistema
+/**
+ * GET /riesgos/nuevo · con sesión. ?actividad=ID preselecciona la actividad (y su sistema).
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const newForm = async (req, res) => {
   const actividadId = idValido(req.query.actividad);
   let sistemaId = leerSistemaId(req.query.sistema) || null;
@@ -134,6 +180,11 @@ const newForm = async (req, res) => {
   return renderFormulario(req, res, { riesgo: { actividad_id: actividadId, sistema_id: sistemaId } });
 };
 
+/**
+ * POST /riesgos · con sesión. Regla de negocio: nivel = probabilidad × impacto (ver lib/riesgo.js).
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const create = async (req, res) => {
   const datos = leerFormulario(req.body);
   const errores = await validar(datos, req.user);
@@ -149,12 +200,22 @@ const create = async (req, res) => {
   res.redirect(`/riesgos/${riesgo.id}`);
 };
 
+/**
+ * GET /riesgos/:id/editar · con sesión; solo los visibles para el usuario.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const editForm = async (req, res) => {
   const riesgo = await buscarVisible(req);
   if (!riesgo) return noEncontrado(res);
   renderFormulario(req, res, { riesgo });
 };
 
+/**
+ * POST /riesgos/:id · con sesión. El nivel se recalcula siempre.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const update = async (req, res) => {
   const actual = await buscarVisible(req);
   if (!actual) return noEncontrado(res);
@@ -178,6 +239,11 @@ const update = async (req, res) => {
 };
 
 // Solo administradores (la ruta usa ensureAdmin)
+/**
+ * POST /riesgos/:id/eliminar · Administrador.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const remove = async (req, res) => {
   const riesgo = await buscarVisible(req);
   if (!riesgo) return noEncontrado(res);

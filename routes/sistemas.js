@@ -1,3 +1,5 @@
+// Rutas de los sistemas de información (/sistemas), eje de la aplicación: ficha con toda la
+// información RGPD/ENS asociada, histórico y creación de evaluaciones ENS.
 const express = require('express');
 const sistemaController = require('../controllers/sistemaController');
 const evaluacionController = require('../controllers/evaluacionController');

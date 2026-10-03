@@ -1,3 +1,5 @@
+// Rutas de las Declaraciones de Conformidad ENS (/declaraciones). Consultar y ver el PDF: cualquier
+// usuario con sesión; observaciones, emitir y eliminar: Administrador. Se generan desde /evaluaciones.
 const express = require('express');
 const declaracionController = require('../controllers/declaracionController');
 const { ensureAuthenticated, ensureAdmin } = require('../middlewares/auth');

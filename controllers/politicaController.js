@@ -1,3 +1,5 @@
+// Políticas y documentación de seguridad: listado, ficha, versiones en PDF, estados, aceptación
+// por los usuarios afectados y documentos adjuntos.
 const prisma = require('../lib/prisma');
 const { esAdmin, idValido } = require('../lib/permisos');
 const { desdeInputFecha } = require('../lib/formato');
@@ -21,24 +23,59 @@ const { LIMITES, excesos } = require('../lib/validacion');
 const usuarioSelect = { select: { id: true, nombre: true } };
 const opciones = { TIPOS_POLITICA, ESTADOS_POLITICA, DIAS_AVISO_REVISION };
 
+/**
+ * @param {import('express').Response} res
+ */
 const noEncontrada = (res) =>
   res.status(404).render('error', { title: 'Documento no encontrado', mensaje: 'La política o el documento no existen o no están vigentes.' });
 
 // Un usuario que no es Administrador solo accede a las políticas aprobadas
+/**
+ * @param {object} user
+ * @param {object|null} politica
+ * @returns {boolean}
+ */
 const visible = (user, politica) => politica && (esAdmin(user) || politica.estado === 'APROBADA');
 
+/**
+ * @param {import('express').Request} req
+ * @param {object} [include]
+ * @returns {Promise<object|null>|null}
+ */
 const buscar = (req, include = {}) => {
   const id = idValido(req.params.id);
   return id ? prisma.politica.findUnique({ where: { id }, include }) : null;
 };
 
+/**
+ * @param {unknown} valor
+ * @returns {string}
+ */
 const texto = (valor) => (typeof valor === 'string' ? valor.trim() : '');
+/**
+ * @param {object} mapa
+ * @param {unknown} valor
+ * @returns {boolean}
+ */
 const esOpcion = (mapa, valor) => Object.hasOwn(mapa, valor ?? '');
+/**
+ * Vuelve a la ficha de la política con un mensaje flash.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {number} id
+ * @param {'exito'|'error'} [tipo]
+ * @param {string} [mensaje]
+ */
 const volver = (req, res, id, tipo, mensaje) => {
   if (mensaje) req.session.flash = { tipo, mensaje };
   res.redirect(`/politicas/${id}`);
 };
 
+/**
+ * @param {object} body
+ * @param {object|null} actual Política existente (null al crear)
+ * @returns {{ datos: object, errores: string[] }}
+ */
 const leerFormulario = (body, actual) => {
   const errores = [...excesos(body, LIMITES.politica)];
   const datos = {
@@ -64,6 +101,10 @@ const leerFormulario = (body, actual) => {
   return { datos, errores };
 };
 
+/**
+ * @param {import('express').Response} res
+ * @param {{ politica: object, errores?: string[], status?: number }} opciones
+ */
 const renderFormulario = async (res, { politica, errores = [], status = 200 }) =>
   res.status(status).render('politicas/form', {
     title: politica.id ? 'Editar documento' : 'Nuevo documento normativo',
@@ -73,6 +114,11 @@ const renderFormulario = async (res, { politica, errores = [], status = 200 }) =
     ...opciones,
   });
 
+/**
+ * GET /politicas · con sesión (un Usuario solo ve las Aprobadas). Filtros ?estado=, ?tipo= y ?filtro=pendientes|revision.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const list = async (req, res) => {
   const admin = esAdmin(req.user);
   const tipo = esOpcion(TIPOS_POLITICA, req.query.tipo) ? req.query.tipo : '';
@@ -109,6 +155,11 @@ const list = async (req, res) => {
   });
 };
 
+/**
+ * GET /politicas/:id · con sesión. Versiones, adjuntos y aceptaciones de los usuarios afectados (todos los activos si es General; los asignados, si es de un sistema).
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const show = async (req, res) => {
   const politica = await buscar(req, {
     creado_por: usuarioSelect,
@@ -157,8 +208,18 @@ const show = async (req, res) => {
   });
 };
 
+/**
+ * GET /politicas/nueva · Administrador.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const newForm = (req, res) => renderFormulario(res, { politica: { version: '1.0', tipo_documento: 'POLITICA', requiere_aceptacion: true } });
 
+/**
+ * POST /politicas · Administrador. Se crea en Borrador, sin PDF todavía.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const create = async (req, res) => {
   const { datos, errores } = leerFormulario(req.body, null);
   const errorSistema = await validarSistema(datos.sistema_id);
@@ -169,17 +230,31 @@ const create = async (req, res) => {
   volver(req, res, politica.id, 'exito', `"${politica.titulo}" creado en Borrador. Sube el PDF de la versión ${politica.version}.`);
 };
 
+/**
+ * @param {import('express').Request} req
+ * @returns {Promise<object|null>} Política con tieneArchivos (true si ya tiene algún PDF)
+ */
 const conArchivos = async (req) => {
   const politica = await buscar(req, { _count: { select: { archivos: true } } });
   return politica && { ...politica, tieneArchivos: politica._count.archivos > 0 };
 };
 
+/**
+ * GET /politicas/:id/editar · Administrador.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const editForm = async (req, res) => {
   const politica = await conArchivos(req);
   if (!politica) return noEncontrada(res);
   renderFormulario(res, { politica });
 };
 
+/**
+ * POST /politicas/:id · Administrador. La versión ya no se puede cambiar a mano si hay PDF subido.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const update = async (req, res) => {
   const actual = await conArchivos(req);
   if (!actual) return noEncontrada(res);
@@ -195,6 +270,11 @@ const update = async (req, res) => {
 };
 
 // Solo administradores: sube el PDF de una versión (la anterior pasa a histórica)
+/**
+ * POST /politicas/:id/versiones · Administrador. Con «aprobar» queda Aprobada; si no, Pendiente de aprobación. Los usuarios tendrán que aceptar la versión nueva.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const subirVersion = async (req, res) => {
   const politica = await buscar(req, { archivos: { select: { version: true } } });
   if (!politica) return noEncontrada(res);
@@ -232,6 +312,11 @@ const subirVersion = async (req, res) => {
 };
 
 // Solo administradores
+/**
+ * POST /politicas/:id/estado · Administrador. No se puede aprobar sin PDF.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const cambiarEstado = async (req, res) => {
   const politica = await buscar(req, { archivos: { where: { historico: false }, select: { id: true } } });
   if (!politica) return noEncontrada(res);
@@ -250,6 +335,11 @@ const cambiarEstado = async (req, res) => {
 };
 
 // Cualquier usuario: registra que ha leído y acepta la versión vigente
+/**
+ * POST /politicas/:id/aceptar · con sesión; solo usuarios afectados y solo políticas Aprobadas que requieren aceptación.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const aceptar = async (req, res) => {
   const politica = await buscar(req);
   if (!visible(req.user, politica)) return noEncontrada(res);
@@ -274,6 +364,12 @@ const aceptar = async (req, res) => {
 };
 
 // Ver (por defecto) o descargar (?descargar=1) el PDF de una versión
+/**
+ * GET /politicas/:id/archivos/:archivoId · con sesión (si puede ver la política).
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {Function} next
+ */
 const verArchivo = async (req, res, next) => {
   const politicaId = idValido(req.params.id);
   const archivoId = idValido(req.params.archivoId);
@@ -300,6 +396,11 @@ const verArchivo = async (req, res, next) => {
 
 // Solo administradores (la ruta usa ensureAdmin). Borra la política, sus versiones y
 // aceptaciones (en cascada) y los PDF del servidor
+/**
+ * POST /politicas/:id/eliminar · Administrador.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const remove = async (req, res) => {
   const politica = await buscar(req, { archivos: { select: { ruta_archivo: true } }, documentos: { select: { ruta_archivo: true } } });
   if (!politica) return noEncontrada(res);
@@ -311,6 +412,10 @@ const remove = async (req, res) => {
 
 // --- Documentos adjuntos (anexos, plantillas, registros…). Los ve quien puede ver la política;
 // los sube y elimina el Administrador.
+/**
+ * @param {import('express').Request} req
+ * @returns {Promise<{ politica: object, documento: object }|null>} El adjunto solo si pertenece a esa política y el usuario puede verla
+ */
 const buscarAdjunto = async (req) => {
   const politicaId = idValido(req.params.id);
   const docId = idValido(req.params.docId);
@@ -320,6 +425,11 @@ const buscarAdjunto = async (req) => {
 };
 
 // Solo administradores (la ruta usa ensureAdmin)
+/**
+ * POST /politicas/:id/adjuntos · Administrador.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const subirAdjunto = async (req, res) => {
   const politica = await buscar(req);
   if (!politica) return noEncontrada(res);
@@ -351,6 +461,12 @@ const subirAdjunto = async (req, res) => {
   volverA('exito', `Documento "${nombre}" adjuntado (${formatoTamano(req.file.size)}).`);
 };
 
+/**
+ * GET /politicas/:id/adjuntos/:docId · con sesión (si puede ver la política).
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {Function} next
+ */
 const verAdjunto = async (req, res, next) => {
   const documento = await buscarAdjunto(req);
   if (!documento || !visible(req.user, documento.politica)) return noEncontrada(res);
@@ -372,6 +488,11 @@ const verAdjunto = async (req, res, next) => {
 };
 
 // Solo administradores (la ruta usa ensureAdmin)
+/**
+ * POST /politicas/:id/adjuntos/:docId/eliminar · Administrador.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const eliminarAdjunto = async (req, res) => {
   const documento = await buscarAdjunto(req);
   if (!documento) return noEncontrada(res);

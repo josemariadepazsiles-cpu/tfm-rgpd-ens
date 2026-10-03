@@ -1,3 +1,5 @@
+// Sistemas de información: listado con su resumen RGPD/ENS, ficha con toda la información
+// asociada, alta, edición, baja e histórico de cambios del checklist.
 const prisma = require('../lib/prisma');
 const { idValido, esAdmin, ambitoActividad, ambitoRiesgo, esAdminOResponsable } = require('../lib/permisos');
 const { resumenRgpdPorSistema } = require('../lib/sistemas');
@@ -18,19 +20,35 @@ const { LIMITES, excesos } = require('../lib/validacion');
 
 const HISTORIAL_POR_PAGINA = 50;
 
+/**
+ * @param {import('express').Response} res
+ */
 const noEncontrado = (res) =>
   res.status(404).render('error', {
     title: 'Sistema no encontrado',
     mensaje: 'El sistema no existe.',
   });
 
+/**
+ * @param {import('express').Request} req
+ * @param {object} [include]
+ * @returns {Promise<object|null>|null}
+ */
 const buscar = (req, include) => {
   const id = idValido(req.params.id);
   return id ? prisma.sistema.findUnique({ where: { id }, include }) : null;
 };
 
+/**
+ * @param {unknown} valor
+ * @returns {string}
+ */
 const texto = (valor) => (typeof valor === 'string' ? valor.trim() : '');
 
+/**
+ * @param {object} body
+ * @returns {object}
+ */
 const leerFormulario = (body) => ({
   nombre: texto(body.nombre),
   descripcion: texto(body.descripcion) || null,
@@ -38,6 +56,10 @@ const leerFormulario = (body) => ({
   categoria_general: body.categoria_general || null,
 });
 
+/**
+ * @param {import('express').Response} res
+ * @param {{ sistema: object, errores?: string[], status?: number }} opciones
+ */
 const renderFormulario = (res, { sistema, errores = [], status = 200 }) =>
   res.status(status).render('sistemas/form', {
     title: sistema.id ? 'Editar sistema' : 'Nuevo sistema',
@@ -48,6 +70,12 @@ const renderFormulario = (res, { sistema, errores = [], status = 200 }) =>
   });
 
 // Valida y guarda (crear o editar) controlando el nombre duplicado
+/**
+ * @param {import('express').Response} res
+ * @param {object} sistema Datos del formulario
+ * @param {() => Promise<object>} operacion
+ * @returns {Promise<object|null>} Resultado, o null si ya se ha respondido con el formulario
+ */
 const guardar = async (res, sistema, operacion) => {
   const errores = [...excesos(sistema, LIMITES.sistema)];
   if (!sistema.nombre) errores.push('El nombre es obligatorio.');
@@ -67,6 +95,11 @@ const guardar = async (res, sistema, operacion) => {
   }
 };
 
+/**
+ * GET /sistemas · con sesión. Por sistema: % ENS de la última evaluación y resumen RGPD (riesgos e incidentes).
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const list = async (req, res) => {
   const [sistemas, totalControles, rgpd] = await Promise.all([
     prisma.sistema.findMany({
@@ -93,6 +126,11 @@ const list = async (req, res) => {
   });
 };
 
+/**
+ * GET /sistemas/:id · con sesión. Ficha con evaluaciones, declaraciones y lo RGPD/BIA asociado (RAT y riesgos según la visibilidad del usuario).
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const show = async (req, res) => {
   const sistema = await buscar(req, {
     creado_por: { select: { nombre: true } },
@@ -195,9 +233,19 @@ const show = async (req, res) => {
   });
 };
 
+/**
+ * GET /sistemas/nuevo · Administrador.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const newForm = (req, res) => renderFormulario(res, { sistema: { crear_evaluacion: true } });
 
 // Crea el sistema y, si se marca, su primera evaluación (con todos los controles del catálogo)
+/**
+ * POST /sistemas · Administrador. Si se crea la primera evaluación, redirige a su checklist.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const create = async (req, res) => {
   const datos = leerFormulario(req.body);
   const crearEvaluacion = req.body.crear_evaluacion === 'on';
@@ -229,12 +277,22 @@ const create = async (req, res) => {
   res.redirect(`/sistemas/${sistema.id}`);
 };
 
+/**
+ * GET /sistemas/:id/editar · Administrador.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const editForm = async (req, res) => {
   const sistema = await buscar(req);
   if (!sistema) return noEncontrado(res);
   renderFormulario(res, { sistema });
 };
 
+/**
+ * POST /sistemas/:id · Administrador.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const update = async (req, res) => {
   const actual = await buscar(req);
   if (!actual) return noEncontrado(res);
@@ -249,6 +307,11 @@ const update = async (req, res) => {
 };
 
 // Solo administradores. Borra en cascada sus evaluaciones y su histórico
+/**
+ * POST /sistemas/:id/eliminar · Administrador. Lo asociado en RGPD y BIA queda «sin sistema» (transversal).
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const remove = async (req, res) => {
   const sistema = await buscar(req);
   if (!sistema) return noEncontrado(res);
@@ -269,6 +332,11 @@ const remove = async (req, res) => {
 };
 
 // Histórico de cambios de estado del sistema, filtrable por evaluación y por control
+/**
+ * GET /sistemas/:id/historial · con sesión. Filtros ?evaluacion=, ?control= y ?pagina= (50 cambios por página).
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const historial = async (req, res) => {
   const sistema = await buscar(req, {
     evaluaciones: { orderBy: { created_at: 'desc' }, select: { id: true, nombre: true } },

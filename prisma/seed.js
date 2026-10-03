@@ -1,3 +1,5 @@
+// Carga inicial mínima (npm run prisma:seed): administrador inicial y un catálogo básico de
+// controles ENS. No borra nada: solo crea lo que falta.
 require('dotenv').config();
 
 const crypto = require('crypto');
@@ -18,6 +20,9 @@ const ADMIN = {
   cargo: 'Administrador de la plataforma',
 };
 
+// FALLO DETECTADO (menor): estos 12 controles genéricos no siguen la nomenclatura del Anexo II
+// que usa el catálogo de ejemplo (mp.com.1…): ejecutar este seed sobre los datos de ejemplo los
+// mezcla en el catálogo.
 // Controles ENS iniciales, todos en estado Pendiente y sin responsable
 const CONTROLES = {
   BAJA: [
@@ -41,6 +46,9 @@ const CONTROLES = {
 };
 
 // Si el administrador ya existe no se toca (ni su contraseña)
+/**
+ * @returns {Promise<void>}
+ */
 async function seedAdmin() {
   const existente = await prisma.usuario.findUnique({ where: { email: ADMIN.email } });
   if (existente) {
@@ -63,6 +71,11 @@ async function seedAdmin() {
 }
 
 // Crea los controles que falten; los existentes no se tocan para no perder el progreso
+// FALLO DETECTADO (menor): los controles se crean con createMany, sin añadirlos a la evaluación
+// vigente de cada sistema como hace la aplicación al crear un control (lib/evaluaciones.js).
+/**
+ * @returns {Promise<void>}
+ */
 async function seedControles() {
   const datos = Object.entries(CONTROLES).flatMap(([categoria, nombres]) =>
     nombres.map((nombre) => ({ nombre, categoria }))
@@ -73,6 +86,10 @@ async function seedControles() {
   console.log(`Controles ENS: ${count} creados, ${datos.length - count} ya existían`);
 }
 
+/**
+ * Ejecuta el seed y cierra la conexión al terminar (también si falla).
+ * @returns {Promise<void>}
+ */
 async function main() {
   await seedAdmin();
   await seedControles();

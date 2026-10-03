@@ -1,12 +1,24 @@
+// Inicio y cierre de sesión.
 const passport = require('passport');
 const { intentosLogin } = require('../middlewares/seguridad');
 
+/**
+ * GET /login · solo sin sesión. Formulario de acceso.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const showLogin = (req, res) => {
   res.render('auth/login', { title: 'Iniciar sesión', error: null, email: '' });
 };
 
 // Tras varios fallos seguidos con la misma IP y email, se bloquean los intentos durante unos
 // minutos (ver middlewares/seguridad.js)
+/**
+ * POST /login · solo sin sesión. Valida las credenciales con Passport y abre la sesión.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {Function} next
+ */
 const login = (req, res, next) => {
   const minutos = intentosLogin.bloqueado(req);
   if (minutos) {
@@ -34,6 +46,12 @@ const login = (req, res, next) => {
   })(req, res, next);
 };
 
+/**
+ * POST /logout · con sesión. Cierra la sesión, destruye sus datos y borra la cookie.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {Function} next
+ */
 const logout = (req, res, next) => {
   req.logout((err) => {
     if (err) return next(err);

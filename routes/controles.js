@@ -1,3 +1,4 @@
+// Rutas del catálogo de controles ENS (/controles). Todas exigen rol Administrador.
 const express = require('express');
 const controlController = require('../controllers/controlController');
 const { ensureAdmin } = require('../middlewares/auth');

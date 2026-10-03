@@ -1,3 +1,5 @@
+// Rutas de BIA y continuidad de negocio (/bia): procesos de negocio y sus pruebas de continuidad.
+// Requieren sesión; crear y eliminar procesos, además, rol Administrador.
 const express = require('express');
 const biaController = require('../controllers/biaController');
 const { ensureAuthenticated, ensureAdmin } = require('../middlewares/auth');

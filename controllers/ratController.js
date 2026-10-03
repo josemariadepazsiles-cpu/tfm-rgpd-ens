@@ -1,3 +1,4 @@
+// Registro de Actividades de Tratamiento (RAT, art. 30 RGPD): listado, ficha, alta, edición y baja.
 const prisma = require('../lib/prisma');
 const { BASES_LEGALES } = require('../config/baseLegal');
 const { NIVELES } = require('../lib/riesgo');
@@ -7,6 +8,9 @@ const { LIMITES, excesos } = require('../lib/validacion');
 
 const responsableSelect = { select: { id: true, nombre: true, email: true, cargo: true } };
 
+/**
+ * @param {import('express').Response} res
+ */
 const noEncontrada = (res) =>
   res.status(404).render('error', {
     title: 'Actividad no encontrada',
@@ -14,6 +18,11 @@ const noEncontrada = (res) =>
   });
 
 // Devuelve la actividad solo si el usuario puede verla
+/**
+ * @param {import('express').Request} req
+ * @param {object} [include]
+ * @returns {Promise<object|null>|null}
+ */
 const buscarVisible = (req, include = {}) => {
   const id = idValido(req.params.id);
   if (!id) return null;
@@ -23,8 +32,16 @@ const buscarVisible = (req, include = {}) => {
   });
 };
 
+/**
+ * @param {unknown} valor
+ * @returns {string} Texto sin espacios a los lados («» si no es texto)
+ */
 const texto = (valor) => (typeof valor === 'string' ? valor.trim() : '');
 
+/**
+ * @param {object} body
+ * @returns {object} Datos de la actividad
+ */
 const leerFormulario = (body) => {
   const transferencia_intl = body.transferencia_intl === 'on';
   return {
@@ -53,6 +70,11 @@ const OBLIGATORIOS = {
   medidas_seguridad: 'Las medidas de seguridad son obligatorias.',
 };
 
+/**
+ * @param {object} datos
+ * @param {object} user
+ * @returns {Promise<string[]>}
+ */
 const validar = async (datos, user) => {
   const errores = Object.entries(OBLIGATORIOS)
     .filter(([campo]) => !datos[campo])
@@ -76,6 +98,12 @@ const validar = async (datos, user) => {
   return errores;
 };
 
+/**
+ * Solo el Administrador elige responsable: el desplegable de usuarios no se carga para los demás.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {{ actividad: object, errores?: string[], status?: number }} opciones
+ */
 const renderFormulario = async (req, res, { actividad, errores = [], status = 200 }) => {
   const sistemas = await listaSistemas();
   const responsables = esAdmin(req.user)
@@ -94,6 +122,11 @@ const renderFormulario = async (req, res, { actividad, errores = [], status = 20
   });
 };
 
+/**
+ * GET /rat · con sesión (un Usuario solo ve las suyas). Filtro ?sistema=ID|ninguno.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const list = async (req, res) => {
   const filtro = filtroSistema(req.query.sistema);
   const where = { ...ambito(req.user), ...filtro.where };
@@ -112,6 +145,11 @@ const list = async (req, res) => {
   });
 };
 
+/**
+ * GET /rat/:id · con sesión; 404 si es de otro Usuario.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const show = async (req, res) => {
   const actividad = await buscarVisible(req, {
     riesgos: { orderBy: [{ nivel_riesgo: 'desc' }, { amenaza: 'asc' }] },
@@ -125,12 +163,22 @@ const show = async (req, res) => {
   });
 };
 
+/**
+ * GET /rat/nueva · con sesión. Admite ?sistema=ID para preseleccionarlo.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const newForm = (req, res) =>
   renderFormulario(req, res, {
     // Admite ?sistema=ID para llegar desde la ficha de un sistema con él preseleccionado
     actividad: { transferencia_intl: false, usuario_id: req.user.id, sistema_id: leerSistemaId(req.query.sistema) || null },
   });
 
+/**
+ * POST /rat · con sesión. Un Usuario queda siempre como responsable de lo que crea.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const create = async (req, res) => {
   const datos = leerFormulario(req.body);
   if (!esAdmin(req.user)) datos.usuario_id = req.user.id;
@@ -145,12 +193,22 @@ const create = async (req, res) => {
   res.redirect(`/rat/${actividad.id}`);
 };
 
+/**
+ * GET /rat/:id/editar · con sesión; solo las propias si no es Administrador.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const editForm = async (req, res) => {
   const actividad = await buscarVisible(req);
   if (!actividad) return noEncontrada(res);
   renderFormulario(req, res, { actividad });
 };
 
+/**
+ * POST /rat/:id · con sesión; solo las propias si no es Administrador.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const update = async (req, res) => {
   const actual = await buscarVisible(req);
   if (!actual) return noEncontrada(res);
@@ -174,6 +232,11 @@ const update = async (req, res) => {
 };
 
 // Solo administradores (la ruta usa ensureAdmin)
+/**
+ * POST /rat/:id/eliminar · Administrador. Borra también sus riesgos (borrado en cascada).
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const remove = async (req, res) => {
   const actividad = await buscarVisible(req);
   if (!actividad) return noEncontrada(res);

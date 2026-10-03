@@ -1,3 +1,5 @@
+// Rutas de políticas y documentación ENS (/politicas): versiones en PDF, estados, aceptación por
+// los usuarios y documentos adjuntos. La gestión es del Administrador; aceptar y consultar, de todos.
 const express = require('express');
 const politicaController = require('../controllers/politicaController');
 const { ensureAuthenticated, ensureAdmin } = require('../middlewares/auth');

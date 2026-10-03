@@ -1,3 +1,5 @@
+// Declaraciones de Conformidad ENS: listado, ficha, PDF, generación desde una evaluación,
+// observaciones, emisión y eliminación de borradores.
 const prisma = require('../lib/prisma');
 const { idValido } = require('../lib/permisos');
 const { CATEGORIAS, ESTADOS } = require('../lib/ens');
@@ -14,9 +16,17 @@ const { LIMITES, excesos } = require('../lib/validacion');
 
 const opciones = { CATEGORIAS_SISTEMA, ESTADOS_DECLARACION, formatoPorcentaje };
 
+/**
+ * @param {import('express').Response} res
+ */
 const noEncontrada = (res) =>
   res.status(404).render('error', { title: 'Declaración no encontrada', mensaje: 'La declaración no existe.' });
 
+/**
+ * @param {import('express').Request} req
+ * @param {object} [include] Relaciones de Prisma a incluir
+ * @returns {Promise<object|null>|null}
+ */
 const buscar = (req, include = {}) => {
   const id = idValido(req.params.id);
   return id ? prisma.declaracionConformidad.findUnique({ where: { id }, include }) : null;
@@ -26,6 +36,11 @@ const conDetalles = {
   detalles: { orderBy: [{ control_categoria: 'asc' }, { control_nombre: 'asc' }] },
 };
 
+/**
+ * GET /declaraciones · cualquier usuario con sesión. Filtro ?sistema=ID.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const list = async (req, res) => {
   const sistemas = await prisma.sistema.findMany({ select: { id: true, nombre: true }, orderBy: { nombre: 'asc' } });
   const sistemaId = idValido(req.query.sistema);
@@ -45,6 +60,11 @@ const list = async (req, res) => {
   });
 };
 
+/**
+ * GET /declaraciones/:id · cualquier usuario con sesión. Muestra la foto guardada, no el estado actual de los controles.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const show = async (req, res) => {
   const declaracion = await buscar(req, conDetalles);
   if (!declaracion) return noEncontrada(res);
@@ -77,6 +97,11 @@ const show = async (req, res) => {
 };
 
 // Solo administradores: genera una declaración en Borrador a partir de una evaluación
+/**
+ * POST /evaluaciones/:id/declaracion · Administrador.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const generar = async (req, res) => {
   const evaluacionId = idValido(req.params.id);
   if (!evaluacionId) return noEncontrada(res);
@@ -96,6 +121,11 @@ const generar = async (req, res) => {
 };
 
 // Solo administradores: observaciones del borrador (una declaración emitida no se modifica)
+/**
+ * POST /declaraciones/:id · Administrador. Solo en Borrador.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const actualizarObservaciones = async (req, res) => {
   const declaracion = await buscar(req);
   if (!declaracion) return noEncontrada(res);
@@ -109,6 +139,7 @@ const actualizarObservaciones = async (req, res) => {
     req.session.flash = { tipo: 'error', mensaje: largas[0] };
     return res.redirect(`/declaraciones/${declaracion.id}`);
   }
+  // updateMany con estado BORRADOR en el where: si otra petición la emite a la vez, no se toca
   const { count } = await prisma.declaracionConformidad.updateMany({
     where: { id: declaracion.id, estado: 'BORRADOR' },
     data: { observaciones: observaciones || null },
@@ -120,6 +151,11 @@ const actualizarObservaciones = async (req, res) => {
 };
 
 // Solo administradores
+/**
+ * POST /declaraciones/:id/emitir · Administrador.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const emitir = async (req, res) => {
   const id = idValido(req.params.id);
   if (!id) return noEncontrada(res);
@@ -133,6 +169,11 @@ const emitir = async (req, res) => {
   res.redirect(`/declaraciones/${id}`);
 };
 
+/**
+ * GET /declaraciones/:id/pdf · cualquier usuario con sesión. ?ver=1 lo abre en el navegador; sin él, se descarga.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const pdf = async (req, res) => {
   const declaracion = await buscar(req, conDetalles);
   if (!declaracion) return noEncontrada(res);
@@ -151,6 +192,11 @@ const pdf = async (req, res) => {
 // Solo administradores y solo borradores (las declaraciones emitidas son registros formales).
 // Si el borrador era la última versión, la versión anterior que había superado recupera su
 // estado (Emitida si tenía fecha de emisión; si no, Borrador).
+/**
+ * POST /declaraciones/:id/eliminar · Administrador. Solo borradores.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const remove = async (req, res) => {
   const declaracion = await buscar(req);
   if (!declaracion) return noEncontrada(res);

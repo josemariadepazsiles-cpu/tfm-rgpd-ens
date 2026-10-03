@@ -1,3 +1,4 @@
+// Gestión de usuarios: alta, edición, sistemas asignados y activación o desactivación.
 const bcrypt = require('bcryptjs');
 const prisma = require('../lib/prisma');
 const { idValido } = require('../lib/permisos');
@@ -12,17 +13,32 @@ const { LIMITES, excesos } = require('../lib/validacion');
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const texto = (valor) => (typeof valor === 'string' ? valor.trim() : '');
 
+/**
+ * @param {import('express').Response} res
+ */
 const noEncontrado = (res) =>
   res.status(404).render('error', { title: 'Usuario no encontrado', mensaje: 'El usuario no existe.' });
 
+/**
+ * @param {import('express').Request} req
+ * @returns {Promise<object|null>|null} Usuario de :id con sus sistemas, o null
+ */
 const buscar = (req) => {
   const id = idValido(req.params.id);
   return id ? prisma.usuario.findUnique({ where: { id }, include: { sistemas: { select: { sistema_id: true } } } }) : null;
 };
 
 // Sistemas marcados en el formulario (checkboxes «sistemas»)
+/**
+ * @param {string|string[]|undefined} valor Casillas «sistemas» marcadas
+ * @returns {number[]} Ids válidos (los no válidos se descartan)
+ */
 const leerSistemas = (valor) => [].concat(valor || []).map(idValido).filter(Boolean);
 
+/**
+ * @param {object} body
+ * @returns {object} Datos normalizados (email en minúsculas, sistemas sin duplicados)
+ */
 const leerFormulario = (body) => ({
   nombre: texto(body.nombre),
   email: texto(body.email).toLowerCase(),
@@ -33,6 +49,12 @@ const leerFormulario = (body) => ({
 });
 
 // Comprueba los datos; `actual` es el usuario que se edita (null al crear)
+/**
+ * @param {object} datos
+ * @param {object|null} actual Usuario que se edita (null al crear)
+ * @param {object} yo Administrador que hace el cambio
+ * @returns {Promise<string[]>}
+ */
 const validar = async (datos, actual, yo) => {
   const errores = [...excesos(datos, LIMITES.usuario)];
   if (!datos.nombre) errores.push('El nombre es obligatorio.');
@@ -49,6 +71,10 @@ const validar = async (datos, actual, yo) => {
   return errores;
 };
 
+/**
+ * @param {import('express').Response} res
+ * @param {{ usuario: object, errores?: string[], status?: number }} opciones
+ */
 const renderFormulario = async (res, { usuario, errores = [], status = 200 }) => {
   const [sistemas, cargos] = await Promise.all([
     listaSistemas(),
@@ -65,6 +91,11 @@ const renderFormulario = async (res, { usuario, errores = [], status = 200 }) =>
 };
 
 // Listado con sus sistemas y cuántas políticas tiene pendientes de aceptar
+/**
+ * GET /usuarios · Administrador. Filtro ?estado=activos|inactivos; por cada usuario activo, sus políticas pendientes de aceptar.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const list = async (req, res) => {
   const estado = ['activos', 'inactivos'].includes(req.query.estado) ? req.query.estado : 'activos';
   const [usuarios, politicas] = await Promise.all([
@@ -93,8 +124,18 @@ const list = async (req, res) => {
   });
 };
 
+/**
+ * GET /usuarios/nuevo · Administrador.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const newForm = (req, res) => renderFormulario(res, { usuario: { rol: 'USUARIO', sistemaIds: [] } });
 
+/**
+ * POST /usuarios · Administrador. Contraseña con bcrypt (coste 12).
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const create = async (req, res) => {
   const datos = leerFormulario(req.body);
   const errores = await validar(datos, null, req.user);
@@ -115,18 +156,30 @@ const create = async (req, res) => {
   }
 };
 
+/**
+ * GET /usuarios/:id/editar · Administrador.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const editForm = async (req, res) => {
   const usuario = await buscar(req);
   if (!usuario) return noEncontrado(res);
   renderFormulario(res, { usuario: { ...usuario, sistemaIds: usuario.sistemas.map((s) => s.sistema_id) } });
 };
 
+/**
+ * POST /usuarios/:id · Administrador. Contraseña vacía = no se cambia. Los sistemas se sustituyen por los marcados.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const update = async (req, res) => {
   const actual = await buscar(req);
   if (!actual) return noEncontrado(res);
   const datos = leerFormulario(req.body);
   const errores = await validar(datos, actual, req.user);
   if (errores.length) return renderFormulario(res, { usuario: { ...datos, id: actual.id, activo: actual.activo }, errores, status: 400 });
+  // FALLO DETECTADO (menor): cambiar la contraseña de un usuario no cierra las sesiones que ya
+  // tenga abiertas (sí lo hace desactivarlo, ver config/passport.js).
   try {
     await prisma.$transaction([
       prisma.usuario.update({
@@ -149,6 +202,11 @@ const update = async (req, res) => {
 
 // Activar o desactivar. Un administrador no puede desactivarse a sí mismo ni dejar la
 // plataforma sin ningún administrador activo.
+/**
+ * POST /usuarios/:id/estado · Administrador. activo=1 activa, activo=0 desactiva.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const cambiarEstado = async (req, res) => {
   const usuario = await buscar(req);
   if (!usuario) return noEncontrado(res);

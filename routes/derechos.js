@@ -1,3 +1,5 @@
+// Rutas de las solicitudes de derechos de los interesados (/derechos): alta, tramitación,
+// historial de estados y documentos adjuntos.
 const express = require('express');
 const derechoController = require('../controllers/derechoController');
 const { ensureAuthenticated } = require('../middlewares/auth');

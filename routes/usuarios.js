@@ -1,3 +1,5 @@
+// Rutas de la gestión de usuarios (/usuarios): alta, edición, sistemas asignados y
+// activación/desactivación. Todas exigen rol Administrador.
 const express = require('express');
 const usuarioController = require('../controllers/usuarioController');
 const { ensureAdmin } = require('../middlewares/auth');

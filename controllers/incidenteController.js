@@ -1,3 +1,5 @@
+// Incidentes y brechas de seguridad: listado con filtros, ficha, alta, edición, cambio de
+// estado e historial.
 const prisma = require('../lib/prisma');
 const { esAdmin, idValido, idDeFormulario, ID_MAXIMO } = require('../lib/permisos');
 const { desdeInputFechaHora } = require('../lib/formato');
@@ -15,25 +17,51 @@ const { LIMITES, excesos } = require('../lib/validacion');
 const HISTORIAL_POR_PAGINA = 50;
 const usuarioSelect = { select: { id: true, nombre: true } };
 
+/**
+ * @param {import('express').Response} res
+ */
 const noEncontrado = (res) =>
   res.status(404).render('error', { title: 'Incidente no encontrado', mensaje: 'El incidente no existe.' });
 
+/**
+ * Responde 403: solo el Administrador o el responsable asignado.
+ * @param {import('express').Response} res
+ */
 const sinPermiso = (res) =>
   res.status(403).render('error', {
     title: 'Acceso denegado',
     mensaje: 'Solo el Administrador o el responsable asignado pueden modificar este incidente.',
   });
 
+/**
+ * @param {import('express').Request} req
+ * @param {object} [include]
+ * @returns {Promise<object|null>|null} Registro de :id, o null
+ */
 const buscar = (req, include = {}) => {
   const id = idValido(req.params.id);
   return id ? prisma.incidente.findUnique({ where: { id }, include }) : null;
 };
 
+/**
+ * @param {unknown} valor
+ * @returns {string}
+ */
 const texto = (valor) => (typeof valor === 'string' ? valor.trim() : '');
 const opciones = { TIPOS, GRAVEDADES, ESTADOS_INCIDENTE };
+/**
+ * @param {object} mapa Valores válidos (claves)
+ * @param {unknown} valor
+ * @returns {boolean}
+ */
 const esOpcion = (mapa, valor) => Object.hasOwn(mapa, valor ?? '');
 
 // Lee y valida el formulario. `actual` es el incidente existente (null al crear)
+/**
+ * @param {import('express').Request} req
+ * @param {object|null} actual
+ * @returns {Promise<{ datos: object, errores: string[] }>}
+ */
 const leerFormulario = async (req, actual) => {
   const largos = excesos(req.body, LIMITES.incidente);
   const { body, user } = req;
@@ -87,6 +115,8 @@ const leerFormulario = async (req, actual) => {
     errores.push('El número de afectados debe ser un entero igual o mayor que 0.');
   }
 
+  // Regla de negocio: las fechas de detección y de notificación no pueden ser futuras, y las
+  // notificaciones no pueden ser anteriores a la detección (de ella parte el plazo de 72 h)
   const ahora = Date.now() + 5 * 60 * 1000; // margen por diferencias de reloj
   if (datos.fecha_deteccion && datos.fecha_deteccion.getTime() > ahora) {
     errores.push('La fecha de detección no puede ser futura.');
@@ -101,6 +131,8 @@ const leerFormulario = async (req, actual) => {
     if (datos[campo] && datos[campo].getTime() > ahora) errores.push(`La notificación a ${etiqueta} no puede ser futura.`);
   }
 
+// FALLO DETECTADO (menor): el responsable solo se valida que exista; puede asignarse un usuario
+// desactivado (los desplegables de responsable tampoco filtran por activo).
   if (datos.responsable_id !== undefined && datos.responsable_id !== null) {
     const existe =
       Number.isInteger(datos.responsable_id) &&
@@ -111,6 +143,11 @@ const leerFormulario = async (req, actual) => {
   return { datos, errores };
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {{ incidente: object, errores?: string[], status?: number }} opciones
+ */
 const renderFormulario = async (req, res, { incidente, errores = [], status = 200 }) => {
   const usuarios = esAdmin(req.user)
     ? await prisma.usuario.findMany({ select: { id: true, nombre: true, cargo: true }, orderBy: { nombre: 'asc' } })
@@ -134,6 +171,11 @@ const ALERTAS = {
   aepd_vencido: { texto: 'Notificación a la AEPD fuera de plazo (más de 72 h)', where: (ahora) => whereAepdPendiente(ahora, true) },
 };
 
+/**
+ * GET /incidentes · con sesión. Filtros ?estado=, ?gravedad=, ?sistema=, ?alerta=activos|aepd_pendiente|aepd_vencido y ?pagina=.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const list = async (req, res) => {
   const estado = esOpcion(ESTADOS_INCIDENTE, req.query.estado) ? req.query.estado : '';
   const gravedad = esOpcion(GRAVEDADES, req.query.gravedad) ? req.query.gravedad : '';
@@ -165,6 +207,11 @@ const list = async (req, res) => {
   });
 };
 
+/**
+ * GET /incidentes/:id · con sesión. Incluye la situación del plazo de 72 h de la AEPD.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const show = async (req, res) => {
   const incidente = await buscar(req, {
     responsable: usuarioSelect,
@@ -185,9 +232,19 @@ const show = async (req, res) => {
 };
 
 // Admite ?sistema=ID para llegar desde la ficha de un sistema con él preseleccionado
+/**
+ * GET /incidentes/nuevo · con sesión.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const newForm = (req, res) =>
   renderFormulario(req, res, { incidente: { fecha_deteccion: new Date(), sistema_id: leerSistemaId(req.query.sistema) || null } });
 
+/**
+ * POST /incidentes · con sesión (cualquiera puede reportar). Empieza en estado Abierto.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const create = async (req, res) => {
   const { datos, errores } = await leerFormulario(req, null);
   if (errores.length) return renderFormulario(req, res, { incidente: datos, errores, status: 400 });
@@ -197,6 +254,11 @@ const create = async (req, res) => {
   res.redirect(`/incidentes/${incidente.id}`);
 };
 
+/**
+ * GET /incidentes/:id/editar · Administrador o responsable.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const editForm = async (req, res) => {
   const incidente = await buscar(req, { responsable: usuarioSelect });
   if (!incidente) return noEncontrado(res);
@@ -204,6 +266,11 @@ const editForm = async (req, res) => {
   renderFormulario(req, res, { incidente });
 };
 
+/**
+ * POST /incidentes/:id · Administrador o responsable. El cambio de estado queda en el historial.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const update = async (req, res) => {
   const actual = await buscar(req, { responsable: usuarioSelect });
   if (!actual) return noEncontrado(res);
@@ -229,6 +296,11 @@ const update = async (req, res) => {
 };
 
 // Cambio rápido de estado desde el detalle
+/**
+ * POST /incidentes/:id/estado · Administrador o responsable.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const cambiarEstado = async (req, res) => {
   const incidente = await buscar(req);
   if (!incidente) return noEncontrado(res);
@@ -249,6 +321,11 @@ const cambiarEstado = async (req, res) => {
   res.redirect(`/incidentes/${incidente.id}`);
 };
 
+/**
+ * GET /incidentes/:id/historial · con sesión.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const historial = async (req, res) => {
   const incidente = await buscar(req, { creado_por: usuarioSelect });
   if (!incidente) return noEncontrado(res);

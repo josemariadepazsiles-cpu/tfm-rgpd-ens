@@ -1,3 +1,5 @@
+// Solicitudes de derechos de los interesados: registro, tramitación (estados, ampliación del
+// plazo, resolución), historial y documentos adjuntos.
 const prisma = require('../lib/prisma');
 const { esAdmin, esAdminOResponsable, idValido, idDeFormulario } = require('../lib/permisos');
 const { desdeInputFechaHora, finPlazoMeses, fecha } = require('../lib/formato');
@@ -19,25 +21,55 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const usuarioSelect = { select: { id: true, nombre: true } };
 const opciones = { TIPOS_DERECHO, ARTICULOS_DERECHO, CANALES, ESTADOS_SOLICITUD, DIAS_AVISO, MESES_AMPLIACION };
 
+/**
+ * @param {import('express').Response} res
+ */
 const noEncontrada = (res) =>
   res.status(404).render('error', { title: 'Solicitud no encontrada', mensaje: 'La solicitud no existe.' });
 
+/**
+ * Responde 403: solo el Administrador o el responsable asignado.
+ * @param {import('express').Response} res
+ */
 const sinPermiso = (res) =>
   res.status(403).render('error', {
     title: 'Acceso denegado',
     mensaje: 'Solo el Administrador o el responsable asignado pueden tramitar esta solicitud.',
   });
 
+/**
+ * @param {import('express').Request} req
+ * @param {object} [include]
+ * @returns {Promise<object|null>|null} Registro de :id, o null
+ */
 const buscar = (req, include = {}) => {
   const id = idValido(req.params.id);
   return id ? prisma.solicitudDerecho.findUnique({ where: { id }, include }) : null;
 };
 
+/**
+ * @param {unknown} valor
+ * @returns {string}
+ */
 const texto = (valor) => (typeof valor === 'string' ? valor.trim() : '');
+/**
+ * @param {object} mapa Valores válidos (claves)
+ * @param {unknown} valor
+ * @returns {boolean}
+ */
 const esOpcion = (mapa, valor) => Object.hasOwn(mapa, valor ?? '');
+/**
+ * @param {import('express').Response} res
+ * @param {number} id
+ */
 const volver = (res, id) => res.redirect(`/derechos/${id}`);
 
 // Lee y valida el formulario. `actual` es la solicitud existente (null al registrarla)
+/**
+ * @param {import('express').Request} req
+ * @param {object|null} actual
+ * @returns {Promise<{ datos: object, errores: string[] }>}
+ */
 const leerFormulario = async (req, actual) => {
   const largos = excesos(req.body, LIMITES.derecho);
   const { body, user } = req;
@@ -90,6 +122,8 @@ const leerFormulario = async (req, actual) => {
     if (!esOpcion(ESTADOS_SOLICITUD, datos.estado)) errores.push('El estado no es válido.');
     const resuelta = estaResuelta(datos.estado);
 
+    // Regla de negocio (art. 12.3 RGPD): el plazo de 1 mes solo puede ampliarse 2 meses más,
+    // con motivo, sin haber resuelto y antes de que acabe el primer mes
     if (datos.plazo_ampliado && !actual.plazo_ampliado) {
       // Nueva ampliación: con motivo, antes de que venza el plazo inicial y sin resolver
       if (!datos.motivo_ampliacion) errores.push('Indica el motivo de la ampliación del plazo (art. 12.3).');
@@ -114,6 +148,8 @@ const leerFormulario = async (req, actual) => {
     if (datos.fecha_recepcion) datos.fecha_limite = calcularFechaLimite(datos.fecha_recepcion, datos.plazo_ampliado);
   }
 
+// FALLO DETECTADO (menor): el responsable solo se valida que exista; puede asignarse un usuario
+// desactivado (los desplegables de responsable tampoco filtran por activo).
   if (datos.responsable_id !== undefined && datos.responsable_id !== null) {
     const existe =
       Number.isInteger(datos.responsable_id) &&
@@ -124,6 +160,11 @@ const leerFormulario = async (req, actual) => {
   return { datos, errores };
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {{ solicitud: object, errores?: string[], status?: number }} opciones
+ */
 const renderFormulario = async (req, res, { solicitud, errores = [], status = 200 }) => {
   const usuarios = esAdmin(req.user)
     ? await prisma.usuario.findMany({ select: { id: true, nombre: true, cargo: true }, orderBy: { nombre: 'asc' } })
@@ -145,6 +186,11 @@ const renderFormulario = async (req, res, { solicitud, errores = [], status = 20
   });
 };
 
+/**
+ * GET /derechos · con sesión. Filtros ?estado=, ?tipo=, ?plazo=vencidas|proximas, ?sistema= y ?pagina=. Abiertas primero, por fecha límite.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const list = async (req, res) => {
   const tipo = esOpcion(TIPOS_DERECHO, req.query.tipo) ? req.query.tipo : '';
   const estado = esOpcion(ESTADOS_SOLICITUD, req.query.estado) ? req.query.estado : '';
@@ -188,6 +234,11 @@ const list = async (req, res) => {
   });
 };
 
+/**
+ * GET /derechos/:id · con sesión. Indica si aún se puede ampliar el plazo.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const show = async (req, res) => {
   const solicitud = await buscar(req, {
     responsable: usuarioSelect,
@@ -212,10 +263,20 @@ const show = async (req, res) => {
   });
 };
 
+/**
+ * GET /derechos/nueva · con sesión.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const newForm = (req, res) =>
   // Admite ?sistema=ID para llegar desde la ficha de un sistema con él preseleccionado
   renderFormulario(req, res, { solicitud: { fecha_recepcion: new Date(), canal_entrada: 'EMAIL', sistema_id: leerSistemaId(req.query.sistema) || null } });
 
+/**
+ * POST /derechos · con sesión. La fecha límite se calcula: recepción + 1 mes.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const create = async (req, res) => {
   const { datos, errores } = await leerFormulario(req, null);
   if (errores.length) return renderFormulario(req, res, { solicitud: datos, errores, status: 400 });
@@ -228,6 +289,11 @@ const create = async (req, res) => {
   volver(res, solicitud.id);
 };
 
+/**
+ * GET /derechos/:id/editar · Administrador o responsable.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const editForm = async (req, res) => {
   const solicitud = await buscar(req, { responsable: usuarioSelect });
   if (!solicitud) return noEncontrada(res);
@@ -235,6 +301,11 @@ const editForm = async (req, res) => {
   renderFormulario(req, res, { solicitud });
 };
 
+/**
+ * POST /derechos/:id · Administrador o responsable. Estado y ampliación quedan en el historial.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const update = async (req, res) => {
   const actual = await buscar(req, { responsable: usuarioSelect });
   if (!actual) return noEncontrada(res);
@@ -258,6 +329,11 @@ const update = async (req, res) => {
 };
 
 // Cambio rápido de estado desde el detalle
+/**
+ * POST /derechos/:id/estado · Administrador o responsable. Al resolver se fija la fecha de respuesta.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const cambiarEstado = async (req, res) => {
   const solicitud = await buscar(req);
   if (!solicitud) return noEncontrada(res);
@@ -286,6 +362,11 @@ const cambiarEstado = async (req, res) => {
   volver(res, solicitud.id);
 };
 
+/**
+ * GET /derechos/:id/historial · con sesión.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const historial = async (req, res) => {
   const solicitud = await buscar(req, { creado_por: usuarioSelect });
   if (!solicitud) return noEncontrada(res);
@@ -316,6 +397,10 @@ const historial = async (req, res) => {
 // Cualquier usuario autenticado puede verlos; subirlos y eliminarlos, el Administrador o el
 // responsable asignado (los mismos que tramitan la solicitud).
 
+/**
+ * @param {import('express').Request} req
+ * @returns {Promise<{ solicitud: object, documento: object }|null>} El documento solo si pertenece a esa solicitud
+ */
 const buscarDocumento = async (req) => {
   const solicitudId = idValido(req.params.id);
   const docId = idValido(req.params.docId);
@@ -324,6 +409,11 @@ const buscarDocumento = async (req) => {
   return documento && documento.solicitud_id === solicitudId ? documento : null;
 };
 
+/**
+ * POST /derechos/:id/documentos · Administrador o responsable. PDF de hasta 10 MB.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const subirDocumento = async (req, res) => {
   const solicitud = await buscar(req);
   if (!solicitud) return noEncontrada(res);
@@ -364,6 +454,12 @@ const subirDocumento = async (req, res) => {
   volverA('exito', `Documento "${nombre}" subido (${formatoTamano(req.file.size)}).`);
 };
 
+/**
+ * GET /derechos/:id/documentos/:docId · con sesión. Se muestra en el navegador (o se descarga con ?descargar=1).
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {Function} next
+ */
 const verDocumento = async (req, res, next) => {
   const documento = await buscarDocumento(req);
   if (!documento) return noEncontrada(res);
@@ -389,6 +485,11 @@ const verDocumento = async (req, res, next) => {
   });
 };
 
+/**
+ * POST /derechos/:id/documentos/:docId/eliminar · Administrador o responsable. Borra también el archivo.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const eliminarDocumento = async (req, res) => {
   const documento = await buscarDocumento(req);
   if (!documento) return noEncontrada(res);

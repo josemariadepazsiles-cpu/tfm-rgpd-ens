@@ -1,3 +1,5 @@
+// Rutas de la evaluación de riesgos RGPD (/riesgos), ligados a una actividad del RAT.
+// Un Usuario solo ve los riesgos de sus actividades; eliminar es del Administrador.
 const express = require('express');
 const riesgoController = require('../controllers/riesgoController');
 const { ensureAuthenticated, ensureAdmin } = require('../middlewares/auth');
