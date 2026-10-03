@@ -213,7 +213,7 @@ Con `NODE_ENV=production` la cookie de sesión exige HTTPS, así que hay que ser
 
 ### 3.8 Despliegue en Render
 
-La aplicación está desplegada en **https://tfm-rgpd-ens.onrender.com** (Render, plan gratuito, región Frankfurt; base de datos en Neon).
+La aplicación está desplegada en **https://tfm-rgpd-ens.onrender.com** (Render, plan gratuito; base de datos en Neon).
 
 Configuración de un *Web Service* de Node en Render, con la base de datos en Neon:
 
