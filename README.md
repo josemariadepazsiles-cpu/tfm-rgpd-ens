@@ -77,16 +77,24 @@ Versiones instaladas según `package-lock.json`.
 | @tailwindcss/cli | 4.3.3 | Compila los estilos (`npm run build:css` y `npm run watch:css`). |
 | `node --watch` | la de Node.js | Reinicia el servidor al cambiar el código (`npm run dev`). |
 | Pruebas propias (`tests/`) | — | Batería funcional con el `fetch` de Node, sin framework de tests; incluye copia y restauración de los datos (`npm test`). |
-| Git | — | Control de versiones. `.gitattributes` fija el fin de línea LF de las migraciones. |
 
 El proyecto no tiene configuración de linters, formateadores, Docker ni despliegue.
 
+### Entorno de desarrollo y control de versiones
+
+| Herramienta | Para qué se ha usado en este proyecto |
+|---|---|
+| Visual Studio Code | Editor de código principal: edición, terminal integrada y ejecución de la aplicación en local. |
+| Git y GitHub | Control de versiones y alojamiento del repositorio del proyecto. `.gitattributes` fija el fin de línea LF de las migraciones. |
+
 ### Herramientas de IA utilizadas
 
-- **Claude Code (Anthropic), con el modelo Claude Opus 5.5:** se usó para escribir y revisar código, hacer pruebas, documentar y preparar commits. Lo indican:
-  - `CLAUDE.md` y `AGENTS.md`, guías para asistentes de programación;
-  - 61 commits con la línea `Co-Authored-By: Claude Opus 5.5`.
-- [COMPLETAR: otras herramientas de IA utilizadas y para qué]
+| Herramienta | Para qué se ha usado en este proyecto |
+|---|---|
+| Claude Code (Anthropic) | Asistente de programación dentro del proyecto: generación y refactorización de código, pruebas de funcionamiento, comentarios del código y redacción de la documentación a partir del código real. |
+| Claude (Anthropic) | Apoyo fuera del código: preparación de los prompts de trabajo y de una infografía del funcionamiento de la aplicación. |
+
+Todo el código y la documentación generados con IA han sido revisados y validados por el autor.
 
 Aplicación web para gestionar en un solo sitio el cumplimiento del **Reglamento General de
 Protección de Datos (RGPD)** y del **Esquema Nacional de Seguridad (ENS, RD 311/2022)** de una
