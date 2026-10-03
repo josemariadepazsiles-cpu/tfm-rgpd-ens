@@ -1,5 +1,7 @@
 # Compliance AI · RGPD + ENS
 
+**Demostración en línea:** https://tfm-rgpd-ens.onrender.com (credenciales en el [apartado 6](#6-usuario-y-contraseña-de-prueba); la primera carga puede tardar hasta un minuto si la instancia gratuita estaba dormida).
+
 ## 1. Descripción general del proyecto
 
 Compliance AI es una plataforma web para gestionar el cumplimiento del Reglamento General de
@@ -210,6 +212,8 @@ npm start
 Con `NODE_ENV=production` la cookie de sesión exige HTTPS, así que hay que servir la aplicación detrás de un proxy con certificado. Las sesiones se guardan en la memoria del servidor (limitación conocida, ver [docs/PLAN.md](docs/PLAN.md)).
 
 ### 3.8 Despliegue en Render
+
+La aplicación está desplegada en **https://tfm-rgpd-ens.onrender.com** (Render, plan gratuito, región Frankfurt; base de datos en Neon).
 
 Configuración de un *Web Service* de Node en Render, con la base de datos en Neon:
 
