@@ -1,0 +1,44 @@
+<%#
+  Apertura común de las páginas legales (se cierra con legal-cerrar.ejs). Son públicas: con
+  sesión se muestra el menú de la aplicación; sin ella, una cabecera sencilla con «Iniciar sesión».
+%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('head') %>
+</head>
+<body class="flex min-h-screen flex-col bg-fondo">
+  <% if (user) { %>
+    <%- include('nav') %>
+  <% } else { %>
+    <header class="border-b border-slate-200/80 bg-white">
+      <div class="contenedor flex h-16 items-center justify-between">
+        <a href="/" class="flex items-center gap-2.5">
+          <%- include('logo', { tamano: 'h-8 w-8' }) %>
+          <span class="text-[15px] font-semibold tracking-tight text-slate-900"><%= producto.nombre %></span>
+        </a>
+        <a href="/login" class="btn btn-secondary btn-sm"><%- icono('log-in', 'h-3.5 w-3.5') %>Iniciar sesión</a>
+      </div>
+    </header>
+  <% } %>
+
+  <main data-area="<%= areaNormativa %>" class="contenedor w-full flex-1 py-8 sm:py-10">
+    <div class="mx-auto max-w-3xl">
+      <p class="eyebrow">Información legal</p>
+      <h1 class="mt-1 titulo-pagina"><%= title %></h1>
+      <p class="mt-2 text-sm text-slate-500">Última actualización: <%= fecha(actualizado) %></p>
+
+      <div class="alerta alerta-aviso mt-6" role="note">
+        <%- icono('flask-conical', 'mt-0.5 h-4 w-4') %>
+        <div>
+          <p class="font-semibold"><%= legal.PROYECTO.aviso %></p>
+          <p class="mt-1">
+            Esta web y sus páginas legales son de prueba: forman parte de un <%= legal.PROYECTO.tipo %>.
+            La empresa, las personas, los identificadores y los datos de contacto son inventados y no
+            corresponden a ninguna entidad real. Los textos sirven como ejemplo y no constituyen
+            asesoramiento jurídico.
+          </p>
+        </div>
+      </div>
+
+      <article class="card texto-legal mt-6 p-6 sm:p-10">

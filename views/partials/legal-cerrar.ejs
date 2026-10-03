@@ -1,0 +1,13 @@
+<%# Cierre común de las páginas legales (abre legal-abrir.ejs) %>
+      </article>
+
+      <nav aria-label="Otras páginas legales" class="mt-6 flex flex-wrap gap-2 text-sm">
+        <% [['/aviso-legal', 'Aviso legal'], ['/privacidad', 'Política de privacidad'], ['/cookies', 'Política de cookies']].forEach(([href, texto]) => { %>
+          <% if (currentPath !== href) { %><a href="<%= href %>" class="btn btn-secondary btn-sm"><%= texto %></a><% } %>
+        <% }) %>
+      </nav>
+    </div>
+  </main>
+  <%- include('pie') %>
+</body>
+</html>

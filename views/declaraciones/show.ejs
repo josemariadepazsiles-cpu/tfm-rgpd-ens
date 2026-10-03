@@ -154,5 +154,6 @@
       Generada por <strong><%= d.generado_por_nombre %></strong> el <%= fechaHora(d.fecha_generacion) %><% if (d.fecha_emision) { %> · emitida por <strong><%= d.emitido_por_nombre %></strong> el <%= fechaHora(d.fecha_emision) %><% } %>.
     </p>
   </main>
+  <%- include('../partials/pie') %>
 </body>
 </html>

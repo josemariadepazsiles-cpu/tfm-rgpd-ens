@@ -1,0 +1,50 @@
+<%- include('../partials/legal-abrir') %>
+
+<h2>1. Qué son las cookies</h2>
+<p>Las cookies y tecnologías similares, como el almacenamiento local del navegador, son pequeños archivos o datos que una web guarda en tu dispositivo para que funcione o para recordar información sobre tu visita. El artículo 22.2 de la LSSI-CE obliga a informar de ellas y a pedir consentimiento, salvo cuando son estrictamente necesarias para prestar el servicio que solicitas.</p>
+
+<h2>2. Cookies que usa esta web</h2>
+<p><strong>Esta web solo utiliza cookies y almacenamiento técnicos, necesarios para su funcionamiento</strong>:</p>
+<ul>
+  <li>no usa cookies analíticas, publicitarias ni de redes sociales;</li>
+  <li>no instala cookies de terceros.</li>
+</ul>
+<p>Por eso están exentas del deber de consentimiento y no se muestra un aviso para aceptarlas.</p>
+
+<div class="tabla-contenedor mt-4">
+  <table class="tabla text-sm">
+    <thead><tr><th>Nombre</th><th>Titular</th><th>Finalidad</th><th>Tipo</th><th>Duración</th></tr></thead>
+    <tbody>
+      <% legal.COOKIES.forEach((c) => { %>
+        <tr>
+          <td class="px-4 py-3 font-mono text-xs text-slate-800"><%= c.nombre %></td>
+          <td class="px-4 py-3"><%= c.titular %></td>
+          <td class="px-4 py-3"><%= c.finalidad %></td>
+          <td class="px-4 py-3"><%= c.tipo %></td>
+          <td class="px-4 py-3"><%= c.duracion %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+
+<h3>Lo que no hace esta web</h3>
+<ul>
+  <li><strong>Formularios:</strong> la protección frente a envíos falsificados no usa ninguna cookie adicional; su clave se guarda en el servidor, dentro de la sesión.</li>
+  <li><strong>Sin sesión iniciada:</strong> no se crea ninguna cookie (tampoco al visitar estas páginas legales).</li>
+  <li><strong>Recursos de terceros:</strong>
+    <ul>
+      <li>la librería Alpine.js se descarga de la red jsDelivr, que recibe la dirección IP pero no instala cookies;</li>
+      <li>la tipografía se sirve desde el propio servidor.</li>
+    </ul>
+  </li>
+</ul>
+
+<h2>3. Cómo eliminarlas o bloquearlas</h2>
+<p>Puedes borrar las cookies y los datos de este sitio, o impedir que se guarden, desde la configuración de privacidad de tu navegador (Chrome, Firefox, Safari o Edge, en el apartado de cookies y datos de sitios).</p>
+<p>Si bloqueas la cookie <code>sid</code> no podrás iniciar sesión. Si borras el almacenamiento local, el panel de control volverá a mostrar todas las secciones plegadas.</p>
+
+<h2>4. Cambios en esta política</h2>
+<p>Si en el futuro la web incorporase cookies que no sean técnicas (por ejemplo, de analítica), esta política se actualizará y se pedirá el consentimiento antes de instalarlas.</p>
+
+<%- include('../partials/legal-cerrar') %>

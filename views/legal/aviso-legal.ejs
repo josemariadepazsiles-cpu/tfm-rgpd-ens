@@ -1,0 +1,61 @@
+<% const t = legal.TITULAR; %>
+<%- include('../partials/legal-abrir') %>
+
+<h2>1. Datos identificativos del titular</h2>
+<p>En cumplimiento del artículo 10 de la Ley 34/2002, de 11 de julio, de servicios de la sociedad de la información y de comercio electrónico (LSSI-CE), se informa de los datos del titular de este sitio web:</p>
+<dl class="mt-4">
+  <dt>Titular</dt><dd><%= t.razon_social %></dd>
+  <dt>NIF</dt><dd><%= t.nif %></dd>
+  <dt>Domicilio</dt><dd><%= t.domicilio %>, <%= t.codigo_postal %> <%= t.localidad %> (<%= t.provincia %>), <%= t.pais %></dd>
+  <dt>Correo electrónico</dt><dd><a href="mailto:<%= t.email %>"><%= t.email %></a></dd>
+  <dt>Teléfono</dt><dd><%= t.telefono %></dd>
+  <dt>Datos registrales</dt><dd><%= t.registro_mercantil %></dd>
+  <dt>Actividad</dt><dd><%= t.actividad %></dd>
+  <dt>Sitio web</dt><dd><%= t.web %></dd>
+</dl>
+
+<h2>2. Objeto</h2>
+<p><%= producto.nombre %> es la herramienta interna con la que <%= t.nombre_comercial %> gestiona su cumplimiento del Reglamento General de Protección de Datos (RGPD) y del Esquema Nacional de Seguridad (ENS, Real Decreto 311/2022). Permite llevar el registro de actividades de tratamiento, la evaluación de riesgos, los incidentes y brechas de seguridad, las solicitudes de ejercicio de derechos, los proveedores, las evaluaciones y Declaraciones de Conformidad del ENS, las políticas de seguridad y el análisis de impacto en el negocio, organizados por sistema de información.</p>
+<p>El acceso está reservado al personal autorizado de la organización. No existe registro público: las cuentas las crea el Administrador de la plataforma. Sin iniciar sesión solo pueden consultarse la página de acceso y estas páginas legales.</p>
+
+<h2>3. Condiciones de uso</h2>
+<p>Quien utiliza la plataforma se compromete a:</p>
+<ul>
+  <li>Usarla solo para las funciones propias de su puesto y según el rol asignado (Administrador o Usuario).</li>
+  <li>Custodiar sus credenciales, no compartirlas y cerrar la sesión al terminar. La sesión caduca a las 8 horas.</li>
+  <li>Introducir información veraz y limitada a lo necesario. En los campos de texto libre no deben incluirse datos personales innecesarios ni categorías especiales de datos.</li>
+  <li>Subir únicamente documentos PDF relacionados con la gestión del cumplimiento, de los que la organización sea titular o esté autorizada a tratar.</li>
+</ul>
+<p>Por seguridad, tras varios intentos fallidos de inicio de sesión el acceso con esa cuenta se bloquea temporalmente. Las actuaciones relevantes quedan registradas con su autor y fecha: cambios de estado de controles, incidentes y solicitudes, aceptaciones de políticas y documentos subidos. El Administrador puede desactivar una cuenta en cualquier momento; una cuenta desactivada no puede acceder y pierde la sesión abierta.</p>
+
+<h2>4. Propiedad intelectual e industrial</h2>
+<p>El nombre, los logotipos y los contenidos propios de la organización son de <%= t.razon_social %>. Los documentos que los usuarios suben a la plataforma pertenecen a la organización o a sus legítimos titulares.</p>
+<p>El código fuente de la aplicación es obra de <%= legal.PROYECTO.autor %>, realizada como <%= legal.PROYECTO.tipo %>, y se distribuye con licencia MIT. Incorpora software de terceros bajo sus propias licencias, entre otros:</p>
+<ul>
+  <li>Express, Tailwind CSS, Alpine.js y pdfkit (licencia MIT).</li>
+  <li>Los iconos Lucide (licencia ISC).</li>
+  <li>La tipografía Inter (SIL Open Font License 1.1).</li>
+</ul>
+<p>Queda prohibida la reproducción o distribución de los contenidos de la organización sin su autorización.</p>
+
+<h2>5. Responsabilidad</h2>
+<p>Los cálculos que ofrece la plataforma son ayudas para la gestión y no sustituyen el criterio de las personas responsables del cumplimiento. Se calculan, entre otros:</p>
+<ul>
+  <li>los plazos de notificación de brechas a la AEPD y de respuesta a los derechos;</li>
+  <li>el nivel de riesgo;</li>
+  <li>el porcentaje de cumplimiento del ENS;</li>
+  <li>los avisos del panel de control.</li>
+</ul>
+<p>El titular no se hace responsable del uso indebido de la plataforma ni de los daños derivados de interrupciones del servicio, errores técnicos o del acceso no autorizado debido a una custodia negligente de las credenciales. Los enlaces a sitios de terceros (por ejemplo, la sede de la Agencia Española de Protección de Datos) se ofrecen solo a título informativo.</p>
+
+<h2>6. Legislación aplicable y jurisdicción</h2>
+<p>Este aviso legal se rige por la legislación española, en particular por:</p>
+<ul>
+  <li>la LSSI-CE;</li>
+  <li>el Reglamento (UE) 2016/679 (RGPD);</li>
+  <li>la Ley Orgánica 3/2018 de Protección de Datos Personales y garantía de los derechos digitales (LOPDGDD);</li>
+  <li>el Real Decreto 311/2022 (ENS).</li>
+</ul>
+<p>Para cualquier controversia, las partes se someten a los juzgados y tribunales de <%= t.provincia %>, salvo que la normativa aplicable disponga otro fuero.</p>
+
+<%- include('../partials/legal-cerrar') %>

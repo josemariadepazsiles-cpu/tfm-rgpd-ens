@@ -1,0 +1,133 @@
+<% const t = legal.TITULAR; const d = legal.DPD; %>
+<%- include('../partials/legal-abrir') %>
+
+<p>Esta política explica cómo <%= t.razon_social %> trata los datos personales en la plataforma <%= producto.nombre %>, de acuerdo con los artículos 13 y 14 del Reglamento (UE) 2016/679 (RGPD) y con la Ley Orgánica 3/2018 (LOPDGDD).</p>
+
+<h2>1. Responsable del tratamiento</h2>
+<dl class="mt-4">
+  <dt>Responsable</dt><dd><%= t.razon_social %> · NIF <%= t.nif %></dd>
+  <dt>Domicilio</dt><dd><%= t.domicilio %>, <%= t.codigo_postal %> <%= t.localidad %> (<%= t.provincia %>)</dd>
+  <dt>Contacto</dt><dd><a href="mailto:<%= t.email %>"><%= t.email %></a> · <%= t.telefono %></dd>
+</dl>
+
+<h2>2. Delegado de Protección de Datos</h2>
+<dl class="mt-4">
+  <dt>Delegado de Protección de Datos</dt><dd><%= d.nombre %></dd>
+  <dt>Correo electrónico</dt><dd><a href="mailto:<%= d.email %>"><%= d.email %></a></dd>
+  <dt>Dirección postal</dt><dd><%= d.direccion %></dd>
+</dl>
+
+<h2>3. Qué datos tratamos</h2>
+<p>La plataforma guarda los siguientes datos personales (según su modelo de datos):</p>
+<h3>Personas usuarias de la plataforma (personal de la organización)</h3>
+<ul>
+  <li>Nombre y apellidos, correo electrónico, cargo, rol (Administrador o Usuario), estado de la cuenta (activa o desactivada) y sistemas de información en los que trabaja.</li>
+  <li>Contraseña, guardada solo como resumen cifrado (bcrypt), nunca en claro.</li>
+  <li>Registros de su actividad:
+    <ul>
+      <li>autoría y responsabilidad de actividades de tratamiento, incidentes, solicitudes, proveedores, procesos de negocio, controles del ENS, políticas y declaraciones;</li>
+      <li>historial de los cambios de estado que realiza, con fecha y hora;</li>
+      <li>aceptación de cada versión de las políticas de seguridad;</li>
+      <li>documentos que sube.</li>
+    </ul>
+  </li>
+</ul>
+<h3>Personas que ejercen sus derechos de protección de datos</h3>
+<ul>
+  <li>Nombre, correo electrónico y teléfono, tipo de derecho ejercido, canal de entrada, descripción de la solicitud, respuesta, motivos de denegación o de ampliación del plazo y fechas de recepción y respuesta.</li>
+  <li>Documentos que aporten o que se generen en la tramitación: acreditación de identidad, escrito de solicitud, respuesta y justificante de envío.</li>
+</ul>
+<h3>Personas de contacto de los proveedores</h3>
+<ul>
+  <li>Nombre, correo electrónico y teléfono de la persona de contacto, junto con los datos de la empresa proveedora y la documentación del contrato.</li>
+</ul>
+<h3>Cargos de la organización</h3>
+<ul>
+  <li>Nombre del Delegado de Protección de Datos y de las personas Responsables de la Información, de la Seguridad y del Sistema, y correo electrónico del DPD.</li>
+</ul>
+<h3>Datos técnicos</h3>
+<ul>
+  <li>Cookie de sesión (ver la <a href="/cookies">política de cookies</a>).</li>
+  <li>Dirección IP: solo se usa, unida al correo introducido y en la memoria del servidor durante 15 minutos, para limitar los intentos fallidos de inicio de sesión.</li>
+</ul>
+<p>De las personas afectadas por un incidente de seguridad la plataforma no guarda su identidad, solo las categorías de datos afectados y el número estimado de afectados. No se tratan categorías especiales de datos ni se toman decisiones automatizadas con efectos jurídicos: las recomendaciones del panel son avisos basados en reglas fijas.</p>
+
+<h2>4. Finalidades y bases legales</h2>
+<div class="tabla-contenedor mt-4">
+  <table class="tabla text-sm">
+    <thead><tr><th>Finalidad</th><th>Base legal</th></tr></thead>
+    <tbody>
+      <tr><td class="px-4 py-3">Gestionar las cuentas de la plataforma, autenticar a las personas usuarias y controlar sus permisos.</td><td class="px-4 py-3">Ejecución de la relación laboral o contractual con el personal (art. 6.1.b RGPD) y obligación legal de controlar el acceso a los sistemas (art. 6.1.c RGPD y medidas op.acc del ENS).</td></tr>
+      <tr><td class="px-4 py-3">Dejar constancia de quién hace cada cambio y de la aceptación de las políticas de seguridad (trazabilidad y auditoría).</td><td class="px-4 py-3">Obligación legal derivada del ENS y del principio de responsabilidad proactiva (arts. 5.2 y 24 RGPD; art. 6.1.c).</td></tr>
+      <tr><td class="px-4 py-3">Atender las solicitudes de ejercicio de derechos dentro de plazo.</td><td class="px-4 py-3">Obligación legal (art. 6.1.c en relación con los arts. 12 a 22 RGPD).</td></tr>
+      <tr><td class="px-4 py-3">Registrar y gestionar los incidentes y brechas, y su notificación a la AEPD y a los afectados.</td><td class="px-4 py-3">Obligación legal (art. 6.1.c en relación con los arts. 33 y 34 RGPD).</td></tr>
+      <tr><td class="px-4 py-3">Mantener la relación con los proveedores y encargados del tratamiento.</td><td class="px-4 py-3">Interés legítimo en el tratamiento de datos de contacto de profesionales (art. 6.1.f RGPD y art. 19 LOPDGDD).</td></tr>
+      <tr><td class="px-4 py-3">Proteger la plataforma frente a accesos no autorizados (límite de intentos de inicio de sesión).</td><td class="px-4 py-3">Interés legítimo en garantizar la seguridad de la red y de la información (art. 6.1.f y considerando 49 RGPD).</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>5. Plazos de conservación</h2>
+<ul>
+  <% legal.CONSERVACION.forEach(([que, plazo]) => { %>
+    <li><strong><%= que %>:</strong> <%= plazo %></li>
+  <% }) %>
+</ul>
+<p>Las copias de seguridad de la base de datos se custodian con acceso restringido y siguen los mismos plazos.</p>
+
+<h2>6. Destinatarios y encargados del tratamiento</h2>
+<p>No se ceden datos a terceros, salvo por obligación legal: por ejemplo, a la Agencia Española de Protección de Datos al notificar una brecha, o a juzgados y tribunales.</p>
+<p>Estos proveedores tratan datos por cuenta de la organización o reciben datos técnicos:</p>
+<div class="tabla-contenedor mt-4">
+  <table class="tabla text-sm">
+    <thead><tr><th>Proveedor</th><th>Servicio</th><th>Datos</th><th>Ubicación</th></tr></thead>
+    <tbody>
+      <% legal.ENCARGADOS.forEach((e) => { %>
+        <tr>
+          <td class="px-4 py-3 font-medium text-slate-800"><%= e.nombre %></td>
+          <td class="px-4 py-3"><%= e.servicio %></td>
+          <td class="px-4 py-3"><%= e.datos %></td>
+          <td class="px-4 py-3"><%= e.ubicacion %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<p class="mt-3"><%= legal.ALOJAMIENTO_APP %></p>
+<p>La tipografía de la web se sirve desde el propio servidor: no se envían datos a servicios externos de fuentes.</p>
+
+<h2>7. Transferencias internacionales</h2>
+<p>La base de datos se aloja en el Reino Unido, país que cuenta con una decisión de adecuación de la Comisión Europea.</p>
+<p>Hay dos casos que pueden suponer transferencias fuera del Espacio Económico Europeo:</p>
+<ul>
+  <li>El proveedor de la base de datos tiene su sede en Estados Unidos, por lo que puede haber accesos desde allí, por ejemplo de soporte.</li>
+  <li>La red de distribución que sirve la librería Alpine.js recibe la dirección IP del navegador.</li>
+</ul>
+<p>En ambos casos se exigen las garantías del capítulo V del RGPD (cláusulas contractuales tipo o adhesión del proveedor al Marco de Privacidad de Datos UE-EE. UU.).</p>
+
+<h2>8. Tus derechos</h2>
+<p>Puedes ejercer los derechos de acceso, rectificación, supresión, oposición, limitación del tratamiento y portabilidad (arts. 15 a 22 RGPD).</p>
+<p>Para ejercerlos, escribe al Delegado de Protección de Datos a <a href="mailto:<%= d.email %>"><%= d.email %></a> o por correo postal a <%= d.direccion %>. Indica el derecho que ejerces y acredita tu identidad.</p>
+<p>Responderemos en el plazo de un mes desde la recepción, ampliable otros dos meses si la complejidad o el número de solicitudes lo exige; en ese caso te lo comunicaremos dentro del primer mes (art. 12.3 RGPD). Es el mismo plazo con el que la plataforma controla las solicitudes que recibe la organización.</p>
+
+<h2>9. Reclamación ante la autoridad de control</h2>
+<p>Si consideras que no se han atendido correctamente tus derechos, puedes presentar una reclamación ante la Agencia Española de Protección de Datos (C/ Jorge Juan 6, 28001 Madrid · <a href="https://www.aepd.es" rel="noopener" target="_blank">www.aepd.es</a>). Antes, si lo prefieres, puedes dirigirte al Delegado de Protección de Datos.</p>
+
+<h2>10. Origen de los datos y seguridad</h2>
+<p>Los datos tienen tres orígenes:</p>
+<ul>
+  <li>los del personal los registra el Administrador de la plataforma a partir de la relación laboral;</li>
+  <li>los de quienes ejercen sus derechos proceden de su propia solicitud;</li>
+  <li>los de contacto de proveedores los facilita la empresa proveedora.</li>
+</ul>
+<p>La plataforma aplica, entre otras, estas medidas de seguridad:</p>
+<ul>
+  <li>contraseñas cifradas;</li>
+  <li>acceso por roles y por responsable;</li>
+  <li>protección de los formularios frente a envíos falsificados;</li>
+  <li>cabeceras de seguridad;</li>
+  <li>validación de los documentos subidos;</li>
+  <li>registro de los cambios.</li>
+</ul>
+
+<%- include('../partials/legal-cerrar') %>

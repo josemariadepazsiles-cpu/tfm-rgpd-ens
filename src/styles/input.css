@@ -273,6 +273,38 @@
     @apply font-medium text-indigo-600 underline-offset-2 transition hover:text-indigo-700 hover:underline;
   }
 
+  /* --- Texto de las páginas legales (aviso legal, privacidad, cookies) --- */
+  .texto-legal {
+    @apply text-[15px] leading-7 text-slate-700;
+  }
+  .texto-legal h2 {
+    @apply mt-10 mb-3 text-lg font-semibold tracking-tight text-slate-900;
+  }
+  .texto-legal h2:first-child {
+    @apply mt-0;
+  }
+  .texto-legal h3 {
+    @apply mt-6 mb-2 font-semibold text-slate-800;
+  }
+  .texto-legal p + p {
+    @apply mt-3;
+  }
+  .texto-legal ul {
+    @apply mt-2 list-disc space-y-1.5 pl-5;
+  }
+  .texto-legal a {
+    @apply font-medium text-indigo-600 underline-offset-2 hover:underline;
+  }
+  .texto-legal dl {
+    @apply grid gap-x-6 gap-y-2 sm:grid-cols-[minmax(0,14rem)_1fr];
+  }
+  .texto-legal dt {
+    @apply font-medium text-slate-500;
+  }
+  .texto-legal dd {
+    @apply text-slate-800;
+  }
+
   /* --- Formularios --- */
   .label {
     @apply mb-1.5 block text-sm font-medium text-slate-700;

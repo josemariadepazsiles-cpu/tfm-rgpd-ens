@@ -26,6 +26,7 @@ const politicaRoutes = require('./routes/politicas');
 const biaRoutes = require('./routes/bia');
 const empresaRoutes = require('./routes/empresa');
 const usuarioRoutes = require('./routes/usuarios');
+const legalRoutes = require('./routes/legal');
 const { obtenerOrganizacion } = require('./lib/organizacion');
 const { CRITICIDAD_CLASES, ESTADO_REVISION_CLASES, RESULTADO_CLASES, ALERTA_BIA_CLASES } = require('./lib/bia');
 const { ESTADO_POLITICA_CLASES, REVISION_CLASES } = require('./lib/politicas');
@@ -83,6 +84,8 @@ app.locals.versionCss = '0';
 const CSS_COMPILADO = path.join(__dirname, 'public', 'css', 'output.css');
 app.locals.areasNormativas = AREAS;
 app.locals.producto = { nombre: 'Compliance AI', lema: 'AI Compliance Platform' };
+// Datos de las páginas legales (pie de página de todas las pantallas)
+app.locals.legal = require('./config/legal');
 // Iniciales para el avatar: "José María de Paz" → "JM" (sin partículas como "de" o "la")
 const PARTICULAS = new Set(['de', 'del', 'la', 'las', 'los', 'y', 'i', 'da', 'do', 'van', 'von']);
 /**
@@ -181,6 +184,8 @@ app.use('/politicas', politicaRoutes);
 app.use('/bia', biaRoutes);
 app.use('/empresa', empresaRoutes);
 app.use('/usuarios', usuarioRoutes);
+// Páginas legales públicas (aviso legal, privacidad y cookies)
+app.use('/', legalRoutes);
 // El checklist global se sustituyó por evaluaciones por sistema
 app.get('/checklist', (req, res) => res.redirect(301, '/sistemas'));
 
