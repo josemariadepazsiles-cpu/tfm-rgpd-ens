@@ -304,7 +304,6 @@
 
     <%# Accesos secundarios al final de la ficha %>
     <div class="mt-8 flex flex-wrap gap-2 border-t border-slate-200/80 pt-6">
-      <a href="/sistemas/<%= sistema.id %>/historial" class="btn btn-secondary"><%- icono('history', 'h-4 w-4') %>Ver histórico</a>
       <a href="/declaraciones?sistema=<%= sistema.id %>" class="btn btn-secondary"><%- icono('file-badge', 'h-4 w-4') %>Declaraciones (<%= declaraciones %>)</a>
     </div>
   </main>
