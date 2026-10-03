@@ -9,6 +9,7 @@ const { BASES_LEGALES } = require('../config/baseLegal');
 const { resumenEvaluaciones } = require('../lib/evaluaciones');
 const { CATEGORIAS, ESTADOS, esCategoria, resumenGlobal } = require('../lib/ens');
 const { nombreEvaluacionSugerido } = require('../lib/formato');
+const { ESTADOS_DECLARACION } = require('../lib/declaraciones');
 
 // Los sistemas y sus evaluaciones son compartidos por toda la organización:
 // cualquier usuario los consulta; solo el Administrador los crea, edita o elimina.
@@ -132,13 +133,18 @@ const show = async (req, res) => {
       select: { id: true, nombre: true, criticidad: true, estado_revision: true, rto_horas: true },
       orderBy: [{ criticidad: 'desc' }, { nombre: 'asc' }],
     }),
-    prisma.declaracionConformidad.count({ where: { sistema_id: sid } }),
+    prisma.declaracionConformidad.findMany({
+      where: { sistema_id: sid },
+      select: { id: true, version: true, estado: true, evaluacion_id: true },
+      orderBy: { version: 'desc' },
+    }),
   ]);
 
   const ahora = new Date();
   const evaluaciones = sistema.evaluaciones.map((e) => {
     const resumen = resumenes.get(e.id);
-    return { ...e, resumen, global: resumenGlobal(resumen) };
+    // Declaraciones generadas a partir de esta evaluación (la más reciente primero)
+    return { ...e, resumen, global: resumenGlobal(resumen), declaraciones: declaraciones.filter((d) => d.evaluacion_id === e.id) };
   });
   const conUrgencia = solicitudes.map((s) => ({ ...s, urgencia: urgencia(s, ahora) }));
   // Abiertas primero (por fecha límite), después las resueltas
@@ -166,7 +172,9 @@ const show = async (req, res) => {
     incidentes: incidentesPlazo,
     solicitudes: conUrgencia,
     procesos,
-    declaraciones,
+    ESTADOS_DECLARACION,
+    // Declaraciones cuya evaluación se borró: no tienen tarjeta en la que mostrarse
+    declaracionesSueltas: declaraciones.filter((d) => !sistema.evaluaciones.some((e) => e.id === d.evaluacion_id)),
     resumen,
     // Un Usuario solo ve sus propias actividades y riesgos
     ambitoRestringido: !esAdmin(req.user),

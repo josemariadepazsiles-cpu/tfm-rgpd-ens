@@ -142,8 +142,8 @@
         <div class="mt-4 space-y-4">
           <% evaluaciones.forEach((e, i) => { %>
             <article class="card p-6">
-              <div>
-                <div>
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <div class="min-w-0">
                   <h3 class="font-semibold text-slate-800">
                     <a href="/evaluaciones/<%= e.id %>" class="enlace-registro"><%= e.nombre %></a>
                     <% if (i === 0) { %><span class="ml-2 rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700">Última</span><% } %>
@@ -152,6 +152,20 @@
                     Creada el <%= fechaHora(e.created_at) %><%= e.creado_por ? ' por ' + e.creado_por.nombre : '' %>
                   </p>
                   <div class="mt-2"><%- include('../partials/barra-global', { global: e.global }) %></div>
+                </div>
+                <%# Declaraciones de conformidad generadas desde esta evaluación %>
+                <div class="flex flex-col items-end gap-1.5 text-sm">
+                  <% if (e.declaraciones.length) { %>
+                    <% e.declaraciones.forEach((d) => { %>
+                      <div class="flex items-center gap-2">
+                        <a href="/declaraciones/<%= d.id %>" class="enlace-registro text-sm">Declaración v<%= d.version %></a>
+                        <span class="badge <%= estadoDeclaracionClases[d.estado] %>"><%= ESTADOS_DECLARACION[d.estado] %></span>
+                        <a href="/declaraciones/<%= d.id %>/pdf?ver=1" target="_blank" rel="noopener" class="btn btn-secondary btn-sm"><%- icono('file-text', 'h-3.5 w-3.5') %>Ver PDF</a>
+                      </div>
+                    <% }) %>
+                  <% } else { %>
+                    <span class="text-xs text-slate-400">Sin declaración de conformidad</span>
+                  <% } %>
                 </div>
               </div>
               <div class="mt-4">
@@ -302,10 +316,15 @@
       </div>
     </div>
 
-    <%# Accesos secundarios al final de la ficha %>
-    <div class="mt-8 flex flex-wrap gap-2 border-t border-slate-200/80 pt-6">
-      <a href="/declaraciones?sistema=<%= sistema.id %>" class="btn btn-secondary"><%- icono('file-badge', 'h-4 w-4') %>Declaraciones (<%= declaraciones %>)</a>
-    </div>
+    <%# Declaraciones de evaluaciones ya eliminadas (las demás aparecen junto a su evaluación) %>
+    <% if (declaracionesSueltas.length) { %>
+      <p class="mt-8 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-slate-200/80 pt-6 text-sm text-slate-500">
+        Declaraciones de evaluaciones eliminadas:
+        <% declaracionesSueltas.forEach((d) => { %>
+          <a href="/declaraciones/<%= d.id %>" class="enlace-registro text-sm">Declaración v<%= d.version %></a>
+        <% }) %>
+      </p>
+    <% } %>
   </main>
 </body>
 </html>
