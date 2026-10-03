@@ -36,6 +36,12 @@
             <button type="submit" class="btn btn-primary">Generar Declaración de Conformidad</button>
           </form>
         <% } %>
+        <% if (user.rol === 'ADMIN') { %>
+          <form action="/evaluaciones/<%= evaluacion.id %>/eliminar" method="POST" data-nombre="<%= evaluacion.nombre %>"
+                onsubmit="return confirm('¿Eliminar la evaluación «' + this.dataset.nombre + '» y su histórico? Esta acción no se puede deshacer.')">
+            <button type="submit" class="btn btn-danger"><%- icono('trash-2', 'h-4 w-4') %>Eliminar</button>
+          </form>
+        <% } %>
       </div>
     </div>
     <% if (user.rol === 'ADMIN' && !evaluacion.sistema.categoria_general) { %>
