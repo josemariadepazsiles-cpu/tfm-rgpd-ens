@@ -1,5 +1,93 @@
 # Compliance AI · RGPD + ENS
 
+## 1. Descripción general del proyecto
+
+Compliance AI es una plataforma web para gestionar el cumplimiento del Reglamento General de
+Protección de Datos (RGPD) y del Esquema Nacional de Seguridad (ENS) en una organización.
+
+En muchas organizaciones ese cumplimiento se lleva en hojas de cálculo y documentos dispersos,
+sin control de los plazos legales ni una visión de conjunto del estado de cada sistema.
+
+Está dirigida a delegados de protección de datos, responsables de seguridad y de cumplimiento, y
+administradores de organizaciones sujetas al RGPD y al ENS.
+
+Lo que la distingue:
+
+- **RGPD y ENS en torno al sistema de información:** actividades de tratamiento, riesgos,
+  incidentes, solicitudes de derechos, evaluaciones ENS y procesos de continuidad se asocian a un
+  sistema o quedan como transversales.
+- **Panel de control con las acciones pendientes ordenadas por urgencia**, para toda la
+  organización o para un sistema concreto.
+- **Avisos automáticos de plazos legales:**
+  - 72 horas para notificar una brecha a la AEPD;
+  - un mes para responder a los derechos;
+  - revisión periódica de las políticas;
+  - pruebas de continuidad en los últimos 12 meses.
+- **Declaración de Conformidad del ENS** generada a partir de una evaluación, versionada y con su
+  documento PDF.
+
+## 2. Stack tecnológico utilizado
+
+Versiones instaladas según `package-lock.json`.
+
+### Backend
+
+| Tecnología | Versión | Para qué se usa en este proyecto |
+|---|---|---|
+| Node.js | ^20.19, ^22.12 o ≥ 24 (`engines`) | Ejecuta el servidor; es la versión mínima que exige Prisma 7. |
+| Express | 5.2.1 | Servidor HTTP: un router por módulo, middlewares, archivos estáticos y manejo de errores (`app.js`). |
+| multer | 2.4.0 | Recibe en memoria los PDF subidos a proveedores, derechos y políticas, con un máximo de 10 MB (`lib/subidas.js`). |
+| pdfkit | 0.20.2 | Genera el PDF de la Declaración de Conformidad (`lib/pdfDeclaracion.js`) y los PDF de ejemplo de las políticas. |
+| dotenv | 18.0.4 | Carga la configuración del archivo `.env`: conexión a la base de datos, secreto de sesión… |
+
+### Base de datos y ORM
+
+| Tecnología | Versión | Para qué se usa en este proyecto |
+|---|---|---|
+| PostgreSQL | — (no fijada en el proyecto) | Base de datos relacional (`provider = "postgresql"` en `prisma/schema.prisma`). |
+| Neon | — | Alojamiento de PostgreSQL en la nube. `prisma.config.js` quita el «-pooler» de la URL para que las migraciones no se bloqueen. |
+| Prisma (CLI) | 7.10.0 | Esquema de 25 modelos, 21 migraciones, generación del cliente y ejecución del seed. |
+| @prisma/client | 7.10.0 | Consultas desde controladores y `lib/`, con un único cliente compartido (`lib/prisma.js`). |
+| @prisma/adapter-pg | 7.10.0 | Conecta Prisma 7 a PostgreSQL con el driver `pg` y un pool de hasta 20 conexiones. |
+
+### Frontend
+
+| Tecnología | Versión | Para qué se usa en este proyecto |
+|---|---|---|
+| EJS | 6.0.1 | Plantillas de las pantallas, renderizadas en el servidor (`views/`). |
+| Tailwind CSS | 4.3.3 | Estilos. La configuración está en `src/styles/input.css` y se compila a `public/css/output.css`. |
+| Alpine.js | 3.x por CDN (jsDelivr; hoy sirve la 3.17.4) | Interactividad en el navegador: menús desplegables, pestañas, secciones plegables del panel y mostrar u ocultar la contraseña. |
+| Lucide (`lucide-static`) | 1.48.0 | Iconos SVG que el servidor incrusta en el HTML (`lib/iconos.js`). |
+| Inter (`@fontsource-variable/inter`) | 5.3.0 | Tipografía servida desde el propio servidor en `/fuentes`. |
+
+### Autenticación y seguridad
+
+| Tecnología | Versión | Para qué se usa en este proyecto |
+|---|---|---|
+| Passport | 0.7.0 | Inicio de sesión y recuperación del usuario en cada petición (`config/passport.js`). |
+| passport-local | 1.0.0 | Estrategia de acceso con email y contraseña. |
+| express-session | 1.19.0 | Sesión en la cookie `sid`: 8 h, HttpOnly, SameSite=Lax y Secure en producción. |
+| bcryptjs | 3.0.3 | Hash de las contraseñas (coste 12) y comprobación en el login. |
+| Middleware propio | — | `middlewares/seguridad.js`: cabeceras de seguridad (CSP, X-Frame-Options…), protección CSRF y límite de intentos de login, sin dependencias externas. |
+
+### Herramientas de desarrollo
+
+| Tecnología | Versión | Para qué se usa en este proyecto |
+|---|---|---|
+| @tailwindcss/cli | 4.3.3 | Compila los estilos (`npm run build:css` y `npm run watch:css`). |
+| `node --watch` | la de Node.js | Reinicia el servidor al cambiar el código (`npm run dev`). |
+| Pruebas propias (`tests/`) | — | Batería funcional con el `fetch` de Node, sin framework de tests; incluye copia y restauración de los datos (`npm test`). |
+| Git | — | Control de versiones. `.gitattributes` fija el fin de línea LF de las migraciones. |
+
+El proyecto no tiene configuración de linters, formateadores, Docker ni despliegue.
+
+### Herramientas de IA utilizadas
+
+- **Claude Code (Anthropic), con el modelo Claude Opus 5.5:** se usó para escribir y revisar código, hacer pruebas, documentar y preparar commits. Lo indican:
+  - `CLAUDE.md` y `AGENTS.md`, guías para asistentes de programación;
+  - 61 commits con la línea `Co-Authored-By: Claude Opus 5.5`.
+- [COMPLETAR: otras herramientas de IA utilizadas y para qué]
+
 Aplicación web para gestionar en un solo sitio el cumplimiento del **Reglamento General de
 Protección de Datos (RGPD)** y del **Esquema Nacional de Seguridad (ENS, RD 311/2022)** de una
 organización, tomando el **sistema de información** como eje: cada actividad de tratamiento,
