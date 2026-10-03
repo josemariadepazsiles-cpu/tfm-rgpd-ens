@@ -117,4 +117,4 @@ docs/           PRD.md, ARQUITECTURA.md, PLAN.md
   - cada evaluación guarda sus propios controles (`crearFilasEvaluacion`);
   - un control nuevo del catálogo solo entra en la evaluación vigente de cada sistema;
   - el % se calcula sobre las filas de la evaluación, no sobre el catálogo.
-- **Pendientes conocidos:** ver la lista de fallos de la revisión de comentarios en [docs/PLAN.md](docs/PLAN.md) (MemoryStore de sesiones, plazos en días hábiles, etc.).
+- **Pendientes conocidos:** ver la lista de fallos de la revisión de comentarios en [docs/PLAN.md](docs/PLAN.md) (plazos en días hábiles, etc.).

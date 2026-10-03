@@ -83,7 +83,7 @@ como análisis normativo o diseño]
 
 Están marcados en el código con «FALLO DETECTADO».
 
-- [ ] Guardar las sesiones en PostgreSQL en lugar de MemoryStore (`app.js`).
+- [x] Guardar las sesiones en PostgreSQL en lugar de MemoryStore (`app.js`, migración `sesiones_postgres`).
 - [ ] No pasar a «Superada» la declaración emitida hasta emitir la nueva versión (`lib/declaraciones.js`).
 - [ ] Trasladar al siguiente día hábil los plazos que vencen en sábado, domingo o festivo (`lib/formato.js`).
 - [ ] Mensaje en español cuando el login llega vacío, en lugar de «Missing credentials» (`config/passport.js`).

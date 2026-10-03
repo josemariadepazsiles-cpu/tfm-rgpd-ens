@@ -4,7 +4,7 @@
 // (prisma/seed-ejemplo.js) y usan el dominio reservado .example.
 
 // Fecha de la última actualización de los textos legales (AAAA-MM-DD)
-const FECHA_ACTUALIZACION = '2026-10-03';
+const FECHA_ACTUALIZACION = '2026-10-04';
 
 // Proyecto académico al que pertenece la web
 const PROYECTO = {
@@ -63,7 +63,7 @@ const CONSERVACION = [
   ['Incidentes y brechas de seguridad', 'Se conservan como documentación obligatoria de las brechas (art. 33.5 RGPD); la aplicación no permite eliminarlos.'],
   ['Datos de contacto de proveedores', 'Mientras dure la relación con el proveedor y 5 años después de su baja.'],
   ['Registro de aceptación de políticas', 'Mientras la política esté vigente y 5 años después de quedar obsoleta, como evidencia para auditorías del ENS.'],
-  ['Sesión iniciada', '8 horas desde el inicio de sesión (o hasta cerrar sesión).'],
+  ['Sesión iniciada', 'Hasta 8 horas sin actividad (o hasta cerrar sesión); las sesiones caducadas se borran de la base de datos cada 15 minutos.'],
   ['Registro de intentos fallidos de inicio de sesión', '15 minutos, solo en la memoria del servidor.'],
 ];
 
@@ -73,9 +73,9 @@ const COOKIES = [
   {
     nombre: 'sid',
     titular: 'Propia',
-    finalidad: 'Mantener la sesión iniciada. Guarda solo un identificador aleatorio y firmado; los datos de la sesión (usuario, token antifalsificación de formularios y avisos) se guardan en el servidor.',
+    finalidad: 'Mantener la sesión iniciada. Guarda solo un identificador aleatorio y firmado; los datos de la sesión (usuario, token antifalsificación de formularios y avisos) se guardan en la base de datos del servidor.',
     tipo: 'Técnica, necesaria (cookie HTTP con HttpOnly y SameSite=Lax; además Secure cuando la web funciona por HTTPS)',
-    duracion: '8 horas desde el inicio de sesión. Se crea al iniciar sesión y se borra al cerrarla.',
+    duracion: '8 horas desde la última actividad. Se crea al iniciar sesión y se borra al cerrarla.',
   },
   {
     nombre: 'compliance-ai:plegables-abiertos',

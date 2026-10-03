@@ -143,7 +143,7 @@ En los datos de ejemplo, el rol Administrador lo tienen la Dirección, el DPD y 
 | **Aceptación de políticas** | Solo las Aprobadas que requieren aceptación. Una **General** la aceptan todos los usuarios activos; una de **sistema**, los activos asignados a ese sistema. La aceptación es por **versión**, y no se puede aprobar una política sin su PDF. | `lib/usuarios.js`, `controllers/politicaController.js` |
 | **Proveedores** | Avisos de: falta de contrato de encargado, revisión del contrato vencida o en 30 días, y transferencia fuera del EEE sin mecanismo (se permite guardar, pero queda marcada). | `lib/proveedores.js` |
 | **Usuarios** | Un administrador no puede desactivarse ni quitarse el rol, y siempre queda al menos un administrador activo. | `controllers/usuarioController.js` |
-| **Cookies** | Solo técnicas: la cookie de sesión `sid` (8 h, solo con sesión iniciada) y el almacenamiento local de las secciones desplegadas del panel. Están exentas de consentimiento (art. 22.2 LSSI-CE), por lo que no hay banner. | `app.js`, `views/partials/head.ejs`, `config/legal.js` |
+| **Cookies** | Solo técnicas: la cookie de sesión `sid` (caduca tras 8 h sin actividad, solo con sesión iniciada) y el almacenamiento local de las secciones desplegadas del panel. Están exentas de consentimiento (art. 22.2 LSSI-CE), por lo que no hay banner. | `app.js`, `views/partials/head.ejs`, `config/legal.js` |
 | **Documentos** | Solo PDF (comprobada la firma `%PDF-`) de hasta 10 MB, guardados con nombre aleatorio. | `lib/subidas.js` |
 
 ## 5. Fuera del alcance

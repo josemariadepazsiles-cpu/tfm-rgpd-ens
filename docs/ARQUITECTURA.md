@@ -64,7 +64,7 @@ Orden de los middlewares en `app.js`:
 
 ## 3. Modelo de datos
 
-El esquema (`prisma/schema.prisma`) tiene **25 modelos** y **26 enums**, con **21 migraciones**.
+El esquema (`prisma/schema.prisma`) tiene **26 modelos** y **26 enums**, con **22 migraciones**.
 Los campos van en snake_case y las tablas en plural (`@@map`). Cada modelo y enum tiene una línea `///`
 que lo describe.
 
@@ -170,6 +170,7 @@ erDiagram
 | Datos de las páginas legales en un único archivo (`config/legal.js`) | Cambiar titular, DPD, encargados, plazos o cookies sin tocar las vistas; los datos son ficticios (proyecto académico). |
 | Páginas legales públicas y pie común en todas las vistas (`partials/pie.ejs`) | Son accesibles sin sesión y desde cualquier pantalla, incluido el login. Sin sesión no se crea cookie (`saveUninitialized: false`). |
 | Solo cookies técnicas, sin banner de consentimiento | La sesión (`sid`) y una preferencia de la interfaz en almacenamiento local están exentas (art. 22.2 LSSI-CE). El token CSRF se guarda en la sesión, no en otra cookie. |
+| Sesiones en PostgreSQL (connect-pg-simple, tabla `session`) con caducidad de 8 h sin actividad | Que la sesión no se pierda al reiniciarse el servidor (despliegues y reposo de la instancia gratuita de Render). |
 | Copias de seguridad en JSON con Prisma | Sin necesidad de `pg_dump` (`prisma/copia-seguridad.js`). |
 | Renderizado en el servidor (EJS) con Alpine.js para la interactividad | [COMPLETAR: motivo de elegir SSR en lugar de una SPA] |
 | PostgreSQL en Neon | [COMPLETAR: motivo de elegir Neon] |
@@ -177,7 +178,6 @@ erDiagram
 ## 5. Limitaciones conocidas
 
 Están anotadas en el código con «FALLO DETECTADO» y resumidas en [PLAN.md](PLAN.md):
-- las sesiones se guardan en memoria (MemoryStore);
 - los plazos no se trasladan a días hábiles;
 - al generar un borrador de declaración, la declaración emitida vigente pasa ya a «Superada»;
 - otras de menor impacto.

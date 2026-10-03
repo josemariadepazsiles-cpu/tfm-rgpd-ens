@@ -6,6 +6,8 @@ const path = require('path');
 const fs = require('fs');
 const express = require('express');
 const session = require('express-session');
+const PgSession = require('connect-pg-simple')(session);
+const { Pool } = require('pg');
 const passport = require('./config/passport');
 const { cabecerasSeguridad, proteccionCsrf } = require('./middlewares/seguridad');
 const { ROLES } = require('./config/roles');
@@ -114,15 +116,22 @@ app.use('/fuentes', express.static(
 // Detrás de un proxy (HTTPS terminado fuera): necesario para la cookie «secure» y para req.ip
 if (isProduction) app.set('trust proxy', 1);
 
-// FALLO DETECTADO: no se indica almacén de sesiones, así que express-session usa MemoryStore,
-// que no está pensado para producción (crece sin límite, no se comparte entre instancias y
-// todas las sesiones se pierden al reiniciar). Convendría un almacén en PostgreSQL.
+// Las sesiones se guardan en PostgreSQL (tabla «session», migración sesiones_postgres) y no en
+// memoria: así sobreviven a los reinicios del servidor (despliegues y reposo de la instancia
+// gratuita de Render). connect-pg-simple borra cada 15 minutos las sesiones caducadas.
+const poolSesiones = new Pool({ connectionString: process.env.DATABASE_URL, max: 5 });
+// Neon cierra las conexiones inactivas: sin este manejador, ese error tumbaría el proceso
+poolSesiones.on('error', (err) => console.error('Conexión de sesiones cerrada:', err.message));
+
 app.use(
   session({
     name: 'sid',
     secret: process.env.SESSION_SECRET,
+    store: new PgSession({ pool: poolSesiones, tableName: 'session' }),
     resave: false,
     saveUninitialized: false,
+    // La caducidad se renueva con cada petición: la sesión dura 8 horas sin actividad
+    rolling: true,
     cookie: {
       httpOnly: true,
       sameSite: 'lax',

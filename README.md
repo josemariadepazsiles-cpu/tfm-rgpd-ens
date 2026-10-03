@@ -50,7 +50,7 @@ Versiones instaladas según `package-lock.json`.
 |---|---|---|
 | PostgreSQL | — (no fijada en el proyecto) | Base de datos relacional (`provider = "postgresql"` en `prisma/schema.prisma`). |
 | Neon | — | Alojamiento de PostgreSQL en la nube. `prisma.config.js` quita el «-pooler» de la URL para que las migraciones no se bloqueen. |
-| Prisma (CLI) | 7.10.0 | Esquema de 25 modelos, 21 migraciones, generación del cliente y ejecución del seed. |
+| Prisma (CLI) | 7.10.0 | Esquema de 26 modelos, 22 migraciones, generación del cliente y ejecución del seed. |
 | @prisma/client | 7.10.0 | Consultas desde controladores y `lib/`, con un único cliente compartido (`lib/prisma.js`). |
 | @prisma/adapter-pg | 7.10.0 | Conecta Prisma 7 a PostgreSQL con el driver `pg` y un pool de hasta 20 conexiones. |
 
@@ -70,7 +70,9 @@ Versiones instaladas según `package-lock.json`.
 |---|---|---|
 | Passport | 0.7.0 | Inicio de sesión y recuperación del usuario en cada petición (`config/passport.js`). |
 | passport-local | 1.0.0 | Estrategia de acceso con email y contraseña. |
-| express-session | 1.19.0 | Sesión en la cookie `sid`: 8 h, HttpOnly, SameSite=Lax y Secure en producción. |
+| express-session | 1.19.0 | Sesión en la cookie `sid`: caduca tras 8 h sin actividad, HttpOnly, SameSite=Lax y Secure en producción. |
+| connect-pg-simple | 10.0.0 | Guarda las sesiones en PostgreSQL (tabla `session`), para que no se pierdan al reiniciarse el servidor. |
+| pg | 8.23.0 | Conexión a PostgreSQL del almacén de sesiones (y driver del adaptador de Prisma). |
 | bcryptjs | 3.0.3 | Hash de las contraseñas (coste 12) y comprobación en el login. |
 | Middleware propio | — | `middlewares/seguridad.js`: cabeceras de seguridad (CSP, X-Frame-Options…), protección CSRF y límite de intentos de login, sin dependencias externas. |
 
@@ -209,11 +211,11 @@ npm run build:css
 npm start
 ```
 
-Con `NODE_ENV=production` la cookie de sesión exige HTTPS, así que hay que servir la aplicación detrás de un proxy con certificado. Las sesiones se guardan en la memoria del servidor (limitación conocida, ver [docs/PLAN.md](docs/PLAN.md)).
+Con `NODE_ENV=production` la cookie de sesión exige HTTPS, así que hay que servir la aplicación detrás de un proxy con certificado. Las sesiones se guardan en PostgreSQL (tabla `session`), por lo que no se pierden al reiniciarse el servidor.
 
 ### 3.8 Despliegue en Render
 
-La aplicación está desplegada en **https://tfm-rgpd-ens.onrender.com** (Render, plan gratuito; base de datos en Neon).
+La aplicación está desplegada en **https://tfm-rgpd-ens.onrender.com** (Render, plan gratuito, región Frankfurt; base de datos en Neon).
 
 Configuración de un *Web Service* de Node en Render, con la base de datos en Neon:
 
@@ -234,7 +236,7 @@ Variables de entorno en Render:
 Render asigna `PORT` por su cuenta.
 
 Limitaciones del plan gratuito con la versión actual:
-- **Sesiones en memoria:** se pierden al reiniciarse el servicio (cada despliegue o cuando la instancia se duerme por inactividad), y hay que volver a iniciar sesión.
+- **Sesiones:** se guardan en PostgreSQL, así que no se pierden al reiniciarse el servicio (despliegues o reposo de la instancia).
 - **Archivos subidos:** los PDF se guardan en el disco del servicio, que Render borra en cada reinicio. Los documentos subidos en local no existen en Render; la app muestra «Archivo no disponible» en lugar de fallar.
 - **Arranque en frío:** la primera visita tras un rato sin uso tarda unos segundos, mientras la instancia se reactiva.
 
@@ -286,8 +288,8 @@ tfm-rgpd-ens/
 ├── src/styles/input.css      Fuente de Tailwind: tema, componentes (.btn, .card, .tabla…) y archivos que escanea
 ├── public/img/logo.svg       Logotipo (el CSS se compila en public/css/ y no se versiona)
 ├── prisma/
-│   ├── schema.prisma         Modelo de datos: 25 modelos y 26 enums
-│   ├── migrations/           21 migraciones SQL y migration_lock.toml
+│   ├── schema.prisma         Modelo de datos: 26 modelos y 26 enums
+│   ├── migrations/           22 migraciones SQL y migration_lock.toml
 │   ├── seed.js               Carga mínima: administrador inicial y 12 controles ENS (npm run seed)
 │   ├── seed-ejemplo.js       Empresa ficticia completa (npm run db:ejemplo)
 │   └── …                     copia-seguridad.js, restaurar-copia.js, utilidades-datos.js, pdfs-politicas.js… (5 scripts más)
@@ -326,10 +328,11 @@ Ejemplo: abrir la ficha de un incidente, `GET /incidentes/7`.
 
 ### Modelo de datos
 
-Los 25 modelos de `prisma/schema.prisma`:
+Los 26 modelos de `prisma/schema.prisma`:
 
 **Organización, usuarios y sistemas**
 - **Organizacion**: ficha de la empresa (una sola fila, sin relaciones).
+- **Session**: sesiones de usuario iniciadas (las guarda connect-pg-simple; sin relaciones).
 - **Usuario**: persona con acceso (rol, cargo, activo). Es autor o responsable de casi todos los registros.
 - **UsuarioSistema**: sistemas en los que trabaja cada usuario (relación Usuario ↔ Sistema).
 - **Sistema**: eje de la aplicación.
@@ -409,7 +412,7 @@ Los 25 modelos de `prisma/schema.prisma`:
 - **Revisión de políticas:** avisa 30 días antes de la fecha de revisión y la marca como vencida al pasarla.
 - **Proveedores:** avisa de los que no tienen contrato de encargado, de los que tienen la revisión del contrato vencida o a 30 días o menos, y de las transferencias fuera del EEE sin mecanismo de garantía.
 - **Panel de control:** ordena las acciones de crítico a atención y a informativo, y destaca el plazo que vence antes.
-- **Acceso:** bloquea durante 15 minutos el acceso tras 5 intentos fallidos seguidos con el mismo email. Cierra la sesión a las 8 horas.
+- **Acceso:** bloquea durante 15 minutos el acceso tras 5 intentos fallidos seguidos con el mismo email. Cierra la sesión tras 8 horas sin actividad.
 
 ### Qué puede hacer cada rol
 
@@ -547,7 +550,7 @@ El informe de la última revisión completa está en [INFORME_PRUEBAS.md](INFORM
 ## 11. Cookies
 
 La aplicación solo usa elementos técnicos, por lo que no muestra banner de consentimiento:
-- la cookie de sesión `sid`, que se crea al iniciar sesión y dura 8 horas;
+- la cookie de sesión `sid`, que se crea al iniciar sesión y caduca tras 8 horas sin actividad (la sesión se guarda en la base de datos);
 - una entrada de almacenamiento local que recuerda las secciones desplegadas del panel.
 
 Sin sesión no se crea ninguna cookie. El detalle está en [/cookies](http://localhost:3000/cookies) y en `config/legal.js`. Si se añadiera una cookie no técnica (por ejemplo, de analítica), habría que pedir consentimiento antes de instalarla y actualizar esa página.
