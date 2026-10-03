@@ -23,6 +23,9 @@ passport.use(
         if (!usuario || !passwordValida) {
           return done(null, false, { message: 'Email o contraseña incorrectos' });
         }
+        if (!usuario.activo) {
+          return done(null, false, { message: 'Tu cuenta está desactivada. Contacta con el administrador.' });
+        }
 
         return done(null, usuario);
       } catch (err) {
@@ -41,9 +44,12 @@ passport.deserializeUser(async (id, done) => {
   try {
     const usuario = await prisma.usuario.findUnique({
       where: { id },
-      select: { id: true, nombre: true, email: true, rol: true, area: true },
+      select: { id: true, nombre: true, email: true, rol: true, area: true, activo: true, sistemas: { select: { sistema_id: true } } },
     });
-    done(null, usuario || false);
+    // Si lo han desactivado, la sesión deja de ser válida
+    if (!usuario || !usuario.activo) return done(null, false);
+    const { sistemas, ...datos } = usuario;
+    done(null, { ...datos, sistemaIds: sistemas.map((s) => s.sistema_id) });
   } catch (err) {
     done(err);
   }

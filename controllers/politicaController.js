@@ -9,6 +9,7 @@ const {
   cabeceraDisposicion, formatoTamano,
 } = require('../lib/subidas');
 const { listaSistemas, sistemaSelect, leerSistemaId, validarSistema } = require('../lib/sistemas');
+const { afectaA, whereAfectados } = require('../lib/usuarios');
 
 // El Administrador crea políticas, sube versiones y cambia su estado. El resto de usuarios
 // solo ve las políticas Aprobadas (las vigentes), descarga sus documentos y registra su
@@ -95,7 +96,8 @@ const list = async (req, res) => {
       .map((p) => ({
         ...p,
         alerta: alertaRevision(p, ahora),
-        pendienteAceptar: p.estado === 'APROBADA' && p.requiere_aceptacion && !p.aceptaciones.some((a) => a.version_aceptada === p.version),
+        afecta: afectaA(p, req.user),
+        pendienteAceptar: p.estado === 'APROBADA' && p.requiere_aceptacion && afectaA(p, req.user) && !p.aceptaciones.some((a) => a.version_aceptada === p.version),
       }))
       .filter((p) => (filtro === 'revision' ? p.alerta : filtro === 'pendientes' ? p.pendienteAceptar : true)),
     tipo,
@@ -126,7 +128,8 @@ const show = async (req, res) => {
   let aceptaciones = null;
   if (esAdmin(req.user) && politica.requiere_aceptacion) {
     const [usuarios, registros] = await Promise.all([
-      prisma.usuario.findMany({ select: { id: true, nombre: true, email: true, area: true }, orderBy: { nombre: 'asc' } }),
+      // Solo los usuarios a los que afecta: activos y, si es de un sistema, asignados a él
+      prisma.usuario.findMany({ where: whereAfectados(politica), select: { id: true, nombre: true, email: true, area: true }, orderBy: { nombre: 'asc' } }),
       prisma.aceptacionPolitica.findMany({ where: { politica_id: politica.id, version_aceptada: politica.version } }),
     ]);
     const porUsuario = new Map(registros.map((r) => [r.usuario_id, r]));
@@ -142,7 +145,8 @@ const show = async (req, res) => {
     vigente,
     historicos,
     miAceptacion,
-    puedeAceptar: politica.estado === 'APROBADA' && politica.requiere_aceptacion && vigente && !miAceptacion,
+    afecta: afectaA(politica, req.user),
+    puedeAceptar: politica.estado === 'APROBADA' && politica.requiere_aceptacion && vigente && !miAceptacion && afectaA(politica, req.user),
     aceptaciones,
     alerta: alertaRevision(politica),
     tamanoMaximoMb: TAMANO_MAXIMO / 1024 / 1024,
@@ -250,6 +254,9 @@ const aceptar = async (req, res) => {
   if (!visible(req.user, politica)) return noEncontrada(res);
   if (politica.estado !== 'APROBADA' || !politica.requiere_aceptacion) {
     return volver(req, res, politica.id, 'error', 'Este documento no requiere aceptación.');
+  }
+  if (!afectaA(politica, req.user)) {
+    return volver(req, res, politica.id, 'error', 'Esta política se aplica a un sistema al que no estás asignado.');
   }
   // La versión que el usuario tenía delante debe seguir siendo la vigente
   if (req.body.version !== politica.version) {

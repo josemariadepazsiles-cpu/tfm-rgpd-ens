@@ -1,0 +1,120 @@
+<%
+  const u = usuario;
+  const editando = !!u.id;
+  const marcados = u.sistemaIds || [];
+  const esYo = editando && u.id === user.id;
+%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <%- include('../partials/head') %>
+</head>
+<body class="min-h-screen bg-fondo">
+  <%- include('../partials/nav') %>
+
+  <main data-area="<%= areaNormativa %>" class="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+    <%- include('../partials/migas', { migas: [{ texto: 'Administración' }, { texto: 'Usuarios', href: '/usuarios' }, { texto: title }] }) %>
+    <%- include('../partials/flash') %>
+
+    <div class="flex flex-wrap items-start justify-between gap-4">
+      <div class="min-w-0">
+        <h1 class="titulo-pagina"><%= title %></h1>
+        <% if (editando) { %>
+          <p class="mt-2 flex flex-wrap items-center gap-2 text-sm">
+            <% if (u.activo === false) { %>
+              <span class="badge bg-slate-100 text-slate-600 ring-slate-500/20"><%- icono('user-x', 'h-3 w-3') %>Desactivado</span>
+            <% } else { %>
+              <span class="badge bg-green-50 text-green-700 ring-green-600/20"><%- icono('user-check', 'h-3 w-3') %>Activo</span>
+            <% } %>
+          </p>
+        <% } else { %>
+          <p class="subtitulo-pagina">Da de alta a una persona de la organización, asígnale su rol y los sistemas en los que trabaja.</p>
+        <% } %>
+      </div>
+      <% if (editando && !esYo) { %>
+        <form action="/usuarios/<%= u.id %>/estado" method="POST"
+              onsubmit="return confirm('<%= u.activo === false ? '¿Volver a activar este usuario?' : '¿Desactivar este usuario? No podrá entrar y dejará de contar en las aceptaciones de políticas; se conserva su historial.' %>')">
+          <input type="hidden" name="activo" value="<%= u.activo === false ? '1' : '0' %>">
+          <% if (u.activo === false) { %>
+            <button type="submit" class="btn btn-secondary"><%- icono('user-check', 'h-4 w-4') %>Activar</button>
+          <% } else { %>
+            <button type="submit" class="btn btn-danger"><%- icono('user-x', 'h-4 w-4') %>Desactivar</button>
+          <% } %>
+        </form>
+      <% } %>
+    </div>
+
+    <% if (errores.length) { %>
+      <ul class="mt-6 list-inside list-disc space-y-0.5 rounded-xl border border-red-200 bg-red-50/60 px-4 py-3 text-sm text-red-800" role="alert">
+        <% errores.forEach((e) => { %><li><%= e %></li><% }) %>
+      </ul>
+    <% } %>
+
+    <form action="<%= editando ? '/usuarios/' + u.id : '/usuarios' %>" method="POST" class="mt-6 space-y-6">
+      <fieldset class="form-seccion space-y-5">
+        <legend>Datos de la persona</legend>
+        <div class="clear-both grid gap-5 sm:grid-cols-2">
+          <div>
+            <label for="nombre" class="label">Nombre y apellidos</label>
+            <input id="nombre" name="nombre" type="text" required value="<%= u.nombre || '' %>" class="input">
+          </div>
+          <div>
+            <label for="area" class="label">Área <span class="font-normal text-slate-400">(opcional)</span></label>
+            <input id="area" name="area" type="text" list="areas" value="<%= u.area || '' %>" class="input" placeholder="Ej.: Recursos Humanos">
+            <datalist id="areas"><% areas.forEach((a) => { %><option value="<%= a %>"></option><% }) %></datalist>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="form-seccion space-y-4">
+        <legend>Sistemas en los que trabaja</legend>
+        <p class="clear-both text-sm text-slate-500">Deberá aceptar las políticas de estos sistemas, además de las generales. Si no marcas ninguno, solo le afectarán las políticas generales.</p>
+        <% if (sistemas.length === 0) { %>
+          <p class="text-sm italic text-slate-400">Todavía no hay sistemas registrados.</p>
+        <% } else { %>
+          <div class="grid gap-2 sm:grid-cols-2">
+            <% sistemas.forEach((s) => { %>
+              <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm transition hover:border-indigo-200 has-[:checked]:border-indigo-300 has-[:checked]:bg-marca-50/60">
+                <input type="checkbox" name="sistemas" value="<%= s.id %>" class="check mt-0.5" <%= marcados.includes(s.id) ? 'checked' : '' %>>
+                <span>
+                  <span class="block font-medium text-slate-800"><%= s.nombre %></span>
+                  <% if (s.tipo_sistema) { %><span class="block text-xs text-slate-500"><%= s.tipo_sistema %></span><% } %>
+                </span>
+              </label>
+            <% }) %>
+          </div>
+        <% } %>
+      </fieldset>
+
+      <fieldset class="form-seccion space-y-5">
+        <legend>Acceso y rol</legend>
+        <div class="clear-both">
+          <label for="email" class="label">Email</label>
+          <input id="email" name="email" type="email" required autocomplete="off" value="<%= u.email || '' %>" class="input" placeholder="nombre@organizacion.es">
+        </div>
+        <div class="grid gap-5 sm:grid-cols-2">
+          <div>
+            <label for="password" class="label"><%= editando ? 'Nueva contraseña' : 'Contraseña inicial' %><% if (editando) { %> <span class="font-normal text-slate-400">(opcional)</span><% } %></label>
+            <input id="password" name="password" type="password" <%= editando ? '' : 'required' %> minlength="8" autocomplete="new-password" class="input">
+            <p class="ayuda"><%= editando ? 'Déjala vacía para no cambiarla. Mínimo 8 caracteres.' : 'Mínimo 8 caracteres.' %></p>
+          </div>
+          <div>
+            <label for="rol" class="label">Rol</label>
+            <select id="rol" name="rol" required class="input">
+              <% Object.entries(roles).forEach(([valor, etiqueta]) => { %>
+                <option value="<%= valor %>" <%= (u.rol || 'USUARIO') === valor ? 'selected' : '' %>><%= etiqueta %></option>
+              <% }) %>
+            </select>
+            <p class="ayuda">El Administrador gestiona la estructura de todos los módulos.</p>
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="flex justify-end gap-3">
+        <a href="/usuarios" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary"><%- icono(editando ? 'check' : 'user-plus', 'h-4 w-4') %><%= editando ? 'Guardar cambios' : 'Crear usuario' %></button>
+      </div>
+    </form>
+  </main>
+</body>
+</html>

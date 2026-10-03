@@ -8,6 +8,7 @@ const MODELOS = [
   ['organizacion', 'organizacion'],
   ['usuario', 'usuarios'],
   ['sistema', 'sistemas'],
+  ['usuarioSistema', 'usuarios_sistemas'],
   ['controlEns', 'controles_ens'],
   ['actividadRat', 'actividades_rat'],
   ['riesgo', 'riesgos'],

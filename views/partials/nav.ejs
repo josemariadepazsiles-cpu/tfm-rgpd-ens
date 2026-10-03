@@ -32,7 +32,7 @@
     },
   ];
   const menuActivo = (m) => m.rutas.some(activo);
-  const usuarioActivo = activo('/registro');
+  const usuarioActivo = activo('/usuarios');
 
   // Área de la pantalla actual (lib/areas.js): colorea el filete de la cabecera y la sección activa
   const areaActual = typeof areaNormativa !== 'undefined' ? areaNormativa : 'neutro';
@@ -162,8 +162,8 @@
           <%- icono('building-2', 'h-4 w-4 text-slate-500') %>Datos de la empresa
         </a>
         <% if (esAdmin) { %>
-          <a href="/registro" class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm <%= activo('/registro') ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:bg-slate-50' %>" <%- activo('/registro') ? 'aria-current="page"' : '' %>>
-            <%- icono('user-plus', 'h-4 w-4 text-slate-500') %>Registrar usuario
+          <a href="/usuarios" class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm <%= activo('/usuarios') ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:bg-slate-50' %>" <%- activo('/usuarios') ? 'aria-current="page"' : '' %>>
+            <%- icono('users-round', 'h-4 w-4 text-slate-500') %>Usuarios
           </a>
         <% } %>
         <form action="/logout" method="POST">
@@ -210,7 +210,7 @@
       <div class="mt-2 space-y-0.5">
         <a href="/empresa" class="<%= claseMovil(activo('/empresa')) %>" <%- activo('/empresa') ? 'aria-current="page"' : '' %>><%- icono('building-2', 'h-4 w-4 text-slate-500') %>Datos de la empresa</a>
         <% if (esAdmin) { %>
-          <a href="/registro" class="<%= claseMovil(activo('/registro')) %>" <%- activo('/registro') ? 'aria-current="page"' : '' %>><%- icono('user-plus', 'h-4 w-4 text-slate-500') %>Registrar usuario</a>
+          <a href="/usuarios" class="<%= claseMovil(activo('/usuarios')) %>" <%- activo('/usuarios') ? 'aria-current="page"' : '' %>><%- icono('users-round', 'h-4 w-4 text-slate-500') %>Usuarios</a>
         <% } %>
         <form action="/logout" method="POST">
           <button type="submit" class="<%= claseMovil(false) %> w-full text-left"><%- icono('log-out', 'h-4 w-4 text-slate-500') %>Cerrar sesión</button>

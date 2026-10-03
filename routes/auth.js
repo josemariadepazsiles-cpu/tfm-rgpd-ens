@@ -8,8 +8,7 @@ router.get('/login', ensureGuest, authController.showLogin);
 router.post('/login', ensureGuest, authController.login);
 router.post('/logout', ensureAuthenticated, authController.logout);
 
-// Solo un administrador puede dar de alta usuarios (y asignar roles)
-router.get('/registro', ensureAdmin, authController.showRegistro);
-router.post('/registro', ensureAdmin, authController.registro);
+// El alta de usuarios está en la gestión de usuarios (/usuarios); se mantiene la dirección antigua
+router.get('/registro', ensureAdmin, (req, res) => res.redirect('/usuarios/nuevo'));
 
 module.exports = router;

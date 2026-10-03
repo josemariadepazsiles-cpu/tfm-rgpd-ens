@@ -22,6 +22,7 @@ const declaracionRoutes = require('./routes/declaraciones');
 const politicaRoutes = require('./routes/politicas');
 const biaRoutes = require('./routes/bia');
 const empresaRoutes = require('./routes/empresa');
+const usuarioRoutes = require('./routes/usuarios');
 const { obtenerOrganizacion } = require('./lib/organizacion');
 const { CRITICIDAD_CLASES, ESTADO_REVISION_CLASES, RESULTADO_CLASES, ALERTA_BIA_CLASES } = require('./lib/bia');
 const { ESTADO_POLITICA_CLASES, REVISION_CLASES } = require('./lib/politicas');
@@ -155,6 +156,7 @@ app.use('/declaraciones', declaracionRoutes);
 app.use('/politicas', politicaRoutes);
 app.use('/bia', biaRoutes);
 app.use('/empresa', empresaRoutes);
+app.use('/usuarios', usuarioRoutes);
 // El checklist global se sustituyó por evaluaciones por sistema
 app.get('/checklist', (req, res) => res.redirect(301, '/sistemas'));
 

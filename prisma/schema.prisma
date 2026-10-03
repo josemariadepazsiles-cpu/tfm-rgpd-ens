@@ -191,6 +191,8 @@ model Usuario {
   password_hash String
   rol           Rol     @default(USUARIO)
   area          String?
+  // Un usuario desactivado no puede entrar ni cuenta en las aceptaciones; se conserva su historial
+  activo        Boolean @default(true)
 
   actividades            ActividadRat[]
   controlesResponsable   EvaluacionControl[]
@@ -208,6 +210,7 @@ model Usuario {
   documentosSubidos      DocumentoProveedor[]
   documentosSolicitudes  DocumentoSolicitudDerecho[]
   documentosPoliticas    DocumentoPolitica[]
+  sistemas               UsuarioSistema[]
   declaracionesGeneradas DeclaracionConformidad[]    @relation("DeclaracionGenerador")
   declaracionesEmitidas  DeclaracionConformidad[]    @relation("DeclaracionEmisor")
   politicasAprobadas     Politica[]                  @relation("PoliticaAprobador")
@@ -307,6 +310,7 @@ model Sistema {
   incidentes    Incidente[]
   solicitudes   SolicitudDerecho[]
   politicas     Politica[]
+  usuarios      UsuarioSistema[]
 
   @@map("sistemas")
 }
@@ -775,4 +779,19 @@ model DocumentoPolitica {
 
   @@index([politica_id])
   @@map("documentos_politicas")
+}
+
+// Sistemas en los que trabaja cada usuario: determina qué políticas de sistema debe aceptar
+// (las políticas generales las aceptan todos los usuarios activos)
+model UsuarioSistema {
+  id         Int @id @default(autoincrement())
+  usuario_id Int
+  sistema_id Int
+
+  usuario Usuario @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+  sistema Sistema @relation(fields: [sistema_id], references: [id], onDelete: Cascade)
+
+  @@unique([usuario_id, sistema_id])
+  @@index([sistema_id])
+  @@map("usuarios_sistemas")
 }

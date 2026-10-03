@@ -116,7 +116,7 @@
             <div><dt class="text-slate-500">Próxima revisión</dt>
               <dd class="mt-0.5 text-slate-800"><%= p.fecha_proxima_revision ? fecha(p.fecha_proxima_revision) : 'Sin fecha' %></dd></div>
             <div><dt class="text-slate-500">Requiere aceptación</dt>
-              <dd class="mt-0.5 text-slate-800"><%= p.requiere_aceptacion ? 'Sí, de cada versión aprobada' : 'No' %></dd></div>
+              <dd class="mt-0.5 text-slate-800"><%= p.requiere_aceptacion ? 'Sí, de cada versión aprobada' : 'No' %><% if (p.requiere_aceptacion && !afecta) { %><span class="block text-xs text-slate-500">No te afecta: no estás asignado a este sistema.</span><% } %></dd></div>
             <div><dt class="text-slate-500">Creado</dt>
               <dd class="mt-0.5 text-slate-800"><%= fechaHora(p.created_at) %><%= p.creado_por ? ' · ' + p.creado_por.nombre : '' %></dd></div>
           </dl>
@@ -221,7 +221,10 @@
         <div x-show="tab === 'aceptaciones'" x-cloak role="tabpanel" id="panel-aceptaciones" aria-labelledby="tab-aceptaciones" class="mt-6 space-y-4">
           <section class="card p-5">
             <div class="flex flex-wrap items-center justify-between gap-3">
-              <h2 class="text-base font-semibold text-slate-900">Aceptación de la versión <%= p.version %></h2>
+              <div>
+                <h2 class="text-base font-semibold text-slate-900">Aceptación de la versión <%= p.version %></h2>
+                <p class="text-xs text-slate-500">Se pide a <%= p.sistema ? 'los usuarios activos asignados a «' + p.sistema.nombre + '»' : 'todos los usuarios activos' %>.</p>
+              </div>
               <span class="text-sm text-slate-600"><strong class="text-slate-900"><%= aceptaciones.aceptado.length %></strong> de <%= totalUsuarios %> usuarios · <%= pct %> %</span>
             </div>
             <div class="progreso mt-3"><span class="<%= pct === 100 ? 'bg-emerald-500' : 'bg-indigo-500' %>" style="width: <%= pct %>%"></span></div>

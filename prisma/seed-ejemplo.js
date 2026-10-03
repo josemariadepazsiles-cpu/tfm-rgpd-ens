@@ -242,6 +242,12 @@ async function main() {
       (evaluaciones[s.clave] = evaluaciones[s.clave] || []).push(ev);
     }
   }
+  // Cada empleado de la plantilla trabaja en el sistema de su área (Dirección: sin sistema)
+  const sistemaDeArea = { 'Área de laboratorio': sis.lab, 'Área de informática': sis.info, 'Área financiera': sis.fin };
+  await prisma.usuarioSistema.createMany({
+    data: Object.keys(USUARIOS).filter((k) => sistemaDeArea[USUARIOS[k].area]).map((k) => ({ usuario_id: u[k].id, sistema_id: sistemaDeArea[USUARIOS[k].area].id })),
+  });
+
   // Cada activo pertenece al sistema de su departamento
   Object.assign(sis, {
     lims: sis.lab, repositorio: sis.lab, equipos: sis.lab,
