@@ -80,7 +80,7 @@ Versiones instaladas según `package-lock.json`.
 | `node --watch` | la de Node.js | Reinicia el servidor al cambiar el código (`npm run dev`). |
 | Pruebas propias (`tests/`) | — | Batería funcional con el `fetch` de Node, sin framework de tests; incluye copia y restauración de los datos (`npm test`). |
 
-El proyecto no tiene configuración de linters, formateadores, Docker ni despliegue.
+El proyecto no tiene configuración de linters, formateadores ni Docker. El despliegue en Render (script `build` y archivo `.node-version`) se explica en el apartado 3.8.
 
 ### Entorno de desarrollo y control de versiones
 
@@ -209,7 +209,32 @@ npm start
 
 Con `NODE_ENV=production` la cookie de sesión exige HTTPS, así que hay que servir la aplicación detrás de un proxy con certificado. Las sesiones se guardan en la memoria del servidor (limitación conocida, ver [docs/PLAN.md](docs/PLAN.md)).
 
-### 3.8 Problemas frecuentes
+### 3.8 Despliegue en Render
+
+Configuración de un *Web Service* de Node en Render, con la base de datos en Neon:
+
+| Campo | Valor |
+|---|---|
+| Build Command | `npm install --include=dev && npm run build` |
+| Start Command | `npm start` |
+| Versión de Node | 24 (fijada en el archivo `.node-version`) |
+
+`npm run build` genera el cliente de Prisma, compila el CSS de Tailwind y aplica las migraciones (`prisma migrate deploy`). Hace falta `--include=dev` porque, con `NODE_ENV=production`, npm no instalaría la CLI de Tailwind, que es una dependencia de desarrollo.
+
+Variables de entorno en Render:
+- `DATABASE_URL`: obligatoria. Cadena de conexión de Neon con pooler.
+- `SESSION_SECRET`: obligatoria. Cadena aleatoria larga.
+- `NODE_ENV=production`: necesaria para que la cookie de sesión sea segura (HTTPS) y la app confíe en el proxy de Render.
+- `DIRECT_URL`: opcional. Sin ella, la URL directa para migrar se calcula quitando «-pooler».
+
+Render asigna `PORT` por su cuenta.
+
+Limitaciones del plan gratuito con la versión actual:
+- **Sesiones en memoria:** se pierden al reiniciarse el servicio (cada despliegue o cuando la instancia se duerme por inactividad), y hay que volver a iniciar sesión.
+- **Archivos subidos:** los PDF se guardan en el disco del servicio, que Render borra en cada reinicio. Los documentos subidos en local no existen en Render; la app muestra «Archivo no disponible» en lugar de fallar.
+- **Arranque en frío:** la primera visita tras un rato sin uso tarda unos segundos, mientras la instancia se reactiva.
+
+### 3.9 Problemas frecuentes
 
 | Error | Solución |
 |---|---|
@@ -474,6 +499,7 @@ backups/          Copias de seguridad de los datos (no se versiona)
 |---|---|
 | `npm run dev` | Arranca el servidor y lo reinicia al cambiar el código (`node --watch`). |
 | `npm start` | Arranca el servidor (producción). |
+| `npm run build` | Prepara el despliegue: genera el cliente de Prisma, compila el CSS y aplica las migraciones. |
 | `npm run build:css` / `npm run watch:css` | Compila Tailwind una vez / en modo vigilancia. |
 | `npm run prisma:migrate` | Crea y aplica una migración nueva en desarrollo (`prisma migrate dev`). |
 | `npx prisma migrate deploy` | Aplica las migraciones pendientes (instalación, otro equipo, producción). |
@@ -488,7 +514,7 @@ backups/          Copias de seguridad de los datos (no se versiona)
 
 ### Problemas frecuentes durante el desarrollo
 
-Los de la instalación están en el apartado 3.8.
+Los de la instalación están en el apartado 3.9.
 
 | Síntoma | Causa y solución |
 |---|---|
