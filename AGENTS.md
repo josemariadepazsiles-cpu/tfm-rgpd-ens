@@ -28,5 +28,6 @@ Demostración (tras `db:ejemplo`): `admin@test.com` / `admin1234` (Administrador
 - Todo en español: código, comentarios, mensajes y commits.
 - Patrón ruta → controlador → `lib/` → vista EJS. Errores de validación con estado 400; tras guardar, mensaje flash y redirección.
 - Ids con `idValido` / `idDeFormulario`; fechas con `lib/formato.js`; textos con `lib/validacion.js`.
-- En las vistas, datos del usuario siempre con `<%= %>`.
+- En las vistas, datos del usuario siempre con `<%= %>`. Toda vista nueva incluye `partials/pie` (enlaces legales).
+- Los datos legales (titular, DPD, encargados, cookies) solo se cambian en `config/legal.js`; las cookies no técnicas requieren consentimiento.
 - No tocar `.env`, no editar migraciones aplicadas, no ejecutar `db:ejemplo`, `db:restaurar` ni `npm test` contra producción, no subir `uploads/` ni `backups/`.

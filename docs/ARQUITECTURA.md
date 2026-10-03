@@ -10,7 +10,7 @@ Es una aplicación monolítica con renderizado en el servidor (MVC sin framework
 | Capa | Carpeta | Responsabilidad |
 |---|---|---|
 | Entrada | `app.js` | Crea la app Express. Registra middlewares globales, helpers de vistas (`app.locals`), las rutas de cada módulo, el 404 y el manejador de errores. |
-| Configuración | `config/` | Passport (estrategia local, serialización de la sesión), roles y bases legales. |
+| Configuración | `config/` | Passport (estrategia local, serialización de la sesión), roles, bases legales y datos de las páginas legales (`legal.js`). |
 | Middlewares | `middlewares/` | `auth.js`: exigir sesión, rol de Administrador o ausencia de sesión. `seguridad.js`: cabeceras HTTP, CSRF y límite de intentos de login. |
 | Rutas | `routes/` | Un `express.Router` por módulo: asocian método y URL a una acción y aplican `ensureAuthenticated` / `ensureAdmin`. |
 | Controladores | `controllers/` | Leen y validan la petición, comprueban permisos finos (Administrador o responsable), llaman a Prisma o a `lib/` y responden con una vista o una redirección. |
@@ -167,6 +167,9 @@ erDiagram
 | Versión del CSS por fecha de modificación | Que el navegador no siga usando una hoja antigua de su caché (`app.js`). |
 | Datos de la organización en caché de 1 minuto | Se muestran en todas las pantallas; la caché caduca para ver los cambios hechos fuera de la app (`lib/organizacion.js`). |
 | Usuarios desactivados en vez de borrados | Conservar su historial; un desactivado pierde la sesión (`config/passport.js`). |
+| Datos de las páginas legales en un único archivo (`config/legal.js`) | Cambiar titular, DPD, encargados, plazos o cookies sin tocar las vistas; los datos son ficticios (proyecto académico). |
+| Páginas legales públicas y pie común en todas las vistas (`partials/pie.ejs`) | Son accesibles sin sesión y desde cualquier pantalla, incluido el login. Sin sesión no se crea cookie (`saveUninitialized: false`). |
+| Solo cookies técnicas, sin banner de consentimiento | La sesión (`sid`) y una preferencia de la interfaz en almacenamiento local están exentas (art. 22.2 LSSI-CE). El token CSRF se guarda en la sesión, no en otra cookie. |
 | Copias de seguridad en JSON con Prisma | Sin necesidad de `pg_dump` (`prisma/copia-seguridad.js`). |
 | Renderizado en el servidor (EJS) con Alpine.js para la interactividad | [COMPLETAR: motivo de elegir SSR en lugar de una SPA] |
 | PostgreSQL en Neon | [COMPLETAR: motivo de elegir Neon] |

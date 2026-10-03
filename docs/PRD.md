@@ -119,6 +119,13 @@ En los datos de ejemplo, el rol Administrador lo tienen la Dirección, el DPD y 
   - activar y desactivar;
   - por cada usuario, las políticas que tiene pendientes de aceptar.
 
+### Páginas legales (públicas)
+- **Páginas:** Aviso legal (`/aviso-legal`, art. 10 LSSI-CE), Política de privacidad (`/privacidad`, arts. 13-14 RGPD y LOPDGDD) y Política de cookies (`/cookies`, art. 22.2 LSSI-CE).
+- **Acceso:** sin iniciar sesión, enlazadas desde el pie de todas las pantallas, incluido el login.
+- **Aviso de prueba:** cada página muestra «Datos ficticios — proyecto académico» y su fecha de última actualización.
+- **Contenido de la privacidad:** describe los datos que guarda realmente la aplicación según su modelo de datos (usuarios, solicitantes de derechos, contactos de proveedores, cargos de la organización), los encargados (Neon, jsDelivr) y los plazos de conservación.
+- **Datos del titular, DPD y encargados:** son ficticios y están en `config/legal.js`.
+
 ## 4. Reglas de negocio
 
 | Regla | Detalle | Dónde |
@@ -136,6 +143,7 @@ En los datos de ejemplo, el rol Administrador lo tienen la Dirección, el DPD y 
 | **Aceptación de políticas** | Solo las Aprobadas que requieren aceptación. Una **General** la aceptan todos los usuarios activos; una de **sistema**, los activos asignados a ese sistema. La aceptación es por **versión**, y no se puede aprobar una política sin su PDF. | `lib/usuarios.js`, `controllers/politicaController.js` |
 | **Proveedores** | Avisos de: falta de contrato de encargado, revisión del contrato vencida o en 30 días, y transferencia fuera del EEE sin mecanismo (se permite guardar, pero queda marcada). | `lib/proveedores.js` |
 | **Usuarios** | Un administrador no puede desactivarse ni quitarse el rol, y siempre queda al menos un administrador activo. | `controllers/usuarioController.js` |
+| **Cookies** | Solo técnicas: la cookie de sesión `sid` (8 h, solo con sesión iniciada) y el almacenamiento local de las secciones desplegadas del panel. Están exentas de consentimiento (art. 22.2 LSSI-CE), por lo que no hay banner. | `app.js`, `views/partials/head.ejs`, `config/legal.js` |
 | **Documentos** | Solo PDF (comprobada la firma `%PDF-`) de hasta 10 MB, guardados con nombre aleatorio. | `lib/subidas.js` |
 
 ## 5. Fuera del alcance
@@ -147,6 +155,7 @@ No está implementado en el código:
 - **EIPD (art. 35) como flujo propio:** los riesgos se gestionan por actividad.
 - **API pública y aplicación móvil.**
 - **Idiomas distintos del español.**
+- **Gestión del consentimiento de cookies (banner):** no hace falta mientras solo haya cookies técnicas.
 - **Inteligencia artificial:** el «asistente» del panel funciona con reglas fijas, sin modelos de IA.
 
 [COMPLETAR: si alguna de estas exclusiones es una decisión del TFM (y no solo algo pendiente), indicarlo]

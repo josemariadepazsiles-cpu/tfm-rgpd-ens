@@ -63,12 +63,19 @@ como análisis normativo o diseño]
   - contador del panel;
   - foto de cada evaluación.
 
-## Fase 7 · Documentación (03/10/2026) — en curso, sin commit
+## Fase 7 · Documentación (03/10/2026) — hecho
 
 - [x] Código comentado en español: JSDoc en funciones y `///` en el esquema.
 - [x] README, CLAUDE.md, AGENTS.md, docs/ (PRD, arquitectura y plan), CHANGELOG y LICENSE.
 - [x] Pruebas dentro del repositorio: `tests/` y `npm test`, con copia y restauración automáticas.
-- [ ] Revisión del autor y commit.
+- [x] Revisión del autor y commit (0a6d686).
+
+## Fase 8 · Páginas legales (03/10/2026) — hecho
+
+- [x] Aviso legal, Política de privacidad y Política de cookies, públicas y con datos ficticios en `config/legal.js` (4c70cdf).
+- [x] Pie de página con los enlaces legales en todas las pantallas, incluido el login.
+- [x] Revisión de cookies: solo técnicas, sin banner de consentimiento.
+- [x] Documentación actualizada con las páginas legales.
 
 ## Pendiente
 
@@ -81,7 +88,7 @@ Están marcados en el código con «FALLO DETECTADO».
 - [ ] Trasladar al siguiente día hábil los plazos que vencen en sábado, domingo o festivo (`lib/formato.js`).
 - [ ] Mensaje en español cuando el login llega vacío, en lugar de «Missing credentials» (`config/passport.js`).
 - [ ] Límite de login también por IP sola (hoy cuenta por IP + email, así que no frena probar muchos emails) y persistente (`middlewares/seguridad.js`).
-- [ ] Fijar la versión de Alpine.js y añadir SRI, o servirlo desde el propio servidor.
+- [ ] Fijar la versión de Alpine.js y añadir SRI, o servirlo desde el propio servidor (además, la CDN jsDelivr recibe la IP de los usuarios; servirlo localmente permitiría quitar ese encargado de la política de privacidad).
 - [ ] No permitir asignar como responsable a usuarios desactivados, y filtrarlos en los desplegables.
 - [ ] Decidir qué pasa con las evaluaciones pasadas al renombrar o recategorizar un control.
 - [ ] Al borrar la última evaluación, avisar de que la anterior no incluye los controles nuevos.
@@ -101,5 +108,6 @@ Están marcados en el código con «FALLO DETECTADO».
 ### Otras tareas
 
 - [ ] `db:pdfs-politicas`: regenerar también los PDF que falten en disco (p. ej. al trabajar desde otro equipo, ya que `uploads/` no se versiona).
+- [ ] Al desplegar: revisar en `config/legal.js` y en las páginas legales los encargados reales (alojamiento del servidor) y sustituir los datos ficticios si la web dejara de ser una demostración.
 - [ ] Despliegue en producción: [COMPLETAR: plataforma, dominio y base de datos de producción].
 - [ ] [COMPLETAR: otras tareas previstas por el autor]

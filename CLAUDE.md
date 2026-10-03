@@ -35,7 +35,7 @@ Credenciales de demostración (solo tras `db:ejemplo`): `admin@test.com` / `admi
 
 ```text
 app.js          entrada: middlewares globales, montaje de rutas, 404 y manejador de errores
-config/         passport.js (login y sesión), roles.js, baseLegal.js
+config/         passport.js (login y sesión), roles.js, baseLegal.js, legal.js (datos ficticios de las páginas legales)
 middlewares/    auth.js (ensureAuthenticated, ensureAdmin, ensureGuest), seguridad.js
 routes/         un router por módulo, montado en app.js con su prefijo (/rat, /riesgos…)
 controllers/    <modulo>Controller.js
@@ -87,6 +87,13 @@ docs/           PRD.md, ARQUITECTURA.md, PLAN.md
   - RAT y riesgos: un Usuario solo ve los suyos (`ambitoActividad` / `ambitoRiesgo`).
 - **CSRF:** `middlewares/seguridad.js` añade el token a todo `<form method="POST">` al renderizar. Un POST desde JavaScript tendría que enviar `_csrf`.
 - **Organización:** una sola fila en `organizacion` (no es multiempresa), cacheada 1 minuto (`lib/organizacion.js`).
+
+## Páginas públicas y pie legal
+
+- **Rutas públicas:** `/login` y las páginas legales (`/aviso-legal`, `/privacidad`, `/cookies`, en `routes/legal.js`), que no exigen sesión.
+- **Datos del titular, DPD, encargados, plazos y cookies:** están en `config/legal.js`; no se escriben en las vistas.
+- **Toda vista nueva** debe incluir `partials/pie` antes de `</body>`.
+- **Cookies:** solo hay técnicas (`sid` y almacenamiento local de los plegables). Una cookie o un script de terceros nuevo exige actualizar `/cookies` y `/privacidad` y, si no es técnico, pedir consentimiento.
 
 ## Lo que NO se debe hacer
 

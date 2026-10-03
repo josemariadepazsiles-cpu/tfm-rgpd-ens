@@ -26,6 +26,9 @@ Proyecto desarrollado como Trabajo Fin de Máster. [COMPLETAR: máster, universi
 | ENS | BIA y continuidad | `/bia` |
 | Administración | Datos de la empresa | `/empresa` |
 | Administración | Usuarios (solo Administrador) | `/usuarios` |
+| Público | Aviso legal, Política de privacidad y Política de cookies (sin iniciar sesión) | `/aviso-legal`, `/privacidad`, `/cookies` |
+
+Todas las pantallas, incluido el login, tienen un pie con los enlaces a las tres páginas legales. Esas páginas indican que la web y sus datos son **ficticios** (proyecto académico); los datos del titular se cambian en un solo sitio, [config/legal.js](config/legal.js).
 
 El detalle funcional está en [docs/PRD.md](docs/PRD.md) y el técnico en
 [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md).
@@ -122,7 +125,7 @@ La empresa de ejemplo («Laboratorios Farmacéuticos Reunidos») y todas las per
 
 ```text
 app.js            Entrada del servidor: configuración de Express y montaje de rutas
-config/           Passport (login y sesión), roles y bases legales
+config/           Passport (login y sesión), roles, bases legales y datos de las páginas legales
 middlewares/      Control de acceso (auth.js) y seguridad: cabeceras, CSRF, límite de login
 routes/           Una ruta por módulo (URL → controlador y permisos)
 controllers/      Lógica de cada pantalla: lee la petición, valida, consulta y pinta la vista
@@ -164,6 +167,14 @@ El informe de la última revisión completa está en [INFORME_PRUEBAS.md](INFORM
 | Las migraciones se quedan bloqueadas con Neon | El pooler retiene el bloqueo de Prisma: usa la conexión directa (`DIRECT_URL`, ver `prisma.config.js`). |
 | Aviso `SECURITY WARNING: The SSL modes 'prefer', 'require'…` | Es solo un aviso del driver `pg`. Para quitarlo, usa `sslmode=verify-full` en `DATABASE_URL`. |
 | `EADDRINUSE` al arrancar | Ya hay otro proceso en el puerto 3000: ciérralo o cambia `PORT`. |
+
+## Cookies
+
+La aplicación solo usa elementos técnicos, por lo que no muestra banner de consentimiento:
+- la cookie de sesión `sid`, que se crea al iniciar sesión y dura 8 horas;
+- una entrada de almacenamiento local que recuerda las secciones desplegadas del panel.
+
+Sin sesión no se crea ninguna cookie. El detalle está en [/cookies](http://localhost:3000/cookies) y en `config/legal.js`. Si se añadiera una cookie no técnica (por ejemplo, de analítica), habría que pedir consentimiento antes de instalarla y actualizar esa página.
 
 ## Documentación
 

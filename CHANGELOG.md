@@ -3,15 +3,18 @@
 Cambios agrupados por fecha a partir del historial de git (los más recientes primero). Entre
 paréntesis, el commit.
 
-## Sin publicar (pendiente de commit)
-
-- Código comentado en español: cabecera en cada archivo, JSDoc en las funciones (en los controladores, con la ruta y el rol) y una línea `///` por modelo y enum en `schema.prisma`. Los fallos detectados quedan anotados con «FALLO DETECTADO».
-- Documentación: `README.md`, `CLAUDE.md`, `AGENTS.md`, `docs/PRD.md`, `docs/ARQUITECTURA.md`, `docs/PLAN.md`, este `CHANGELOG.md` y `LICENSE` (MIT).
-- Pruebas en el repositorio: `tests/` y los scripts `npm test` y `npm run seed`.
-- `.env.example` con todas las variables que lee el código; `.gitignore` ampliado (logs, sistema, editores, resultados de las pruebas).
-
 ## 03/10/2026
 
+- **Documentación actualizada con las páginas legales** (README, CLAUDE.md, AGENTS.md, PRD, arquitectura, plan y este historial).
+- **Páginas legales públicas** (4c70cdf):
+  - Aviso legal, Política de privacidad y Política de cookies, con datos ficticios en `config/legal.js`;
+  - pie de página con sus enlaces en todas las pantallas;
+  - solo cookies técnicas, sin banner.
+- **Documentación, código comentado y pruebas** (0a6d686):
+  - código comentado en español (JSDoc y `///` en el esquema), con los fallos anotados como «FALLO DETECTADO»;
+  - README, CLAUDE.md, AGENTS.md, docs/, CHANGELOG y LICENSE (MIT);
+  - `tests/` con `npm test` y el script `npm run seed`;
+  - `.env.example` completo y `.gitignore` ampliado.
 - **Correcciones de las pruebas** (dbed80f):
   - ids fuera de rango sin errores 500;
   - controles ENS solo para el Administrador o el responsable;
