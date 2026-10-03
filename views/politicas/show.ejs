@@ -238,7 +238,7 @@
               <ul class="mt-2 divide-y divide-slate-100 text-sm">
                 <% aceptaciones.aceptado.forEach((u) => { %>
                   <li class="flex justify-between gap-3 py-2.5">
-                    <span class="text-slate-800"><%= u.nombre %><% if (u.area) { %> <span class="text-xs text-slate-400"><%= u.area %></span><% } %></span>
+                    <span class="text-slate-800"><%= u.nombre %><% if (u.cargo) { %> <span class="text-xs text-slate-400"><%= u.cargo %></span><% } %></span>
                     <span class="whitespace-nowrap text-slate-500"><%= fechaHora(u.fecha) %></span>
                   </li>
                 <% }) %>
@@ -250,7 +250,7 @@
               <ul class="mt-2 divide-y divide-slate-100 text-sm">
                 <% aceptaciones.pendiente.forEach((u) => { %>
                   <li class="flex justify-between gap-3 py-2.5">
-                    <span class="text-slate-800"><%= u.nombre %><% if (u.area) { %> <span class="text-xs text-slate-400"><%= u.area %></span><% } %></span>
+                    <span class="text-slate-800"><%= u.nombre %><% if (u.cargo) { %> <span class="text-xs text-slate-400"><%= u.cargo %></span><% } %></span>
                     <span class="truncate text-slate-500"><%= u.email %></span>
                   </li>
                 <% }) %>

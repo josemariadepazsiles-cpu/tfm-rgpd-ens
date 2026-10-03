@@ -54,7 +54,7 @@
             <select id="usuario_id" name="usuario_id" required class="<%= inputClase %> bg-white">
               <% responsables.forEach((r) => { %>
                 <option value="<%= r.id %>" <%= actividad.usuario_id === r.id ? 'selected' : '' %>>
-                  <%= r.nombre %><%= r.area ? ' — ' + r.area : '' %>
+                  <%= r.nombre %><%= r.cargo ? ' — ' + r.cargo : '' %>
                 </option>
               <% }) %>
             </select>

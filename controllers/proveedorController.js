@@ -90,7 +90,7 @@ const leerFormulario = async (body) => {
 
 const renderFormulario = async (res, { proveedor, errores = [], status = 200 }) => {
   const usuarios = await prisma.usuario.findMany({
-    select: { id: true, nombre: true, area: true },
+    select: { id: true, nombre: true, cargo: true },
     orderBy: { nombre: 'asc' },
   });
   res.status(status).render('proveedores/form', {

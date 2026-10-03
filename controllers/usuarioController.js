@@ -5,7 +5,7 @@ const { ROLES } = require('../config/roles');
 const { listaSistemas } = require('../lib/sistemas');
 
 // Gestión de usuarios (solo administradores; las rutas usan ensureAdmin). Cada usuario tiene
-// un rol, un área y los sistemas en los que trabaja, que determinan qué políticas de sistema
+// un rol, un cargo y los sistemas en los que trabaja, que determinan qué políticas de sistema
 // debe aceptar. Los usuarios no se borran: se desactivan para conservar su historial.
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -25,7 +25,7 @@ const leerSistemas = (valor) => [].concat(valor || []).map(Number).filter((n) =>
 const leerFormulario = (body) => ({
   nombre: texto(body.nombre),
   email: texto(body.email).toLowerCase(),
-  area: texto(body.area) || null,
+  cargo: texto(body.cargo).slice(0, 150) || null,
   rol: body.rol,
   password: typeof body.password === 'string' ? body.password : '',
   sistemaIds: [...new Set(leerSistemas(body.sistemas))],
@@ -49,9 +49,9 @@ const validar = async (datos, actual, yo) => {
 };
 
 const renderFormulario = async (res, { usuario, errores = [], status = 200 }) => {
-  const [sistemas, areas] = await Promise.all([
+  const [sistemas, cargos] = await Promise.all([
     listaSistemas(),
-    prisma.usuario.findMany({ where: { area: { not: null } }, select: { area: true }, distinct: ['area'], orderBy: { area: 'asc' } }),
+    prisma.usuario.findMany({ where: { cargo: { not: null } }, select: { cargo: true }, distinct: ['cargo'], orderBy: { cargo: 'asc' } }),
   ]);
   res.status(status).render('usuarios/form', {
     title: usuario.id ? 'Editar usuario' : 'Nuevo usuario',
@@ -59,7 +59,7 @@ const renderFormulario = async (res, { usuario, errores = [], status = 200 }) =>
     errores,
     roles: ROLES,
     sistemas,
-    areas: areas.map((a) => a.area),
+    cargos: cargos.map((c) => c.cargo),
   });
 };
 
@@ -101,7 +101,7 @@ const create = async (req, res) => {
   try {
     const usuario = await prisma.usuario.create({
       data: {
-        nombre: datos.nombre, email: datos.email, area: datos.area, rol: datos.rol,
+        nombre: datos.nombre, email: datos.email, cargo: datos.cargo, rol: datos.rol,
         password_hash: await bcrypt.hash(datos.password, 12),
         sistemas: { create: datos.sistemaIds.map((sistema_id) => ({ sistema_id })) },
       },
@@ -131,7 +131,7 @@ const update = async (req, res) => {
       prisma.usuario.update({
         where: { id: actual.id },
         data: {
-          nombre: datos.nombre, email: datos.email, area: datos.area, rol: datos.rol,
+          nombre: datos.nombre, email: datos.email, cargo: datos.cargo, rol: datos.rol,
           ...(datos.password && { password_hash: await bcrypt.hash(datos.password, 12) }),
         },
       }),

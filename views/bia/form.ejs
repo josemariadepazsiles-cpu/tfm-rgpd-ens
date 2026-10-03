@@ -57,7 +57,7 @@
             <select id="responsable_id" name="responsable_id" class="<%= inputClase %> sm:w-80">
               <option value="">Sin asignar</option>
               <% usuarios.forEach((u) => { %>
-                <option value="<%= u.id %>" <%= proceso.responsable_id === u.id ? 'selected' : '' %>><%= u.nombre %><%= u.area ? ' — ' + u.area : '' %></option>
+                <option value="<%= u.id %>" <%= proceso.responsable_id === u.id ? 'selected' : '' %>><%= u.nombre %><%= u.cargo ? ' — ' + u.cargo : '' %></option>
               <% }) %>
             </select>
             <p class="ayuda">Podrá editar la ficha y registrar pruebas de continuidad.</p>

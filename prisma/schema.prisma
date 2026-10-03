@@ -190,7 +190,7 @@ model Usuario {
   email         String  @unique
   password_hash String
   rol           Rol     @default(USUARIO)
-  area          String?
+  cargo         String?
   // Un usuario desactivado no puede entrar ni cuenta en las aceptaciones; se conserva su historial
   activo        Boolean @default(true)
 

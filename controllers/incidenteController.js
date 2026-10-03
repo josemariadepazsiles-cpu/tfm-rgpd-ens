@@ -111,7 +111,7 @@ const leerFormulario = async (req, actual) => {
 
 const renderFormulario = async (req, res, { incidente, errores = [], status = 200 }) => {
   const usuarios = esAdmin(req.user)
-    ? await prisma.usuario.findMany({ select: { id: true, nombre: true, area: true }, orderBy: { nombre: 'asc' } })
+    ? await prisma.usuario.findMany({ select: { id: true, nombre: true, cargo: true }, orderBy: { nombre: 'asc' } })
     : [];
   const sistemas = await listaSistemas();
   res.status(status).render('incidentes/form', {

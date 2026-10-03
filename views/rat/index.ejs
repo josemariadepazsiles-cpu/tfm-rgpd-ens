@@ -20,24 +20,8 @@
     </div>
 
     <div class="mt-6 flex flex-wrap items-end gap-3">
-      <%- include('../partials/filtro-sistema', { accion: '/rat', sistemas, sistema, conservar: { area } }) %>
-    <% if (user.rol === 'ADMIN') { %>
-      <form action="/rat" method="GET" class="flex flex-wrap items-end gap-3">
-        <% if (sistema) { %><input type="hidden" name="sistema" value="<%= sistema %>"><% } %>
-        <div>
-          <label for="area" class="label">Filtrar por área</label>
-          <select id="area" name="area" onchange="this.form.submit()"
-                  class="input w-auto">
-            <option value="">Todas las áreas</option>
-            <% areas.forEach((a) => { %>
-              <option value="<%= a %>" <%= a === area ? 'selected' : '' %>><%= a %></option>
-            <% }) %>
-          </select>
-        </div>
-        <noscript><button type="submit" class="btn btn-secondary">Filtrar</button></noscript>
-      </form>
-    <% } %>
-      <% if (area || sistema) { %>
+      <%- include('../partials/filtro-sistema', { accion: '/rat', sistemas, sistema, conservar: {} }) %>
+      <% if (sistema) { %>
         <a href="/rat" class="py-2.5 text-sm text-indigo-600 hover:underline">Quitar filtros</a>
       <% } %>
     </div>
@@ -45,7 +29,7 @@
     <div class="mt-6 tabla-contenedor">
       <% if (actividades.length === 0) { %>
         <p class="p-8 text-center text-slate-500">
-          No hay actividades de tratamiento<%= area ? ' en el área ' + area : '' %><%= sistema ? ' con el sistema seleccionado' : '' %>.
+          No hay actividades de tratamiento<%= sistema ? ' con el sistema seleccionado' : '' %>.
         </p>
       <% } else { %>
         <table class="tabla">
@@ -67,7 +51,7 @@
                 <td class="px-4 py-3"><%- include('../partials/sistema-celda', { s: a.sistema }) %></td>
                 <td class="px-4 py-3 text-slate-600">
                   <%= a.responsable.nombre %>
-                  <% if (a.responsable.area) { %><span class="block text-xs text-slate-400"><%= a.responsable.area %></span><% } %>
+                  <% if (a.responsable.cargo) { %><span class="block text-xs text-slate-400"><%= a.responsable.cargo %></span><% } %>
                 </td>
               </tr>
             <% }) %>

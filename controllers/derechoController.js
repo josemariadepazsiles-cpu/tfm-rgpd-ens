@@ -124,7 +124,7 @@ const leerFormulario = async (req, actual) => {
 
 const renderFormulario = async (req, res, { solicitud, errores = [], status = 200 }) => {
   const usuarios = esAdmin(req.user)
-    ? await prisma.usuario.findMany({ select: { id: true, nombre: true, area: true }, orderBy: { nombre: 'asc' } })
+    ? await prisma.usuario.findMany({ select: { id: true, nombre: true, cargo: true }, orderBy: { nombre: 'asc' } })
     : [];
   const sistemas = await listaSistemas();
   const fechaLimiteInicial = solicitud.fecha_recepcion ? finPlazoMeses(solicitud.fecha_recepcion, 1) : null;

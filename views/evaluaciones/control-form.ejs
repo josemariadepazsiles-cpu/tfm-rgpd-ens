@@ -53,7 +53,7 @@
             <option value="">Sin asignar</option>
             <% usuarios.forEach((u) => { %>
               <option value="<%= u.id %>" <%= valores.responsable_id === u.id ? 'selected' : '' %>>
-                <%= u.nombre %><%= u.area ? ' — ' + u.area : '' %>
+                <%= u.nombre %><%= u.cargo ? ' — ' + u.cargo : '' %>
               </option>
             <% }) %>
           </select>

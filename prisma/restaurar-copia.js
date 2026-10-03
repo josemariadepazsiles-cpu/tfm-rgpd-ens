@@ -12,6 +12,13 @@ if (!archivo || !process.argv.includes('--confirmar')) {
 
 (async () => {
   const { datos } = JSON.parse(fs.readFileSync(archivo, 'utf8'));
+  // Copias anteriores a la migración usuario_cargo: el usuario tenía «area» en lugar de «cargo»
+  (datos.usuarios || []).forEach((u) => {
+    if ('area' in u) {
+      if (!('cargo' in u)) u.cargo = null;
+      delete u.area;
+    }
+  });
   await vaciarDatos();
   for (const [modelo, tabla] of MODELOS) {
     const filas = datos[tabla] || [];

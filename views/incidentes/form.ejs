@@ -121,7 +121,7 @@
               <select id="responsable_id" name="responsable_id" class="<%= inputClase %>">
                 <option value="">Sin asignar</option>
                 <% usuarios.forEach((u) => { %>
-                  <option value="<%= u.id %>" <%= incidente.responsable_id === u.id ? 'selected' : '' %>><%= u.nombre %><%= u.area ? ' — ' + u.area : '' %></option>
+                  <option value="<%= u.id %>" <%= incidente.responsable_id === u.id ? 'selected' : '' %>><%= u.nombre %><%= u.cargo ? ' — ' + u.cargo : '' %></option>
                 <% }) %>
               </select>
             <% } else { %>

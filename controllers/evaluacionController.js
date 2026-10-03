@@ -178,7 +178,7 @@ const asignarme = async (req, res) => {
 
 const renderFormulario = async (req, res, { evaluacion, control, valores, errores = [], status = 200 }) => {
   const usuarios = esAdmin(req.user)
-    ? await prisma.usuario.findMany({ select: { id: true, nombre: true, area: true }, orderBy: { nombre: 'asc' } })
+    ? await prisma.usuario.findMany({ select: { id: true, nombre: true, cargo: true }, orderBy: { nombre: 'asc' } })
     : [];
   res.status(status).render('evaluaciones/control-form', {
     title: `Editar · ${control.nombre}`,

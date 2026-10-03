@@ -161,14 +161,14 @@ async function main() {
   const admin = await prisma.usuario.upsert({
     where: { email: 'admin@test.com' },
     update: {},
-    create: { nombre: 'Administrador', email: 'admin@test.com', password_hash: hashAdmin, rol: 'ADMIN', area: 'Dirección' },
+    create: { nombre: 'Administrador', email: 'admin@test.com', password_hash: hashAdmin, rol: 'ADMIN', cargo: 'Administrador de la plataforma' },
   });
   const hash = await bcrypt.hash(CLAVE_EJEMPLO, 10);
   const u = {};
   for (const [clave, d] of Object.entries(USUARIOS)) {
     const email = d.nombre.split(' ')[0].toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '') + '.' +
       d.nombre.split(' ')[1].toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '') + '@' + DOMINIO;
-    u[clave] = await prisma.usuario.create({ data: { nombre: d.nombre, email, password_hash: hash, rol: d.rol, area: d.area } });
+    u[clave] = await prisma.usuario.create({ data: { nombre: d.nombre, email, password_hash: hash, rol: d.rol, cargo: d.cargo } });
   }
   const todosUsuarios = await prisma.usuario.findMany();
 

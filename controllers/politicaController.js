@@ -129,7 +129,7 @@ const show = async (req, res) => {
   if (esAdmin(req.user) && politica.requiere_aceptacion) {
     const [usuarios, registros] = await Promise.all([
       // Solo los usuarios a los que afecta: activos y, si es de un sistema, asignados a él
-      prisma.usuario.findMany({ where: whereAfectados(politica), select: { id: true, nombre: true, email: true, area: true }, orderBy: { nombre: 'asc' } }),
+      prisma.usuario.findMany({ where: whereAfectados(politica), select: { id: true, nombre: true, email: true, cargo: true }, orderBy: { nombre: 'asc' } }),
       prisma.aceptacionPolitica.findMany({ where: { politica_id: politica.id, version_aceptada: politica.version } }),
     ]);
     const porUsuario = new Map(registros.map((r) => [r.usuario_id, r]));

@@ -8,7 +8,7 @@ const ADMIN = {
   nombre: 'Administrador',
   email: 'admin@test.com',
   password: 'admin1234',
-  area: 'Dirección',
+  cargo: 'Administrador de la plataforma',
 };
 
 // Controles ENS iniciales, todos en estado Pendiente y sin responsable
@@ -44,7 +44,7 @@ async function seedAdmin() {
       email: ADMIN.email,
       password_hash,
       rol: 'ADMIN',
-      area: ADMIN.area,
+      cargo: ADMIN.cargo,
     },
   });
 

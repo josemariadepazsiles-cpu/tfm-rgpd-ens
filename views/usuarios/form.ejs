@@ -59,9 +59,9 @@
             <input id="nombre" name="nombre" type="text" required value="<%= u.nombre || '' %>" class="input">
           </div>
           <div>
-            <label for="area" class="label">Área <span class="font-normal text-slate-400">(opcional)</span></label>
-            <input id="area" name="area" type="text" list="areas" value="<%= u.area || '' %>" class="input" placeholder="Ej.: Recursos Humanos">
-            <datalist id="areas"><% areas.forEach((a) => { %><option value="<%= a %>"></option><% }) %></datalist>
+            <label for="cargo" class="label">Cargo <span class="font-normal text-slate-400">(opcional)</span></label>
+            <input id="cargo" name="cargo" type="text" list="cargos" maxlength="150" value="<%= u.cargo || '' %>" class="input" placeholder="Ej.: Técnico de laboratorio">
+            <datalist id="cargos"><% cargos.forEach((c) => { %><option value="<%= c %>"></option><% }) %></datalist>
           </div>
         </div>
       </fieldset>

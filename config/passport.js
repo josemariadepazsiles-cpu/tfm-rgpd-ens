@@ -44,7 +44,7 @@ passport.deserializeUser(async (id, done) => {
   try {
     const usuario = await prisma.usuario.findUnique({
       where: { id },
-      select: { id: true, nombre: true, email: true, rol: true, area: true, activo: true, sistemas: { select: { sistema_id: true } } },
+      select: { id: true, nombre: true, email: true, rol: true, cargo: true, activo: true, sistemas: { select: { sistema_id: true } } },
     });
     // Si lo han desactivado, la sesión deja de ser válida
     if (!usuario || !usuario.activo) return done(null, false);

@@ -95,7 +95,7 @@ const renderFormulario = async (req, res, { proceso, errores = [], status = 200 
   const [sistemas, usuarios] = await Promise.all([
     prisma.sistema.findMany({ select: { id: true, nombre: true }, orderBy: { nombre: 'asc' } }),
     esAdmin(req.user)
-      ? prisma.usuario.findMany({ select: { id: true, nombre: true, area: true }, orderBy: { nombre: 'asc' } })
+      ? prisma.usuario.findMany({ select: { id: true, nombre: true, cargo: true }, orderBy: { nombre: 'asc' } })
       : [],
   ]);
   res.status(status).render('bia/form', {

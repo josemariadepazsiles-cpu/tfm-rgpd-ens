@@ -4,7 +4,7 @@ const { NIVELES } = require('../lib/riesgo');
 const { esAdmin, ambitoActividad: ambito } = require('../lib/permisos');
 const { listaSistemas, sistemaSelect, leerSistemaId, validarSistema, filtroSistema } = require('../lib/sistemas');
 
-const responsableSelect = { select: { id: true, nombre: true, email: true, area: true } };
+const responsableSelect = { select: { id: true, nombre: true, email: true, cargo: true } };
 
 const noEncontrada = (res) =>
   res.status(404).render('error', {
@@ -78,7 +78,7 @@ const renderFormulario = async (req, res, { actividad, errores = [], status = 20
   const sistemas = await listaSistemas();
   const responsables = esAdmin(req.user)
     ? await prisma.usuario.findMany({
-        select: { id: true, nombre: true, area: true },
+        select: { id: true, nombre: true, cargo: true },
         orderBy: { nombre: 'asc' },
       })
     : [];
@@ -95,20 +95,6 @@ const renderFormulario = async (req, res, { actividad, errores = [], status = 20
 const list = async (req, res) => {
   const filtro = filtroSistema(req.query.sistema);
   const where = { ...ambito(req.user), ...filtro.where };
-  const area = esAdmin(req.user) ? texto(req.query.area) : '';
-  let areas = [];
-
-  if (esAdmin(req.user)) {
-    if (area) where.responsable = { area };
-    const filas = await prisma.usuario.findMany({
-      where: { area: { not: null } },
-      select: { area: true },
-      distinct: ['area'],
-      orderBy: { area: 'asc' },
-    });
-    areas = filas.map((f) => f.area);
-  }
-
   const [actividades, sistemas] = await Promise.all([prisma.actividadRat.findMany({
     where,
     include: { responsable: responsableSelect, sistema: sistemaSelect },
@@ -118,8 +104,6 @@ const list = async (req, res) => {
   res.render('rat/index', {
     title: 'Actividades RAT',
     actividades,
-    areas,
-    area,
     sistemas,
     sistema: filtro.sistema,
     basesLegales: BASES_LEGALES,
