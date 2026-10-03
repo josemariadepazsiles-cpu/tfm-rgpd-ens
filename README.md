@@ -218,7 +218,123 @@ Con `NODE_ENV=production` la cookie de sesión exige HTTPS, así que hay que ser
 | `db:ejemplo` falla con `has no equivalent in encoding "WIN1252"` | La base de datos local no está en UTF-8. Créala de nuevo con `CREATE DATABASE tfm ENCODING 'UTF8' TEMPLATE template0;`. |
 | `npm install` avisa de vulnerabilidades altas | Vienen de herramientas de Prisma y de Tailwind CLI (paquetes como `mysql2`, `deepmerge-ts` o `braces`), no del código de la aplicación. **No ejecutes `npm audit fix --force`**: bajaría Prisma a la versión 6 y la aplicación dejaría de funcionar. |
 
-## 4. Módulos
+## 4. Estructura del proyecto
+
+Solo se muestran los archivos versionados. No aparecen `node_modules/`, `.env`, el CSS compilado (`public/css/`), `uploads/` ni `backups/`.
+
+```text
+tfm-rgpd-ens/
+├── app.js                    Entrada del servidor: middlewares globales, montaje de las rutas, 404 y errores
+├── prisma.config.js          Prisma: esquema, migraciones, comando del seed y URL directa para migrar en Neon
+├── package.json              Dependencias y scripts (dev, start, seed, test, db:*)
+├── .env.example              Plantilla de las variables de entorno
+├── config/                   4 archivos
+│   ├── passport.js           Login con email y contraseña; usuario de la sesión con sus sistemas asignados
+│   ├── roles.js              Roles ADMIN y USUARIO con su etiqueta
+│   ├── baseLegal.js          Bases de licitud del art. 6.1 RGPD para el RAT
+│   └── legal.js              Datos ficticios del titular, DPD, encargados y cookies de las páginas legales
+├── middlewares/
+│   ├── auth.js               ensureAuthenticated, ensureAdmin y ensureGuest
+│   └── seguridad.js          Cabeceras (CSP…), token CSRF en los formularios y límite de intentos de login
+├── routes/                   Un router por módulo: rat.js, incidentes.js, politicas.js … (17 en total)
+├── controllers/              Una acción por pantalla: ratController.js, incidenteController.js … (17 en total)
+├── lib/                      Reglas de negocio y utilidades (23 módulos)
+│   ├── prisma.js             Cliente único de Prisma con el adaptador pg
+│   ├── incidentes.js         Plazo de 72 h para notificar a la AEPD e historial de estados
+│   ├── derechos.js           Plazo de un mes, ampliación y urgencia de las solicitudes
+│   ├── ens.js                Cálculo del % de cumplimiento ENS por categoría
+│   ├── evaluaciones.js       Foto de controles de cada evaluación y guardado con histórico
+│   ├── panel.js              Avisos y métricas de cada sistema para el panel de control
+│   └── …                     riesgo.js, bia.js, politicas.js, declaraciones.js, pdfDeclaracion.js, subidas.js, formato.js…
+├── views/                    Plantillas EJS (42 pantallas y 30 partials)
+│   ├── dashboard.ejs         Panel de control
+│   ├── error.ejs             Página de error 403, 404 y 500
+│   ├── auth/login.ejs        Pantalla de acceso
+│   ├── incidentes/           index.ejs (listado), show.ejs (ficha), form.ejs (alta/edición), historial.ejs
+│   ├── …                     rat/, riesgos/, derechos/, proveedores/, sistemas/, evaluaciones/… (12 carpetas más)
+│   ├── legal/                aviso-legal.ejs, privacidad.ejs y cookies.ejs
+│   └── partials/             nav.ejs, head.ejs, pie.ejs, plazo-aepd.ejs … (30 en total)
+├── src/styles/input.css      Fuente de Tailwind: tema, componentes (.btn, .card, .tabla…) y archivos que escanea
+├── public/img/logo.svg       Logotipo (el CSS se compila en public/css/ y no se versiona)
+├── prisma/
+│   ├── schema.prisma         Modelo de datos: 25 modelos y 26 enums
+│   ├── migrations/           21 migraciones SQL y migration_lock.toml
+│   ├── seed.js               Carga mínima: administrador inicial y 12 controles ENS (npm run seed)
+│   ├── seed-ejemplo.js       Empresa ficticia completa (npm run db:ejemplo)
+│   └── …                     copia-seguridad.js, restaurar-copia.js, utilidades-datos.js, pdfs-politicas.js… (5 scripts más)
+├── tests/
+│   ├── ejecutar.js           npm test: copia de seguridad, pruebas y restauración
+│   └── pruebas-funcionales.js   Unas 260 pruebas con peticiones HTTP reales
+├── docs/                     PRD.md, ARQUITECTURA.md y PLAN.md
+└── README.md, CHANGELOG.md, INFORME_PRUEBAS.md, CLAUDE.md, AGENTS.md, LICENSE
+```
+
+### Dónde está cada cosa
+
+| Capa | Carpeta | Responsabilidad |
+|---|---|---|
+| Rutas | `routes/` | Asocian cada URL a una acción y aplican los permisos de acceso (`ensureAuthenticated`, `ensureAdmin`). Se montan en `app.js` con su prefijo (`/rat`, `/incidentes`…). |
+| Controladores | `controllers/` | Leen y validan la petición, comprueban permisos finos («Administrador o responsable»), consultan los datos y eligen la vista o la redirección. |
+| Vistas | `views/`, `src/styles/` | HTML con EJS: listado, ficha y formulario de cada módulo, más piezas comunes en `partials/`. Estilos con Tailwind. |
+| Modelos de datos | `prisma/schema.prisma`, `prisma/migrations/` | Tablas, relaciones y valores permitidos (enums). Se accede a ellos con el cliente de `lib/prisma.js`. |
+| Autenticación | `config/passport.js`, `middlewares/auth.js`, `controllers/authController.js` | Login, sesión, usuario activo y roles. |
+| Seguridad y validación | `middlewares/seguridad.js`, `lib/permisos.js`, `lib/validacion.js` | CSRF, cabeceras, límite de intentos de login, ids válidos, permisos por responsable y longitud de los textos. |
+| Lógica de negocio y cálculos | `lib/` | Plazos legales (`incidentes.js`, `derechos.js`, `formato.js`), nivel de riesgo (`riesgo.js`), % ENS (`ens.js`, `evaluaciones.js`), avisos del panel (`panel.js`, `dashboard.js`, `asistente.js`), declaraciones y su PDF. |
+| Datos de prueba y mantenimiento | `prisma/*.js`, `tests/` | Seeds, copia y restauración de datos, y pruebas funcionales. |
+
+### Recorrido de una petición
+
+Ejemplo: abrir la ficha de un incidente, `GET /incidentes/7`.
+
+1. **Middlewares globales (`app.js`):**
+   - `middlewares/seguridad.js` añade las cabeceras de seguridad;
+   - `express-session` y `config/passport.js` (`deserializeUser`) recuperan el usuario de la sesión con sus sistemas.
+2. **Ruta:** `app.js` envía `/incidentes` a `routes/incidentes.js`. Ese router exige sesión con `ensureAuthenticated` (`middlewares/auth.js`) y asigna `GET /:id` a `show`.
+3. **Controlador:** en `controllers/incidenteController.js`, `show` llama a `buscar`:
+   - valida el id con `idValido` (`lib/permisos.js`) y lee el incidente con Prisma (`lib/prisma.js`);
+   - calcula el plazo de 72 h con `plazoAepd` (`lib/incidentes.js`) y si el usuario puede gestionarlo.
+4. **Vista:** `res.render('incidentes/show')` pinta `views/incidentes/show.ejs` con sus partials (`nav`, `plazo-aepd`, `incidente-badges`, `pie`). Antes de enviar el HTML, `middlewares/seguridad.js` añade el token CSRF a cada formulario.
+
+### Modelo de datos
+
+Los 25 modelos de `prisma/schema.prisma`:
+
+**Organización, usuarios y sistemas**
+- **Organizacion**: ficha de la empresa (una sola fila, sin relaciones).
+- **Usuario**: persona con acceso (rol, cargo, activo). Es autor o responsable de casi todos los registros.
+- **UsuarioSistema**: sistemas en los que trabaja cada usuario (relación Usuario ↔ Sistema).
+- **Sistema**: eje de la aplicación.
+  - Tiene evaluaciones y declaraciones.
+  - Puede estar asociado a actividades RAT, riesgos, incidentes, solicitudes, políticas y procesos BIA.
+
+**ENS**
+- **ControlEns**: control del catálogo ENS; se evalúa en `EvaluacionControl`.
+- **Evaluacion**: evaluación ENS de un Sistema; tiene sus `EvaluacionControl`.
+- **EvaluacionControl**: estado, evidencia y responsable (Usuario) de un control en una evaluación.
+- **HistorialEstado**: cada cambio de estado de un `EvaluacionControl`, con su autor.
+- **DeclaracionConformidad**: declaración versionada de un Sistema, generada desde una Evaluacion (opcional si esta se borra).
+- **DetalleDeclaracionControl**: copia congelada de cada control en una declaración.
+
+**RGPD**
+- **ActividadRat**: actividad de tratamiento con un Usuario responsable obligatorio y Sistema opcional; tiene riesgos.
+- **Riesgo**: riesgo de una ActividadRat, con nivel calculado y Sistema opcional.
+- **Incidente**: incidente o brecha con Sistema opcional, creador y responsable.
+- **HistorialIncidente**: cambios de estado de un Incidente.
+- **SolicitudDerecho**: solicitud de un interesado con Sistema opcional y responsable.
+- **HistorialSolicitudDerecho**: cambios de estado o de plazo de una SolicitudDerecho.
+- **DocumentoSolicitudDerecho**: PDF adjuntos a una SolicitudDerecho.
+- **Proveedor**: encargado del tratamiento, con creador y responsable.
+- **DocumentoProveedor**: PDF adjuntos a un Proveedor.
+
+**Políticas y continuidad**
+- **Politica**: documento normativo, General o de un Sistema; con creador y aprobador.
+- **ArchivoPolitica**: PDF de cada versión de una Politica.
+- **DocumentoPolitica**: adjuntos de una Politica (anexos, plantillas…).
+- **AceptacionPolitica**: aceptación de una versión de una Politica por un Usuario.
+- **ProcesoNegocio**: proceso del BIA con Sistema opcional y responsable.
+- **PruebaContinuidad**: prueba del plan de continuidad de un ProcesoNegocio.
+
+## 5. Módulos
 
 | Área | Módulo | Ruta |
 |---|---|---|
@@ -242,7 +358,7 @@ Todas las pantallas, incluido el login, tienen un pie con los enlaces a las tres
 
 El detalle funcional de cada módulo está en [docs/PRD.md](docs/PRD.md).
 
-## 5. Arquitectura y estructura del proyecto
+## 6. Arquitectura y estructura del proyecto
 
 ```mermaid
 flowchart LR
@@ -278,7 +394,7 @@ uploads/          PDF subidos (no se versiona)
 backups/          Copias de seguridad de los datos (no se versiona)
 ```
 
-## 6. Comandos
+## 7. Comandos
 
 | Comando | Qué hace |
 |---|---|
@@ -294,7 +410,7 @@ backups/          Copias de seguridad de los datos (no se versiona)
 | `npm run db:restaurar -- <copia.json> --confirmar` | Restaura una copia (**borra los datos actuales**). |
 | `npm run db:descripciones` | Rellena la descripción de los controles del Anexo II que no la tengan. |
 | `npm run db:pdfs-politicas` | Genera un PDF de ejemplo para las políticas que aún no tienen documento vigente (lo ejecuta también `db:ejemplo`). |
-| `npm test` | Batería de pruebas funcionales (ver el apartado 7). |
+| `npm test` | Batería de pruebas funcionales (ver el apartado 8). |
 
 ### Problemas frecuentes durante el desarrollo
 
@@ -310,7 +426,7 @@ Los de la instalación están en el apartado 3.8.
 | Aviso `SECURITY WARNING: The SSL modes 'prefer', 'require'…` | Es solo un aviso del driver `pg`. Para quitarlo, usa `sslmode=verify-full` en `DATABASE_URL`. |
 | `EADDRINUSE` al arrancar | Ya hay otro proceso en el puerto 3000: ciérralo o cambia `PORT`. |
 
-## 7. Pruebas
+## 8. Pruebas
 
 `npm test` ejecuta unas 260 pruebas funcionales con peticiones HTTP reales: acceso, roles, los diez
 módulos, cálculos, panel y seguridad.
@@ -324,7 +440,7 @@ módulos, cálculos, panel y seguridad.
 Úsalo contra una base de datos de desarrollo o de pruebas, nunca contra producción.
 El informe de la última revisión completa está en [INFORME_PRUEBAS.md](INFORME_PRUEBAS.md).
 
-## 8. Cookies
+## 9. Cookies
 
 La aplicación solo usa elementos técnicos, por lo que no muestra banner de consentimiento:
 - la cookie de sesión `sid`, que se crea al iniciar sesión y dura 8 horas;
@@ -332,7 +448,7 @@ La aplicación solo usa elementos técnicos, por lo que no muestra banner de con
 
 Sin sesión no se crea ninguna cookie. El detalle está en [/cookies](http://localhost:3000/cookies) y en `config/legal.js`. Si se añadiera una cookie no técnica (por ejemplo, de analítica), habría que pedir consentimiento antes de instalarla y actualizar esa página.
 
-## 9. Documentación
+## 10. Documentación
 
 - [docs/PRD.md](docs/PRD.md): requisitos del producto, roles y reglas de negocio.
 - [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md): capas, recorrido de una petición, modelo de datos y decisiones técnicas.
@@ -340,6 +456,6 @@ Sin sesión no se crea ninguna cookie. El detalle está en [/cookies](http://loc
 - [CHANGELOG.md](CHANGELOG.md): historial de cambios.
 - [CLAUDE.md](CLAUDE.md) / [AGENTS.md](AGENTS.md): guía para asistentes de programación.
 
-## 10. Licencia
+## 11. Licencia
 
 [MIT](LICENSE) © 2026 José María de Paz Siles
