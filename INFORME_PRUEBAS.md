@@ -38,7 +38,7 @@ Lo más importante:
 
 - **Entorno:**
   - app en marcha con `npm run dev` en `http://localhost:3000` (`/login` respondió 200);
-  - base de datos: la de Neon del proyecto (`ep-noisy-thunder…`, `neondb`), con la opción 2 acordada: copia de seguridad previa (`backups/copia-20261003-105803.json`) y copia de `uploads/`, pruebas, y **restauración de ambas al terminar**;
+  - base de datos: la de Neon del proyecto (base de datos de desarrollo), con la opción 2 acordada: copia de seguridad previa (`backups/copia-20261003-105803.json`) y copia de `uploads/`, pruebas, y **restauración de ambas al terminar**;
   - verificado tras restaurar: mismos recuentos que la copia (4 sistemas, 11 usuarios, 6 incidentes, 18 riesgos, 39 controles, 4 declaraciones, 8 proveedores, 234 filas de checklist) y los 9 archivos de `uploads/`.
 - **Método:**
   - peticiones HTTP reales con `fetch` de Node 24 contra la app en marcha, manteniendo la cookie de sesión;

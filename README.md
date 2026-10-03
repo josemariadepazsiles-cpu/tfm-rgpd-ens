@@ -334,7 +334,81 @@ Los 25 modelos de `prisma/schema.prisma`:
 - **ProcesoNegocio**: proceso del BIA con Sistema opcional y responsable.
 - **PruebaContinuidad**: prueba del plan de continuidad de un ProcesoNegocio.
 
-## 5. Módulos
+## 5. Funcionalidades principales
+
+### Acceso, usuarios y roles
+- Inicia sesión con email y contraseña. Las cuentas desactivadas no pueden entrar y pierden la sesión abierta.
+- Gestiona los usuarios (alta, edición, cargo, rol y sistemas en los que trabajan) y los activa o desactiva sin borrar su historial.
+- Mantiene los datos de la empresa, cuyo nombre aparece en la cabecera de todas las pantallas.
+- Ofrece el aviso legal, la política de privacidad y la de cookies, accesibles sin sesión desde el pie de cada pantalla.
+
+### Inicio (panel de control)
+- Resume el estado en cuatro tarjetas: cumplimiento ENS, acciones pendientes, incidentes abiertos y próximo vencimiento.
+- Lista las acciones pendientes ordenadas por urgencia, indicando el sistema al que se refiere cada una.
+- Filtra todo el panel por un sistema («Ver por sistema») y muestra la actividad reciente de los historiales.
+
+### Sistemas de información
+- Registra los sistemas de información con su categoría ENS y descripción.
+- Reúne en la ficha de cada sistema sus actividades RAT, riesgos, incidentes, solicitudes, evaluaciones, declaraciones y procesos BIA.
+- Crea evaluaciones ENS del sistema, partiendo de cero o copiando la anterior.
+- Permite marcar cada control como Implementado, Pendiente o No aplicable, con evidencia y responsable.
+- Guarda el histórico de cambios de estado de los controles, filtrable por evaluación y por control.
+
+### RGPD
+- **Actividades RAT:** registra las actividades de tratamiento con finalidad, base legal, datos e interesados, destinatarios, conservación, medidas y transferencias.
+- **Riesgos:** evalúa cada riesgo de una actividad por probabilidad e impacto y lo filtra por nivel, sistema o actividad.
+- **Incidentes / Brechas:** registra incidentes y brechas, su notificación a la AEPD y a los afectados, y guarda su historial de estados.
+- **Derechos de los Interesados:** tramita las solicitudes por estados, amplía el plazo o deniega con motivo y adjunta documentos PDF.
+- **Proveedores:** registra a los encargados del tratamiento con su contrato, nivel ENS, transferencias internacionales y documentos PDF.
+- Filtra los listados por sistema o por «sin sistema» (registros transversales).
+
+### ENS
+- **Catálogo de controles:** mantiene los controles del ENS con su categoría y descripción.
+- **Declaraciones de Conformidad:** genera la declaración a partir de una evaluación, como foto fija versionada; permite añadir observaciones, emitirla y verla en PDF.
+- **Políticas y Documentación:** publica documentos normativos, generales o de un sistema, con versiones en PDF, estados y documentos adjuntos.
+- Registra qué usuarios han aceptado cada versión de una política y muestra a cada uno las que tiene pendientes.
+- **BIA y Continuidad:** analiza los procesos de negocio (criticidad, impactos, RTO y RPO, estrategia) y registra sus pruebas de continuidad.
+
+### Automatismos
+- **Notificación de brechas:** calcula el plazo de 72 h desde la fecha de detección. Avisa cuando está pendiente y lo marca como vencido al superarlo.
+- **Solicitudes de derechos:** fija la fecha límite en un mes desde la recepción (mismo día del mes siguiente, 23:59:59 hora de España). La ampliación de 2 meses solo se admite dentro del primer mes.
+- **Urgencia de las solicitudes:** verde con más de 10 días, amarillo con 10 o menos y rojo si ha vencido sin resolver.
+- **Nivel de riesgo:** probabilidad × impacto, de 1 a 3 cada uno. Bajo de 1 a 2, Medio de 3 a 4 y Alto de 6 a 9.
+- **Cumplimiento ENS:** implementados ÷ (controles − No aplicables), redondeado a entero. Por sistema se toma su última evaluación; para la organización, la media de los sistemas evaluados.
+- **Pruebas de continuidad:** vigila que los procesos de criticidad Alta o Crítica tengan una prueba en los últimos 12 meses. Avisa 30 días antes de que caduque.
+- **Declaraciones de Conformidad:** considera vigente una declaración emitida durante 12 meses. Al generar una versión nueva, las anteriores pasan a «Superada».
+- **Revisión de políticas:** avisa 30 días antes de la fecha de revisión y la marca como vencida al pasarla.
+- **Proveedores:** avisa de los que no tienen contrato de encargado, de los que tienen la revisión del contrato vencida o a 30 días o menos, y de las transferencias fuera del EEE sin mecanismo de garantía.
+- **Panel de control:** ordena las acciones de crítico a atención y a informativo, y destaca el plazo que vence antes.
+- **Acceso:** bloquea durante 15 minutos el acceso tras 5 intentos fallidos seguidos con el mismo email. Cierra la sesión a las 8 horas.
+
+### Qué puede hacer cada rol
+
+| Rol | Qué puede hacer |
+|---|---|
+| Administrador | Todo lo que puede hacer el Usuario, y además:<br>• gestiona sistemas, evaluaciones, catálogo de controles, Declaraciones de Conformidad, políticas, proveedores, procesos BIA, datos de la empresa y usuarios;<br>• asigna responsables;<br>• es el único que elimina registros. |
+| Usuario | • Consulta todos los módulos.<br>• Registra actividades RAT y riesgos (solo ve y edita los suyos), incidentes y solicitudes de derechos.<br>• Gestiona lo que tiene asignado como responsable y se asigna controles ENS libres.<br>• Acepta las políticas que le afectan. |
+| Sin sesión | Solo accede a la pantalla de inicio de sesión y a las páginas legales. |
+
+## 6. Usuario y contraseña de prueba
+
+Acceso en **http://localhost:3000/login**. Los usuarios se crean al cargar los datos de ejemplo con `npm run db:ejemplo -- --confirmar` (paso [3.5](#35-preparar-la-base-de-datos)). Todos pertenecen a la organización ficticia «Laboratorios Farmacéuticos Reunidos».
+
+| Rol | Email | Contraseña | Qué puede hacer y ver |
+|---|---|---|---|
+| Administrador | `admin@test.com` | `admin1234` | Todo: gestión de sistemas, evaluaciones, catálogo de controles, declaraciones, políticas, proveedores, BIA, datos de la empresa y usuarios; es el único rol que elimina registros. |
+| Administrador | `elena.martin@labfarmareunidos.example` | `Ejemplo2026` | Igual que el anterior. En los datos de ejemplo es la Directora General y Responsable de la Información; no tiene sistema asignado. |
+| Administrador | `javier.ortega@labfarmareunidos.example` | `Ejemplo2026` | Igual que el anterior. Es el Delegado de Protección de Datos; no tiene sistema asignado. |
+| Administrador | `marta.quintero@labfarmareunidos.example` | `Ejemplo2026` | Igual que el anterior. Es la Responsable de Seguridad, asignada al sistema «Área de informática». |
+| Usuario | `carmen.vidal@labfarmareunidos.example` | `Ejemplo2026` | Consulta todos los módulos. Solo ve y edita sus actividades RAT y sus riesgos, y gestiona lo que tiene asignado. Acepta las políticas generales y las de «Área financiera». |
+| Usuario | `andres.pena@labfarmareunidos.example` | `Ejemplo2026` | Lo mismo que un Usuario. Es el Responsable del Sistema, asignado a «Área de informática». |
+| Usuario | `lucia.fernandez@labfarmareunidos.example` | `Ejemplo2026` | Lo mismo que un Usuario. Es la directora técnica de laboratorio, asignada a «Área de laboratorio». |
+| Usuario | `pablo.rubio@labfarmareunidos.example` | `Ejemplo2026` | Lo mismo que un Usuario. Es el responsable de farmacovigilancia, asignado a «Área de laboratorio». |
+| Usuario | `sergio.navas@labfarmareunidos.example` | `Ejemplo2026` | Lo mismo que un Usuario. Es el técnico de nóminas, asignado a «Área financiera». |
+
+> **Credenciales de demostración:** todos los datos de estas cuentas (nombres, cargos, emails) son ficticios y las contraseñas son públicas. En un entorno real hay que cambiarlas o eliminar estas cuentas. `npm run db:ejemplo` se niega a ejecutarse con `NODE_ENV=production`.
+
+## 7. Módulos
 
 | Área | Módulo | Ruta |
 |---|---|---|
@@ -358,7 +432,7 @@ Todas las pantallas, incluido el login, tienen un pie con los enlaces a las tres
 
 El detalle funcional de cada módulo está en [docs/PRD.md](docs/PRD.md).
 
-## 6. Arquitectura y estructura del proyecto
+## 8. Arquitectura y estructura del proyecto
 
 ```mermaid
 flowchart LR
@@ -394,7 +468,7 @@ uploads/          PDF subidos (no se versiona)
 backups/          Copias de seguridad de los datos (no se versiona)
 ```
 
-## 7. Comandos
+## 9. Comandos
 
 | Comando | Qué hace |
 |---|---|
@@ -410,7 +484,7 @@ backups/          Copias de seguridad de los datos (no se versiona)
 | `npm run db:restaurar -- <copia.json> --confirmar` | Restaura una copia (**borra los datos actuales**). |
 | `npm run db:descripciones` | Rellena la descripción de los controles del Anexo II que no la tengan. |
 | `npm run db:pdfs-politicas` | Genera un PDF de ejemplo para las políticas que aún no tienen documento vigente (lo ejecuta también `db:ejemplo`). |
-| `npm test` | Batería de pruebas funcionales (ver el apartado 8). |
+| `npm test` | Batería de pruebas funcionales (ver el apartado 10). |
 
 ### Problemas frecuentes durante el desarrollo
 
@@ -426,7 +500,7 @@ Los de la instalación están en el apartado 3.8.
 | Aviso `SECURITY WARNING: The SSL modes 'prefer', 'require'…` | Es solo un aviso del driver `pg`. Para quitarlo, usa `sslmode=verify-full` en `DATABASE_URL`. |
 | `EADDRINUSE` al arrancar | Ya hay otro proceso en el puerto 3000: ciérralo o cambia `PORT`. |
 
-## 8. Pruebas
+## 10. Pruebas
 
 `npm test` ejecuta unas 260 pruebas funcionales con peticiones HTTP reales: acceso, roles, los diez
 módulos, cálculos, panel y seguridad.
@@ -440,7 +514,7 @@ módulos, cálculos, panel y seguridad.
 Úsalo contra una base de datos de desarrollo o de pruebas, nunca contra producción.
 El informe de la última revisión completa está en [INFORME_PRUEBAS.md](INFORME_PRUEBAS.md).
 
-## 9. Cookies
+## 11. Cookies
 
 La aplicación solo usa elementos técnicos, por lo que no muestra banner de consentimiento:
 - la cookie de sesión `sid`, que se crea al iniciar sesión y dura 8 horas;
@@ -448,7 +522,7 @@ La aplicación solo usa elementos técnicos, por lo que no muestra banner de con
 
 Sin sesión no se crea ninguna cookie. El detalle está en [/cookies](http://localhost:3000/cookies) y en `config/legal.js`. Si se añadiera una cookie no técnica (por ejemplo, de analítica), habría que pedir consentimiento antes de instalarla y actualizar esa página.
 
-## 10. Documentación
+## 12. Documentación
 
 - [docs/PRD.md](docs/PRD.md): requisitos del producto, roles y reglas de negocio.
 - [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md): capas, recorrido de una petición, modelo de datos y decisiones técnicas.
@@ -456,6 +530,6 @@ Sin sesión no se crea ninguna cookie. El detalle está en [/cookies](http://loc
 - [CHANGELOG.md](CHANGELOG.md): historial de cambios.
 - [CLAUDE.md](CLAUDE.md) / [AGENTS.md](AGENTS.md): guía para asistentes de programación.
 
-## 11. Licencia
+## 13. Licencia
 
 [MIT](LICENSE) © 2026 José María de Paz Siles
