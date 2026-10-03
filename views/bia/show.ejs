@@ -165,7 +165,7 @@
                 <label for="observaciones" class="label">
                   Observaciones <span class="font-normal text-slate-400" x-show="resultado === 'SATISFACTORIO'">(opcional)</span>
                 </label>
-                <textarea id="observaciones" name="observaciones" rows="3" class="<%= inputClase %>" :required="resultado !== 'SATISFACTORIO'"
+                <textarea maxlength="5000" id="observaciones" name="observaciones" rows="3" class="<%= inputClase %>" :required="resultado !== 'SATISFACTORIO'"
                           placeholder="Alcance de la prueba, tiempos de recuperación obtenidos, incidencias detectadas…"></textarea>
               </div>
             </div>

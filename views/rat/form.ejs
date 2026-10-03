@@ -31,12 +31,12 @@
         <legend class="float-left w-full mb-4 text-base font-semibold text-slate-900">1. Datos básicos</legend>
         <div class="clear-both">
           <label for="nombre" class="label">Nombre de la actividad</label>
-          <input id="nombre" name="nombre" type="text" required value="<%= actividad.nombre || '' %>" class="<%= inputClase %>"
+          <input maxlength="200" id="nombre" name="nombre" type="text" required value="<%= actividad.nombre || '' %>" class="<%= inputClase %>"
                  placeholder="Ej.: Gestión de nóminas">
         </div>
         <div>
           <label for="finalidad" class="label">Finalidad del tratamiento</label>
-          <textarea id="finalidad" name="finalidad" rows="3" required class="<%= inputClase %>"><%= actividad.finalidad || '' %></textarea>
+          <textarea maxlength="5000" id="finalidad" name="finalidad" rows="3" required class="<%= inputClase %>"><%= actividad.finalidad || '' %></textarea>
         </div>
         <div class="grid gap-4 sm:grid-cols-2">
         <div>
@@ -73,17 +73,17 @@
         <legend class="float-left w-full mb-4 text-base font-semibold text-slate-900">2. Datos e interesados</legend>
         <div class="clear-both">
           <label for="categorias_datos" class="label">Categorías de datos personales</label>
-          <textarea id="categorias_datos" name="categorias_datos" rows="3" required class="<%= inputClase %>"
+          <textarea maxlength="5000" id="categorias_datos" name="categorias_datos" rows="3" required class="<%= inputClase %>"
                     placeholder="Ej.: identificativos, datos bancarios, datos de salud…"><%= actividad.categorias_datos || '' %></textarea>
         </div>
         <div>
           <label for="categorias_interesados" class="label">Categorías de interesados</label>
-          <textarea id="categorias_interesados" name="categorias_interesados" rows="2" required class="<%= inputClase %>"
+          <textarea maxlength="5000" id="categorias_interesados" name="categorias_interesados" rows="2" required class="<%= inputClase %>"
                     placeholder="Ej.: empleados, clientes, proveedores…"><%= actividad.categorias_interesados || '' %></textarea>
         </div>
         <div>
           <label for="destinatarios" class="label">Destinatarios</label>
-          <textarea id="destinatarios" name="destinatarios" rows="2" required class="<%= inputClase %>"
+          <textarea maxlength="5000" id="destinatarios" name="destinatarios" rows="2" required class="<%= inputClase %>"
                     placeholder="Ej.: Agencia Tributaria, Seguridad Social, entidades bancarias…"><%= actividad.destinatarios || '' %></textarea>
         </div>
       </fieldset>
@@ -93,7 +93,7 @@
         <legend class="float-left w-full mb-4 text-base font-semibold text-slate-900">3. Conservación y transferencias</legend>
         <div class="clear-both">
           <label for="plazo_conservacion" class="label">Plazo de conservación</label>
-          <input id="plazo_conservacion" name="plazo_conservacion" type="text" required value="<%= actividad.plazo_conservacion || '' %>"
+          <input maxlength="1000" id="plazo_conservacion" name="plazo_conservacion" type="text" required value="<%= actividad.plazo_conservacion || '' %>"
                  class="<%= inputClase %>" placeholder="Ej.: 4 años desde la baja del empleado">
         </div>
         <div>
@@ -105,12 +105,12 @@
         </div>
         <div x-show="transferencia" x-cloak>
           <label for="pais_transferencia" class="label">País de destino</label>
-          <input id="pais_transferencia" name="pais_transferencia" type="text" value="<%= actividad.pais_transferencia || '' %>"
+          <input maxlength="200" id="pais_transferencia" name="pais_transferencia" type="text" value="<%= actividad.pais_transferencia || '' %>"
                  class="<%= inputClase %>" :required="transferencia" placeholder="Ej.: Estados Unidos">
         </div>
         <div>
           <label for="medidas_seguridad" class="label">Medidas de seguridad</label>
-          <textarea id="medidas_seguridad" name="medidas_seguridad" rows="3" required class="<%= inputClase %>"
+          <textarea maxlength="5000" id="medidas_seguridad" name="medidas_seguridad" rows="3" required class="<%= inputClase %>"
                     placeholder="Ej.: control de acceso por roles, cifrado, copias de seguridad…"><%= actividad.medidas_seguridad || '' %></textarea>
         </div>
       </fieldset>

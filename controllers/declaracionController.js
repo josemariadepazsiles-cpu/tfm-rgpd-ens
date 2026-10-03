@@ -6,6 +6,7 @@ const { escribirPdf } = require('../lib/pdfDeclaracion');
 const {
   CATEGORIAS_SISTEMA, ESTADOS_DECLARACION, ErrorDeclaracion, generarDeclaracion, emitirDeclaracion, formatoPorcentaje,
 } = require('../lib/declaraciones');
+const { LIMITES, excesos } = require('../lib/validacion');
 
 // Cualquier usuario autenticado puede consultar las declaraciones y descargar su PDF.
 // Generarlas, editar las observaciones del borrador y emitirlas es solo para el
@@ -103,6 +104,11 @@ const actualizarObservaciones = async (req, res) => {
     return res.redirect(`/declaraciones/${declaracion.id}`);
   }
   const observaciones = typeof req.body.observaciones === 'string' ? req.body.observaciones.trim() : '';
+  const largas = excesos(req.body, LIMITES.declaracion);
+  if (largas.length) {
+    req.session.flash = { tipo: 'error', mensaje: largas[0] };
+    return res.redirect(`/declaraciones/${declaracion.id}`);
+  }
   const { count } = await prisma.declaracionConformidad.updateMany({
     where: { id: declaracion.id, estado: 'BORRADOR' },
     data: { observaciones: observaciones || null },

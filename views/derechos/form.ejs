@@ -36,16 +36,16 @@
         <legend class="float-left w-full mb-4 text-base font-semibold text-slate-900">1. Solicitante</legend>
         <div class="clear-both">
           <label for="nombre_solicitante" class="label">Nombre y apellidos</label>
-          <input id="nombre_solicitante" name="nombre_solicitante" type="text" required value="<%= valor('nombre_solicitante') %>" class="<%= inputClase %>">
+          <input maxlength="200" id="nombre_solicitante" name="nombre_solicitante" type="text" required value="<%= valor('nombre_solicitante') %>" class="<%= inputClase %>">
         </div>
         <div class="grid gap-4 sm:grid-cols-2">
           <div>
             <label for="email_solicitante" class="label">Email</label>
-            <input id="email_solicitante" name="email_solicitante" type="email" required value="<%= valor('email_solicitante') %>" class="<%= inputClase %>">
+            <input maxlength="200" id="email_solicitante" name="email_solicitante" type="email" required value="<%= valor('email_solicitante') %>" class="<%= inputClase %>">
           </div>
           <div>
             <label for="telefono_solicitante" class="label">Teléfono <span class="font-normal text-slate-400">(opcional)</span></label>
-            <input id="telefono_solicitante" name="telefono_solicitante" type="tel" value="<%= valor('telefono_solicitante') %>" class="<%= inputClase %>">
+            <input maxlength="50" id="telefono_solicitante" name="telefono_solicitante" type="tel" value="<%= valor('telefono_solicitante') %>" class="<%= inputClase %>">
           </div>
         </div>
       </fieldset>
@@ -73,7 +73,7 @@
         </div>
         <div>
           <label for="descripcion" class="label">Qué solicita exactamente</label>
-          <textarea id="descripcion" name="descripcion" rows="4" required class="<%= inputClase %>"
+          <textarea maxlength="5000" id="descripcion" name="descripcion" rows="4" required class="<%= inputClase %>"
                     placeholder="Ej.: Solicita copia de todos sus datos personales tratados en el programa de fidelización"><%= valor('descripcion') %></textarea>
         </div>
         <div class="grid gap-4 sm:grid-cols-2">
@@ -125,7 +125,7 @@
               <% } %>
               <div class="mt-3" x-show="ampliar" x-cloak>
                 <label for="motivo_ampliacion" class="label">Motivo de la ampliación (se comunica al interesado)</label>
-                <textarea id="motivo_ampliacion" name="motivo_ampliacion" rows="2" class="<%= inputClase %>"
+                <textarea maxlength="5000" id="motivo_ampliacion" name="motivo_ampliacion" rows="2" class="<%= inputClase %>"
                           :required="ampliar"><%= valor('motivo_ampliacion') %></textarea>
               </div>
             <% } else { %>
@@ -147,12 +147,12 @@
           </div>
           <div x-show="estado === 'DENEGADA'" x-cloak>
             <label for="motivo_denegacion" class="label">Motivo de la denegación</label>
-            <textarea id="motivo_denegacion" name="motivo_denegacion" rows="3" class="<%= inputClase %>" :required="estado === 'DENEGADA'"
+            <textarea maxlength="5000" id="motivo_denegacion" name="motivo_denegacion" rows="3" class="<%= inputClase %>" :required="estado === 'DENEGADA'"
                       placeholder="Motivos de no actuar e indicación de la posibilidad de reclamar ante la AEPD (art. 12.4)"><%= valor('motivo_denegacion') %></textarea>
           </div>
           <div>
             <label for="respuesta_enviada" class="label">Respuesta enviada al interesado <span class="font-normal text-slate-400">(opcional)</span></label>
-            <textarea id="respuesta_enviada" name="respuesta_enviada" rows="4" class="<%= inputClase %>"><%= valor('respuesta_enviada') %></textarea>
+            <textarea maxlength="5000" id="respuesta_enviada" name="respuesta_enviada" rows="4" class="<%= inputClase %>"><%= valor('respuesta_enviada') %></textarea>
           </div>
           <div class="sm:w-80">
             <label for="fecha_respuesta" class="label">Fecha y hora de la respuesta</label>

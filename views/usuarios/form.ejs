@@ -56,7 +56,7 @@
         <div class="clear-both grid gap-5 sm:grid-cols-2">
           <div>
             <label for="nombre" class="label">Nombre y apellidos</label>
-            <input id="nombre" name="nombre" type="text" required value="<%= u.nombre || '' %>" class="input">
+            <input maxlength="200" id="nombre" name="nombre" type="text" required value="<%= u.nombre || '' %>" class="input">
           </div>
           <div>
             <label for="cargo" class="label">Cargo <span class="font-normal text-slate-400">(opcional)</span></label>
@@ -90,7 +90,7 @@
         <legend>Acceso y rol</legend>
         <div class="clear-both">
           <label for="email" class="label">Email</label>
-          <input id="email" name="email" type="email" required autocomplete="off" value="<%= u.email || '' %>" class="input" placeholder="nombre@organizacion.es">
+          <input maxlength="200" id="email" name="email" type="email" required autocomplete="off" value="<%= u.email || '' %>" class="input" placeholder="nombre@organizacion.es">
         </div>
         <div class="grid gap-5 sm:grid-cols-2">
           <div>

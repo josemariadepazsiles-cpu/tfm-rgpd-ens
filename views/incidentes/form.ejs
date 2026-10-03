@@ -42,7 +42,7 @@
         </div>
         <div>
           <label for="descripcion" class="label">Descripción</label>
-          <textarea id="descripcion" name="descripcion" rows="4" required class="<%= inputClase %>"
+          <textarea maxlength="5000" id="descripcion" name="descripcion" rows="4" required class="<%= inputClase %>"
                     placeholder="Qué ha ocurrido, cómo se ha detectado, sistemas implicados…"><%= valor('descripcion') %></textarea>
         </div>
         <div class="grid gap-4 sm:grid-cols-2">
@@ -86,7 +86,7 @@
         <legend class="float-left w-full mb-4 text-base font-semibold text-slate-900">2. Datos afectados</legend>
         <div class="clear-both">
           <label for="categorias_datos_afectados" class="label">Categorías de datos afectados</label>
-          <textarea id="categorias_datos_afectados" name="categorias_datos_afectados" rows="2" required class="<%= inputClase %>"
+          <textarea maxlength="5000" id="categorias_datos_afectados" name="categorias_datos_afectados" rows="2" required class="<%= inputClase %>"
                     placeholder="Ej.: datos identificativos, económicos, de salud…"><%= valor('categorias_datos_afectados') %></textarea>
         </div>
         <div>
@@ -132,7 +132,7 @@
         </div>
         <div>
           <label for="medidas_adoptadas" class="label">Medidas adoptadas <span class="font-normal text-slate-400">(opcional al reportar)</span></label>
-          <textarea id="medidas_adoptadas" name="medidas_adoptadas" rows="4" class="<%= inputClase %>"
+          <textarea maxlength="5000" id="medidas_adoptadas" name="medidas_adoptadas" rows="4" class="<%= inputClase %>"
                     placeholder="Medidas para contener la brecha y mitigar sus efectos…"><%= valor('medidas_adoptadas') %></textarea>
         </div>
       </fieldset>

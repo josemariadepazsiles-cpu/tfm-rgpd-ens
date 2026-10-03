@@ -55,7 +55,7 @@
       </div>
       <div>
         <label for="descripcion" class="label">Descripción <span class="font-normal text-slate-400">(opcional)</span></label>
-        <textarea id="descripcion" name="descripcion" rows="3" class="<%= inputClase %>"
+        <textarea maxlength="5000" id="descripcion" name="descripcion" rows="3" class="<%= inputClase %>"
                   placeholder="Objeto y alcance del documento"><%= politica.descripcion || '' %></textarea>
       </div>
       <div class="sm:w-64">

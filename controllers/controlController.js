@@ -1,9 +1,12 @@
 const prisma = require('../lib/prisma');
 const { idValido } = require('../lib/permisos');
 const { CATEGORIAS, esCategoria } = require('../lib/ens');
+const { incorporarAEvaluacionesVigentes } = require('../lib/evaluaciones');
+const { LIMITES, excesos } = require('../lib/validacion');
 
 // Catálogo de controles ENS (solo administradores; las rutas usan ensureAdmin).
-// Cada control del catálogo se evalúa en todas las evaluaciones de todos los sistemas.
+// Cada evaluación guarda la foto de los controles que existían al crearla; un control nuevo
+// se incorpora solo a la evaluación vigente (la última) de cada sistema.
 
 const noEncontrado = (res) =>
   res.status(404).render('error', { title: 'Control no encontrado', mensaje: 'El control ENS no existe.' });
@@ -35,7 +38,7 @@ const renderFormulario = (res, { control, errores = [], status = 200 }) =>
   });
 
 const validar = (datos) => {
-  const errores = [];
+  const errores = [...excesos(datos, LIMITES.control)];
   if (!datos.nombre) errores.push('El nombre es obligatorio.');
   if (!esCategoria(datos.categoria)) errores.push('La categoría no es válida.');
   if (datos.descripcion && datos.descripcion.length > MAX_DESCRIPCION) {
@@ -78,9 +81,19 @@ const newForm = (req, res) => renderFormulario(res, { control: { categoria: req.
 
 const create = async (req, res) => {
   const datos = leerFormulario(req.body);
-  const control = await guardar(res, datos, () => prisma.controlEns.create({ data: datos }));
+  let vigentes = 0;
+  const control = await guardar(res, datos, () =>
+    prisma.$transaction(async (tx) => {
+      const nuevo = await tx.controlEns.create({ data: datos });
+      vigentes = await incorporarAEvaluacionesVigentes(tx, nuevo.id);
+      return nuevo;
+    })
+  );
   if (!control) return;
-  req.session.flash = { tipo: 'exito', mensaje: `Control "${control.nombre}" añadido al catálogo.` };
+  req.session.flash = {
+    tipo: 'exito',
+    mensaje: `Control "${control.nombre}" añadido al catálogo${vigentes ? ` y, como Pendiente, a la evaluación vigente de ${vigentes} sistema(s)` : ''}. Las evaluaciones anteriores no cambian.`,
+  };
   res.redirect('/controles');
 };
 
@@ -109,7 +122,14 @@ const remove = async (req, res) => {
   const control = await buscar(req);
   if (!control) return noEncontrado(res);
 
-  const usos = await prisma.evaluacionControl.count({ where: { control_id: control.id } });
+  // Se puede quitar mientras nadie lo haya trabajado: filas Pendientes, sin evidencia, sin
+  // responsable y sin histórico (p. ej. recién añadido por error)
+  const usos = await prisma.evaluacionControl.count({
+    where: {
+      control_id: control.id,
+      OR: [{ estado: { not: 'PENDIENTE' } }, { evidencia: { not: null } }, { responsable_id: { not: null } }, { historial: { some: {} } }],
+    },
+  });
   if (usos > 0) {
     req.session.flash = {
       tipo: 'error',
@@ -118,7 +138,10 @@ const remove = async (req, res) => {
     return res.redirect('/controles');
   }
 
-  await prisma.controlEns.delete({ where: { id: control.id } });
+  await prisma.$transaction([
+    prisma.evaluacionControl.deleteMany({ where: { control_id: control.id } }),
+    prisma.controlEns.delete({ where: { id: control.id } }),
+  ]);
   req.session.flash = { tipo: 'exito', mensaje: `Control "${control.nombre}" eliminado del catálogo.` };
   res.redirect('/controles');
 };

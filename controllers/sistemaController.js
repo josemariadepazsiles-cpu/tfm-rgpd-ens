@@ -6,10 +6,11 @@ const { TIPOS, GRAVEDADES, ESTADOS_INCIDENTE, ESTADOS_ACTIVOS, plazoAepd } = req
 const { TIPOS_DERECHO, ESTADOS_SOLICITUD, estaResuelta, urgencia } = require('../lib/derechos');
 const { CRITICIDADES, ESTADOS_REVISION_BIA } = require('../lib/bia');
 const { BASES_LEGALES } = require('../config/baseLegal');
-const { resumenEvaluaciones } = require('../lib/evaluaciones');
+const { resumenEvaluaciones, crearFilasEvaluacion } = require('../lib/evaluaciones');
 const { CATEGORIAS, ESTADOS, esCategoria, resumenGlobal } = require('../lib/ens');
 const { nombreEvaluacionSugerido } = require('../lib/formato');
 const { ESTADOS_DECLARACION } = require('../lib/declaraciones');
+const { LIMITES, excesos } = require('../lib/validacion');
 
 // Los sistemas y sus evaluaciones son compartidos por toda la organización:
 // cualquier usuario los consulta; solo el Administrador los crea, edita o elimina.
@@ -48,7 +49,7 @@ const renderFormulario = (res, { sistema, errores = [], status = 200 }) =>
 
 // Valida y guarda (crear o editar) controlando el nombre duplicado
 const guardar = async (res, sistema, operacion) => {
-  const errores = [];
+  const errores = [...excesos(sistema, LIMITES.sistema)];
   if (!sistema.nombre) errores.push('El nombre es obligatorio.');
   if (sistema.categoria_general !== null && !esCategoria(sistema.categoria_general)) {
     errores.push('La categoría general no es válida.');
@@ -210,6 +211,7 @@ const create = async (req, res) => {
             data: { sistema_id: sistema.id, nombre: nombreEvaluacion, creado_por_id: req.user.id },
           })
         : null;
+      if (evaluacion) await crearFilasEvaluacion(tx, evaluacion.id);
       return { sistema, evaluacion };
     })
   );

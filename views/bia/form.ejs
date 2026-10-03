@@ -30,16 +30,16 @@
         <legend class="float-left w-full mb-4 text-base font-semibold text-slate-900">1. Proceso</legend>
         <div class="clear-both">
           <label for="nombre" class="label">Nombre del proceso</label>
-          <input id="nombre" name="nombre" type="text" required value="<%= valor('nombre') %>" class="<%= inputClase %>" placeholder="Ej.: Facturación a clientes">
+          <input maxlength="200" id="nombre" name="nombre" type="text" required value="<%= valor('nombre') %>" class="<%= inputClase %>" placeholder="Ej.: Facturación a clientes">
         </div>
         <div>
           <label for="descripcion" class="label">Descripción <span class="font-normal text-slate-400">(opcional)</span></label>
-          <textarea id="descripcion" name="descripcion" rows="2" class="<%= inputClase %>"><%= valor('descripcion') %></textarea>
+          <textarea maxlength="5000" id="descripcion" name="descripcion" rows="2" class="<%= inputClase %>"><%= valor('descripcion') %></textarea>
         </div>
         <div class="grid gap-4 sm:grid-cols-2">
           <div>
             <label for="departamento_responsable" class="label">Departamento responsable</label>
-            <input id="departamento_responsable" name="departamento_responsable" type="text" required value="<%= valor('departamento_responsable') %>" class="<%= inputClase %>">
+            <input maxlength="200" id="departamento_responsable" name="departamento_responsable" type="text" required value="<%= valor('departamento_responsable') %>" class="<%= inputClase %>">
           </div>
           <div>
             <label for="sistema_id" class="label">Sistema del que depende <span class="font-normal text-slate-400">(opcional)</span></label>
@@ -92,12 +92,12 @@
         </div>
         <div>
           <label for="impacto_economico" class="label">Impacto económico <span class="font-normal text-slate-400">(opcional)</span></label>
-          <input id="impacto_economico" name="impacto_economico" type="text" value="<%= valor('impacto_economico') %>" class="<%= inputClase %>"
+          <input maxlength="5000" id="impacto_economico" name="impacto_economico" type="text" value="<%= valor('impacto_economico') %>" class="<%= inputClase %>"
                  placeholder="Ej.: ~15.000 € por día de interrupción">
         </div>
         <div>
           <label for="impacto_legal_reputacional" class="label">Impacto legal y reputacional <span class="font-normal text-slate-400">(opcional)</span></label>
-          <textarea id="impacto_legal_reputacional" name="impacto_legal_reputacional" rows="2" class="<%= inputClase %>"><%= valor('impacto_legal_reputacional') %></textarea>
+          <textarea maxlength="5000" id="impacto_legal_reputacional" name="impacto_legal_reputacional" rows="2" class="<%= inputClase %>"><%= valor('impacto_legal_reputacional') %></textarea>
         </div>
       </fieldset>
 
@@ -105,12 +105,12 @@
         <legend class="float-left w-full mb-4 text-base font-semibold text-slate-900">3. Continuidad</legend>
         <div class="clear-both">
           <label for="recursos_minimos_necesarios" class="label">Recursos mínimos necesarios <span class="font-normal text-slate-400">(opcional)</span></label>
-          <textarea id="recursos_minimos_necesarios" name="recursos_minimos_necesarios" rows="3" class="<%= inputClase %>"
+          <textarea maxlength="5000" id="recursos_minimos_necesarios" name="recursos_minimos_necesarios" rows="3" class="<%= inputClase %>"
                     placeholder="Personal, sistemas y proveedores clave para seguir operando"><%= valor('recursos_minimos_necesarios') %></textarea>
         </div>
         <div>
           <label for="estrategia_continuidad" class="label">Estrategia de continuidad <span class="font-normal text-slate-400">(opcional)</span></label>
-          <textarea id="estrategia_continuidad" name="estrategia_continuidad" rows="3" class="<%= inputClase %>"
+          <textarea maxlength="5000" id="estrategia_continuidad" name="estrategia_continuidad" rows="3" class="<%= inputClase %>"
                     placeholder="Cómo se recuperaría el proceso"><%= valor('estrategia_continuidad') %></textarea>
         </div>
         <div class="grid gap-4 sm:grid-cols-2">

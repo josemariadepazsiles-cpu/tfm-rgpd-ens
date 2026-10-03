@@ -1,8 +1,9 @@
 const prisma = require('../lib/prisma');
 const { BASES_LEGALES } = require('../config/baseLegal');
 const { NIVELES } = require('../lib/riesgo');
-const { esAdmin, ambitoActividad: ambito } = require('../lib/permisos');
+const { esAdmin, ambitoActividad: ambito, idValido } = require('../lib/permisos');
 const { listaSistemas, sistemaSelect, leerSistemaId, validarSistema, filtroSistema } = require('../lib/sistemas');
+const { LIMITES, excesos } = require('../lib/validacion');
 
 const responsableSelect = { select: { id: true, nombre: true, email: true, cargo: true } };
 
@@ -14,8 +15,8 @@ const noEncontrada = (res) =>
 
 // Devuelve la actividad solo si el usuario puede verla
 const buscarVisible = (req, include = {}) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id) || id <= 0) return null;
+  const id = idValido(req.params.id);
+  if (!id) return null;
   return prisma.actividadRat.findFirst({
     where: { id, ...ambito(req.user) },
     include: { responsable: responsableSelect, sistema: sistemaSelect, ...include },
@@ -37,7 +38,7 @@ const leerFormulario = (body) => {
     pais_transferencia: transferencia_intl ? texto(body.pais_transferencia) || null : null,
     plazo_conservacion: texto(body.plazo_conservacion),
     medidas_seguridad: texto(body.medidas_seguridad),
-    usuario_id: Number(body.usuario_id),
+    usuario_id: idValido(body.usuario_id) ?? NaN,
     sistema_id: leerSistemaId(body.sistema_id),
   };
 };
@@ -56,6 +57,7 @@ const validar = async (datos, user) => {
   const errores = Object.entries(OBLIGATORIOS)
     .filter(([campo]) => !datos[campo])
     .map(([, mensaje]) => mensaje);
+  errores.push(...excesos(datos, LIMITES.rat));
 
   if (!Object.keys(BASES_LEGALES).includes(datos.base_legal)) {
     errores.push('La base legal no es válida.');

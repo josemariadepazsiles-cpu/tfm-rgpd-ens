@@ -1,7 +1,8 @@
 const prisma = require('../lib/prisma');
-const { ambitoActividad, ambitoRiesgo } = require('../lib/permisos');
+const { ambitoActividad, ambitoRiesgo, idValido } = require('../lib/permisos');
 const { PROBABILIDADES, IMPACTOS, NIVELES, MATRIZ, calcularNivel } = require('../lib/riesgo');
 const { listaSistemas, sistemaSelect, leerSistemaId, validarSistema, filtroSistema } = require('../lib/sistemas');
+const { LIMITES, excesos } = require('../lib/validacion');
 
 const actividadSelect = { select: { id: true, nombre: true, usuario_id: true } };
 
@@ -13,8 +14,8 @@ const noEncontrado = (res) =>
 
 // Devuelve el riesgo solo si el usuario puede verlo
 const buscarVisible = (req) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id) || id <= 0) return null;
+  const id = idValido(req.params.id);
+  if (!id) return null;
   return prisma.riesgo.findFirst({
     where: { id, ...ambitoRiesgo(req.user) },
     include: { actividad: actividadSelect, sistema: sistemaSelect },
@@ -32,7 +33,7 @@ const actividadesVisibles = (user) =>
 const texto = (valor) => (typeof valor === 'string' ? valor.trim() : '');
 
 const leerFormulario = (body) => ({
-  actividad_id: Number(body.actividad_id),
+  actividad_id: idValido(body.actividad_id) ?? NaN,
   amenaza: texto(body.amenaza),
   probabilidad: body.probabilidad,
   impacto: body.impacto,
@@ -41,7 +42,7 @@ const leerFormulario = (body) => ({
 });
 
 const validar = async (datos, user) => {
-  const errores = [];
+  const errores = [...excesos(datos, LIMITES.riesgo)];
   const actividadValida =
     Number.isInteger(datos.actividad_id) &&
     (await prisma.actividadRat.findFirst({
@@ -121,7 +122,7 @@ const show = async (req, res) => {
 // Admite ?actividad=ID para llegar desde el detalle de una actividad con ella preseleccionada
 // (y su sistema como sistema asociado por defecto) o ?sistema=ID desde la ficha de un sistema
 const newForm = async (req, res) => {
-  const actividadId = Number(req.query.actividad) || null;
+  const actividadId = idValido(req.query.actividad);
   let sistemaId = leerSistemaId(req.query.sistema) || null;
   if (actividadId && !sistemaId) {
     const actividad = await prisma.actividadRat.findFirst({

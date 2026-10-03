@@ -117,7 +117,7 @@
                 class="card p-6 flex flex-wrap items-end gap-4">
             <div class="flex-1 min-w-56">
               <label for="nombre" class="label">Nueva evaluación</label>
-              <input id="nombre" name="nombre" type="text" required value="<%= nombreSugerido %>"
+              <input maxlength="200" id="nombre" name="nombre" type="text" required value="<%= nombreSugerido %>"
                      class="input">
             </div>
             <% if (evaluaciones.length) { %>

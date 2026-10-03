@@ -1,5 +1,5 @@
 const prisma = require('../lib/prisma');
-const { esAdmin, esAdminOResponsable, idValido } = require('../lib/permisos');
+const { esAdmin, esAdminOResponsable, idValido, idDeFormulario } = require('../lib/permisos');
 const { desdeInputFecha } = require('../lib/formato');
 const {
   MECANISMOS, NIVELES_ENS, ESTADOS_PROVEEDOR, TIPOS_DOCUMENTO, DIAS_AVISO_REVISION, alertas,
@@ -8,6 +8,7 @@ const {
   TAMANO_MAXIMO, procesarSubida, validarPdf, guardarArchivo, rutaAbsoluta, borrarArchivo,
   cabeceraDisposicion, formatoTamano,
 } = require('../lib/subidas');
+const { LIMITES, excesos } = require('../lib/validacion');
 
 // Cualquier usuario autenticado puede consultar proveedores y sus documentos. Crear y
 // editar proveedores es solo para el Administrador (estructura general); subir y eliminar
@@ -37,7 +38,7 @@ const texto = (valor) => (typeof valor === 'string' ? valor.trim() : '');
 const esOpcion = (mapa, valor) => Object.hasOwn(mapa, valor ?? '');
 
 const leerFormulario = async (body) => {
-  const errores = [];
+  const errores = [...excesos(body, LIMITES.proveedor)];
   const fechaCampo = (campo, etiqueta) => {
     if (!body[campo]) return null;
     const valor = desdeInputFecha(body[campo]);
@@ -62,7 +63,7 @@ const leerFormulario = async (body) => {
     fecha_revision_contrato: fechaCampo('fecha_revision_contrato', 'La fecha de revisión'),
     nivel_cumplimiento_ens: body.nivel_cumplimiento_ens,
     estado: body.estado,
-    responsable_id: body.responsable_id ? Number(body.responsable_id) : null,
+    responsable_id: idDeFormulario(body.responsable_id),
   };
   // El mecanismo de transferencia solo tiene sentido si hay transferencia fuera del EEE
   if (!datos.fuera_ue) datos.mecanismo_transferencia = 'NO_APLICA';

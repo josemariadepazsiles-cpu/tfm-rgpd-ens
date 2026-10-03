@@ -1,11 +1,12 @@
 const prisma = require('../lib/prisma');
-const { esAdmin, idValido } = require('../lib/permisos');
+const { esAdmin, idValido, idDeFormulario, ID_MAXIMO } = require('../lib/permisos');
 const { desdeInputFechaHora } = require('../lib/formato');
 const {
   TIPOS, GRAVEDADES, ESTADOS_INCIDENTE, PLAZO_AEPD_HORAS, ESTADOS_ACTIVOS,
   plazoAepd, puedeGestionar, guardarIncidente, whereAepdPendiente,
 } = require('../lib/incidentes');
 const { listaSistemas, sistemaSelect, leerSistemaId, validarSistema, filtroSistema } = require('../lib/sistemas');
+const { LIMITES, excesos } = require('../lib/validacion');
 
 // Cualquier usuario autenticado puede ver y reportar incidentes. Editarlos y cambiar su
 // estado es solo para el Administrador o el responsable asignado; asignar el responsable,
@@ -34,8 +35,9 @@ const esOpcion = (mapa, valor) => Object.hasOwn(mapa, valor ?? '');
 
 // Lee y valida el formulario. `actual` es el incidente existente (null al crear)
 const leerFormulario = async (req, actual) => {
+  const largos = excesos(req.body, LIMITES.incidente);
   const { body, user } = req;
-  const errores = [];
+  const errores = [...largos];
   const fechaCampo = (campo, etiqueta, obligatorio) => {
     if (!body[campo]) {
       if (obligatorio) errores.push(`${etiqueta} es obligatoria.`);
@@ -70,7 +72,7 @@ const leerFormulario = async (req, actual) => {
 
   // El estado solo lo fija quien gestiona el incidente; al reportarlo empieza Abierto
   if (actual) datos.estado = body.estado;
-  if (esAdmin(user)) datos.responsable_id = body.responsable_id ? Number(body.responsable_id) : null;
+  if (esAdmin(user)) datos.responsable_id = idDeFormulario(body.responsable_id);
 
   if (!datos.titulo) errores.push('El título es obligatorio.');
   if (!datos.descripcion) errores.push('La descripción es obligatoria.');
@@ -81,7 +83,7 @@ const leerFormulario = async (req, actual) => {
   if (errorSistema) errores.push(errorSistema);
   if (actual && !esOpcion(ESTADOS_INCIDENTE, datos.estado)) errores.push('El estado no es válido.');
   if (datos.numero_afectados_estimado !== null &&
-      (!Number.isInteger(datos.numero_afectados_estimado) || datos.numero_afectados_estimado < 0)) {
+      (!Number.isInteger(datos.numero_afectados_estimado) || datos.numero_afectados_estimado < 0 || datos.numero_afectados_estimado > ID_MAXIMO)) {
     errores.push('El número de afectados debe ser un entero igual o mayor que 0.');
   }
 

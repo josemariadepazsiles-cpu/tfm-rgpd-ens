@@ -1,5 +1,6 @@
 const { CAMPOS, obtenerOrganizacion, guardarOrganizacion } = require('../lib/organizacion');
 const { CATEGORIAS_SISTEMA } = require('../lib/declaraciones');
+const { excesos, CORTO } = require('../lib/validacion');
 
 // Datos de la empresa: cualquier usuario los consulta; solo el Administrador los modifica.
 
@@ -14,7 +15,8 @@ const leerFormulario = (body) => {
 };
 
 const validar = (datos) => {
-  const errores = [];
+  // Resto de campos de la ficha: textos cortos
+  const errores = excesos(datos, Object.fromEntries(Object.entries(CAMPOS).filter(([c]) => c !== 'nombre').map(([c, etiqueta]) => [c, [etiqueta, CORTO]])));
   if (!datos.nombre) errores.push('El nombre de la empresa es obligatorio.');
   if (datos.nombre && datos.nombre.length > 150) errores.push('El nombre no puede superar los 150 caracteres.');
   if (datos.categoria_ens !== null && !Object.hasOwn(CATEGORIAS_SISTEMA, datos.categoria_ens)) errores.push('La categoría ENS no es válida.');

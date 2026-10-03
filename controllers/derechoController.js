@@ -1,5 +1,5 @@
 const prisma = require('../lib/prisma');
-const { esAdmin, esAdminOResponsable, idValido } = require('../lib/permisos');
+const { esAdmin, esAdminOResponsable, idValido, idDeFormulario } = require('../lib/permisos');
 const { desdeInputFechaHora, finPlazoMeses, fecha } = require('../lib/formato');
 const {
   TIPOS_DOCUMENTO_SOLICITUD, TIPOS_DERECHO, ARTICULOS_DERECHO, CANALES, ESTADOS_SOLICITUD, DIAS_AVISO, MESES_AMPLIACION, estaResuelta, calcularFechaLimite, urgencia, guardarSolicitud,
@@ -8,6 +8,7 @@ const {
   TAMANO_MAXIMO, procesarSubida, validarPdf, guardarArchivo, rutaAbsoluta, borrarArchivo, cabeceraDisposicion, formatoTamano,
 } = require('../lib/subidas');
 const { listaSistemas, sistemaSelect, leerSistemaId, validarSistema, filtroSistema } = require('../lib/sistemas');
+const { LIMITES, excesos } = require('../lib/validacion');
 
 // Cualquier usuario autenticado puede ver y registrar solicitudes. Tramitarlas (editar,
 // cambiar el estado, ampliar el plazo, resolver) es solo para el Administrador o el
@@ -38,8 +39,9 @@ const volver = (res, id) => res.redirect(`/derechos/${id}`);
 
 // Lee y valida el formulario. `actual` es la solicitud existente (null al registrarla)
 const leerFormulario = async (req, actual) => {
+  const largos = excesos(req.body, LIMITES.derecho);
   const { body, user } = req;
-  const errores = [];
+  const errores = [...largos];
   const ahora = new Date();
   const margen = ahora.getTime() + 5 * 60 * 1000; // diferencias de reloj
   const fechaCampo = (campo, etiqueta, obligatorio) => {
@@ -63,7 +65,7 @@ const leerFormulario = async (req, actual) => {
     fecha_recepcion: fechaCampo('fecha_recepcion', 'La fecha de recepción', true),
     sistema_id: leerSistemaId(body.sistema_id),
   };
-  if (esAdmin(user)) datos.responsable_id = body.responsable_id ? Number(body.responsable_id) : null;
+  if (esAdmin(user)) datos.responsable_id = idDeFormulario(body.responsable_id);
 
   if (!datos.nombre_solicitante) errores.push('El nombre del solicitante es obligatorio.');
   if (!EMAIL_REGEX.test(datos.email_solicitante)) errores.push('El email del solicitante no es válido.');

@@ -1,11 +1,12 @@
 const prisma = require('../lib/prisma');
-const { esAdmin, esAdminOResponsable, idValido } = require('../lib/permisos');
+const { esAdmin, esAdminOResponsable, idValido, idDeFormulario } = require('../lib/permisos');
 const { desdeInputFecha, desdeInputFechaHora } = require('../lib/formato');
 const {
   CRITICIDADES, ESTADOS_REVISION_BIA, TIPOS_PRUEBA, RESULTADOS_PRUEBA, CRITICIDADES_ALTAS,
   alertas, formatoHoras, inicioVentanaPruebas,
 } = require('../lib/bia');
 const { listaSistemas, filtroSistema } = require('../lib/sistemas');
+const { LIMITES, excesos } = require('../lib/validacion');
 
 // Cualquier usuario autenticado puede consultar el BIA. Crear procesos es solo para el
 // Administrador; editar la ficha y registrar pruebas, para el Administrador o el
@@ -40,8 +41,9 @@ const leerHoras = (valor) => {
 };
 
 const leerFormulario = async (req, actual) => {
+  const largos = excesos(req.body, LIMITES.bia);
   const { body, user } = req;
-  const errores = [];
+  const errores = [...largos];
   const datos = {
     nombre: texto(body.nombre),
     descripcion: texto(body.descripcion) || null,
@@ -54,10 +56,10 @@ const leerFormulario = async (req, actual) => {
     recursos_minimos_necesarios: texto(body.recursos_minimos_necesarios) || null,
     estrategia_continuidad: texto(body.estrategia_continuidad) || null,
     estado_revision: body.estado_revision,
-    sistema_id: body.sistema_id ? Number(body.sistema_id) : null,
+    sistema_id: idDeFormulario(body.sistema_id),
     fecha_ultimo_analisis: null,
   };
-  if (esAdmin(user)) datos.responsable_id = body.responsable_id ? Number(body.responsable_id) : null;
+  if (esAdmin(user)) datos.responsable_id = idDeFormulario(body.responsable_id);
 
   if (!datos.nombre) errores.push('El nombre del proceso es obligatorio.');
   if (!datos.departamento_responsable) errores.push('El departamento responsable es obligatorio.');
@@ -235,6 +237,8 @@ const registrarPrueba = async (req, res) => {
   if (!fechaPrueba) return error('Indica una fecha y hora válidas para la prueba.');
   if (fechaPrueba.getTime() > Date.now() + 5 * 60 * 1000) return error('La fecha de la prueba no puede ser futura.');
   if (!esOpcion(TIPOS_PRUEBA, req.body.tipo_prueba)) return error('El tipo de prueba no es válido.');
+  const largas = excesos(req.body, LIMITES.pruebaBia);
+  if (largas.length) return error(largas[0]);
   if (!esOpcion(RESULTADOS_PRUEBA, req.body.resultado)) return error('El resultado no es válido.');
   const observaciones = texto(req.body.observaciones) || null;
   if (req.body.resultado !== 'SATISFACTORIO' && !observaciones) {

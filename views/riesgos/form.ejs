@@ -53,7 +53,7 @@
         </div>
         <div>
           <label for="amenaza" class="label">Amenaza</label>
-          <textarea id="amenaza" name="amenaza" rows="2" required class="<%= inputClase %>"
+          <textarea maxlength="1000" id="amenaza" name="amenaza" rows="2" required class="<%= inputClase %>"
                     placeholder="Ej.: Acceso no autorizado a los datos de nóminas"><%= riesgo.amenaza || '' %></textarea>
         </div>
         <%- include('../partials/campo-sistema', { sistemas, valor: riesgo.sistema_id, ayuda: 'Por defecto, el de la actividad de tratamiento. Déjalo sin asignar si el riesgo es transversal.' }) %>
@@ -126,7 +126,7 @@
         <legend class="float-left w-full mb-4 text-base font-semibold text-slate-900">Tratamiento del riesgo</legend>
         <div class="clear-both">
           <label for="medidas_mitigadoras" class="label">Medidas mitigadoras</label>
-          <textarea id="medidas_mitigadoras" name="medidas_mitigadoras" rows="3" class="<%= inputClase %>"
+          <textarea maxlength="5000" id="medidas_mitigadoras" name="medidas_mitigadoras" rows="3" class="<%= inputClase %>"
                     placeholder="Ej.: Control de acceso por roles, registro de accesos, cifrado…"><%= riesgo.medidas_mitigadoras || '' %></textarea>
         </div>
       </fieldset>

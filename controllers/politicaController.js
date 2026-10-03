@@ -10,6 +10,7 @@ const {
 } = require('../lib/subidas');
 const { listaSistemas, sistemaSelect, leerSistemaId, validarSistema } = require('../lib/sistemas');
 const { afectaA, whereAfectados } = require('../lib/usuarios');
+const { LIMITES, excesos } = require('../lib/validacion');
 
 // El Administrador crea políticas, sube versiones y cambia su estado. El resto de usuarios
 // solo ve las políticas Aprobadas (las vigentes), descarga sus documentos y registra su
@@ -39,7 +40,7 @@ const volver = (req, res, id, tipo, mensaje) => {
 };
 
 const leerFormulario = (body, actual) => {
-  const errores = [];
+  const errores = [...excesos(body, LIMITES.politica)];
   const datos = {
     titulo: texto(body.titulo),
     tipo_documento: body.tipo_documento,

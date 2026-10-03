@@ -27,7 +27,7 @@
           x-data="{ crear: <%= sistema.crear_evaluacion ? 'true' : 'false' %> }">
       <div>
         <label for="nombre" class="label">Nombre del sistema</label>
-        <input id="nombre" name="nombre" type="text" required value="<%= sistema.nombre || '' %>" class="<%= inputClase %>"
+        <input maxlength="200" id="nombre" name="nombre" type="text" required value="<%= sistema.nombre || '' %>" class="<%= inputClase %>"
                placeholder="Ej.: Sistema de receta electrónica, Sistema de laboratorio, Web colegial">
       </div>
       <div>
@@ -43,7 +43,7 @@
       </div>
       <div>
         <label for="descripcion" class="label">Descripción <span class="font-normal text-slate-400">(opcional)</span></label>
-        <textarea id="descripcion" name="descripcion" rows="3" class="<%= inputClase %>"><%= sistema.descripcion || '' %></textarea>
+        <textarea maxlength="5000" id="descripcion" name="descripcion" rows="3" class="<%= inputClase %>"><%= sistema.descripcion || '' %></textarea>
       </div>
       <div>
         <label for="categoria_general" class="label">Categoría general ENS <span class="font-normal text-slate-400">(opcional)</span></label>
@@ -65,7 +65,7 @@
           </label>
           <div x-show="crear" x-cloak>
             <label for="nombre_evaluacion" class="label">Nombre de la evaluación</label>
-            <input id="nombre_evaluacion" name="nombre_evaluacion" type="text" value="<%= nombreSugerido %>" class="<%= inputClase %>">
+            <input maxlength="200" id="nombre_evaluacion" name="nombre_evaluacion" type="text" value="<%= nombreSugerido %>" class="<%= inputClase %>">
           </div>
         </div>
       <% } %>

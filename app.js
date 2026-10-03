@@ -5,6 +5,7 @@ const fs = require('fs');
 const express = require('express');
 const session = require('express-session');
 const passport = require('./config/passport');
+const { cabecerasSeguridad, proteccionCsrf } = require('./middlewares/seguridad');
 const { ROLES } = require('./config/roles');
 
 const indexRoutes = require('./routes/index');
@@ -41,6 +42,8 @@ if (!process.env.SESSION_SECRET) {
 }
 
 const app = express();
+// No anunciar la tecnología del servidor (cabecera X-Powered-By: Express)
+app.disable('x-powered-by');
 const PORT = process.env.PORT || 3000;
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -83,9 +86,12 @@ app.locals.iniciales = (nombre = '') =>
     .map((p) => p[0].toUpperCase()).join('') || '?';
 
 // Middlewares
+app.use(cabecerasSeguridad);
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+// Pestañas sin <link rel="icon"> (p. ej. el visor de PDF del navegador) piden /favicon.ico
+app.get('/favicon.ico', (req, res) => res.type('image/svg+xml').sendFile(path.join(__dirname, 'public', 'img', 'logo.svg')));
 // Tipografía Inter alojada en el propio servidor (sin Google Fonts: no se envían IPs a terceros)
 app.use('/fuentes', express.static(
   path.join(path.dirname(require.resolve('@fontsource-variable/inter/package.json')), 'files'),
@@ -110,6 +116,8 @@ app.use(
 );
 app.use(passport.initialize());
 app.use(passport.session());
+// Protección CSRF (origen de la petición + token de sesión en los formularios)
+app.use(proteccionCsrf);
 
 // Datos comunes a todas las vistas: usuario, ruta actual, área (RGPD/ENS/neutro, para el
 // código de color de contexto) y mensaje flash (se muestra una vez)
@@ -170,6 +178,14 @@ app.use((req, res) => {
 
 // Errores
 app.use((err, req, res, next) => {
+  // Red de seguridad: un valor fuera del rango de la columna (p. ej. un id enorme en la URL)
+  // no es un fallo del servidor sino una petición que no corresponde a ningún registro
+  if (err && err.code === 'P2020') {
+    return res.status(404).render('error', {
+      title: 'Página no encontrada',
+      mensaje: 'La página que buscas no existe.',
+    });
+  }
   console.error(err);
   res.status(500).render('error', {
     title: 'Error del servidor',

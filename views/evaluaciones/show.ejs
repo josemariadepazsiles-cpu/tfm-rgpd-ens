@@ -83,6 +83,7 @@
                     <tr id="control-<%= c.id %>" class="scroll-mt-20 hover:bg-slate-50">
                       <td class="px-4 py-3 font-medium text-slate-800"><%= c.nombre %></td>
                       <td class="px-4 py-3">
+                        <% if (c.gestionable) { %>
                         <form action="<%= base %>/estado" method="POST" class="flex items-center gap-2">
                           <label for="estado-<%= c.id %>" class="sr-only">Estado de <%= c.nombre %></label>
                           <select id="estado-<%= c.id %>" name="estado" onchange="this.form.submit()"
@@ -93,6 +94,9 @@
                           </select>
                           <noscript><button type="submit" class="text-xs text-indigo-600">Guardar</button></noscript>
                         </form>
+                        <% } else { %>
+                          <span class="badge <%= estadoClases[c.estado] %>" title="Solo el Administrador o el responsable pueden cambiarlo"><%= estados[c.estado] %></span>
+                        <% } %>
                       </td>
                       <td class="px-4 py-3 text-slate-600 whitespace-nowrap">
                         <% if (c.fecha_revision) { %>
@@ -112,7 +116,7 @@
                         <% } else { %>
                           <span class="text-slate-400 italic">Sin asignar</span>
                         <% } %>
-                        <% if (!c.responsable || c.responsable.id !== user.id) { %>
+                        <% if (!c.responsable) { %>
                           <form action="<%= base %>/asignarme" method="POST" class="mt-1">
                             <button type="submit" class="text-xs text-indigo-600 hover:underline">Asignarme</button>
                           </form>
@@ -128,7 +132,7 @@
                       <td class="px-4 py-3 text-right whitespace-nowrap">
                         <a href="/sistemas/<%= evaluacion.sistema.id %>/historial?control=<%= c.id %>"
                            class="btn btn-secondary btn-sm"><%- icono('history', 'h-3.5 w-3.5') %>Historial</a>
-                        <a href="<%= base %>/editar" class="ml-1 btn btn-secondary btn-sm"><%- icono('pencil', 'h-3.5 w-3.5') %>Editar</a>
+                        <% if (c.gestionable) { %><a href="<%= base %>/editar" class="ml-1 btn btn-secondary btn-sm"><%- icono('pencil', 'h-3.5 w-3.5') %>Editar</a><% } %>
                       </td>
                     </tr>
                   <% }) %>

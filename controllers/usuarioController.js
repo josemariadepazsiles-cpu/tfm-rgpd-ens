@@ -3,6 +3,7 @@ const prisma = require('../lib/prisma');
 const { idValido } = require('../lib/permisos');
 const { ROLES } = require('../config/roles');
 const { listaSistemas } = require('../lib/sistemas');
+const { LIMITES, excesos } = require('../lib/validacion');
 
 // Gestión de usuarios (solo administradores; las rutas usan ensureAdmin). Cada usuario tiene
 // un rol, un cargo y los sistemas en los que trabaja, que determinan qué políticas de sistema
@@ -20,7 +21,7 @@ const buscar = (req) => {
 };
 
 // Sistemas marcados en el formulario (checkboxes «sistemas»)
-const leerSistemas = (valor) => [].concat(valor || []).map(Number).filter((n) => Number.isInteger(n) && n > 0);
+const leerSistemas = (valor) => [].concat(valor || []).map(idValido).filter(Boolean);
 
 const leerFormulario = (body) => ({
   nombre: texto(body.nombre),
@@ -33,7 +34,7 @@ const leerFormulario = (body) => ({
 
 // Comprueba los datos; `actual` es el usuario que se edita (null al crear)
 const validar = async (datos, actual, yo) => {
-  const errores = [];
+  const errores = [...excesos(datos, LIMITES.usuario)];
   if (!datos.nombre) errores.push('El nombre es obligatorio.');
   if (!EMAIL_REGEX.test(datos.email)) errores.push('El email no es válido.');
   if (!Object.hasOwn(ROLES, datos.rol || '')) errores.push('El rol no es válido.');

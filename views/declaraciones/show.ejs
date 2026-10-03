@@ -139,7 +139,7 @@
       <h2 class="titulo-seccion">Observaciones</h2>
       <% if (user.rol === 'ADMIN' && d.estado === 'BORRADOR') { %>
         <form action="/declaraciones/<%= d.id %>" method="POST" class="mt-3 space-y-3">
-          <textarea name="observaciones" rows="4" class="input"
+          <textarea maxlength="5000" name="observaciones" rows="4" class="input"
                     placeholder="Contexto, salvedades o compromisos de implantación de los controles pendientes…"><%= d.observaciones || '' %></textarea>
           <div class="flex justify-end">
             <button type="submit" class="btn btn-primary">Guardar observaciones</button>

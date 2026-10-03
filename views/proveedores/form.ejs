@@ -32,29 +32,29 @@
         <div class="clear-both grid gap-4 sm:grid-cols-3">
           <div class="sm:col-span-2">
             <label for="nombre_empresa" class="label">Nombre de la empresa</label>
-            <input id="nombre_empresa" name="nombre_empresa" type="text" required value="<%= valor('nombre_empresa') %>" class="<%= inputClase %>">
+            <input maxlength="200" id="nombre_empresa" name="nombre_empresa" type="text" required value="<%= valor('nombre_empresa') %>" class="<%= inputClase %>">
           </div>
           <div>
             <label for="cif" class="label">CIF <span class="font-normal text-slate-400">(opcional)</span></label>
-            <input id="cif" name="cif" type="text" value="<%= valor('cif') %>" class="<%= inputClase %>">
+            <input maxlength="50" id="cif" name="cif" type="text" value="<%= valor('cif') %>" class="<%= inputClase %>">
           </div>
         </div>
         <div>
           <label for="direccion" class="label">Dirección <span class="font-normal text-slate-400">(opcional)</span></label>
-          <input id="direccion" name="direccion" type="text" value="<%= valor('direccion') %>" class="<%= inputClase %>">
+          <input maxlength="300" id="direccion" name="direccion" type="text" value="<%= valor('direccion') %>" class="<%= inputClase %>">
         </div>
         <div class="grid gap-4 sm:grid-cols-3">
           <div>
             <label for="persona_contacto" class="label">Persona de contacto</label>
-            <input id="persona_contacto" name="persona_contacto" type="text" value="<%= valor('persona_contacto') %>" class="<%= inputClase %>">
+            <input maxlength="200" id="persona_contacto" name="persona_contacto" type="text" value="<%= valor('persona_contacto') %>" class="<%= inputClase %>">
           </div>
           <div>
             <label for="email_contacto" class="label">Email</label>
-            <input id="email_contacto" name="email_contacto" type="email" value="<%= valor('email_contacto') %>" class="<%= inputClase %>">
+            <input maxlength="200" id="email_contacto" name="email_contacto" type="email" value="<%= valor('email_contacto') %>" class="<%= inputClase %>">
           </div>
           <div>
             <label for="telefono_contacto" class="label">Teléfono</label>
-            <input id="telefono_contacto" name="telefono_contacto" type="tel" value="<%= valor('telefono_contacto') %>" class="<%= inputClase %>">
+            <input maxlength="50" id="telefono_contacto" name="telefono_contacto" type="tel" value="<%= valor('telefono_contacto') %>" class="<%= inputClase %>">
           </div>
         </div>
       </fieldset>
@@ -63,18 +63,18 @@
         <legend class="float-left w-full mb-4 text-base font-semibold text-slate-900">2. Tratamiento que realiza</legend>
         <div class="clear-both">
           <label for="servicio_prestado" class="label">Servicio prestado</label>
-          <textarea id="servicio_prestado" name="servicio_prestado" rows="2" required class="<%= inputClase %>"
+          <textarea maxlength="5000" id="servicio_prestado" name="servicio_prestado" rows="2" required class="<%= inputClase %>"
                     placeholder="Ej.: hosting, gestoría laboral, envío de email marketing…"><%= valor('servicio_prestado') %></textarea>
         </div>
         <div>
           <label for="categorias_datos_tratados" class="label">Categorías de datos personales que trata en nuestro nombre</label>
-          <textarea id="categorias_datos_tratados" name="categorias_datos_tratados" rows="2" required class="<%= inputClase %>"
+          <textarea maxlength="5000" id="categorias_datos_tratados" name="categorias_datos_tratados" rows="2" required class="<%= inputClase %>"
                     placeholder="Ej.: identificativos y de contacto de clientes, datos de nómina de empleados…"><%= valor('categorias_datos_tratados') %></textarea>
         </div>
         <div class="grid gap-4 sm:grid-cols-2">
           <div>
             <label for="pais_tratamiento" class="label">País del tratamiento</label>
-            <input id="pais_tratamiento" name="pais_tratamiento" type="text" required value="<%= valor('pais_tratamiento') %>" class="<%= inputClase %>"
+            <input maxlength="200" id="pais_tratamiento" name="pais_tratamiento" type="text" required value="<%= valor('pais_tratamiento') %>" class="<%= inputClase %>"
                    placeholder="Dónde están sus servidores o su sede">
           </div>
           <div>

@@ -14,6 +14,11 @@ const { generarDeclaracion, emitirDeclaracion } = require('../lib/declaraciones'
 const { rellenarDescripciones } = require('./descripciones-ens');
 const { adjuntarPdfsEjemplo } = require('./pdfs-politicas');
 
+// Datos ficticios de demostración con contraseñas conocidas: nunca en producción
+if (process.env.NODE_ENV === 'production') {
+  console.error('db:ejemplo no se puede ejecutar con NODE_ENV=production (crea cuentas con contraseñas conocidas).');
+  process.exit(1);
+}
 if (!process.argv.includes('--confirmar')) {
   console.error('Este script BORRA los datos actuales. Ejecútalo con: npm run db:ejemplo -- --confirmar');
   process.exit(1);
