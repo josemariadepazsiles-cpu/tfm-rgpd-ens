@@ -228,14 +228,13 @@
                       <p class="flex flex-wrap items-center gap-2 text-sm font-medium text-slate-900">
                         <% if (etiquetaArea[a.area]) { %><span class="etiqueta-area" data-area="<%= a.area %>"><%= etiquetaArea[a.area] %></span><% } %>
                         <%- include('partials/ambito', { ambito: a.ambito }) %>
-                        <%= a.titulo %>
+                        <a href="<%= a.href %>" class="enlace-registro" title="<%= a.accion %>"><%= a.titulo %></a>
                       </p>
                       <p class="mt-0.5 text-[13px] text-slate-500"><%= a.motivo %></p>
                     </div>
                   </div>
                   <div class="flex shrink-0 items-center gap-3 pl-11 sm:pl-0">
                     <span class="flex items-center gap-1 text-xs font-medium <%= e.texto %>"><%- icono(nivelIcono[a.nivel], 'h-3.5 w-3.5') %><%= e.etiqueta %></span>
-                    <a href="<%= a.href %>" class="btn btn-secondary btn-sm"><%= a.accion %><%- icono('arrow-right', 'h-3.5 w-3.5') %></a>
                   </div>
                 </li>
               <% }) %>
