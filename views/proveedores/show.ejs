@@ -134,7 +134,6 @@
                     <td class="text-slate-600"><%= d.subido_por ? d.subido_por.nombre : '—' %></td>
                     <td class="whitespace-nowrap text-right">
                       <a href="<%= url %>" target="_blank" rel="noopener" class="btn-icono" title="Ver documento" aria-label="Ver <%= d.nombre_documento %>"><%- icono('eye', 'h-4 w-4') %></a>
-                      <a href="<%= url %>?descargar=1" class="ml-1 btn-icono" title="Descargar" aria-label="Descargar <%= d.nombre_documento %>"><%- icono('download', 'h-4 w-4') %></a>
                       <% if (gestionaDocumentos) { %>
                         <form action="<%= url %>/eliminar" method="POST" class="inline" data-nombre="<%= d.nombre_documento %>"
                               onsubmit="return confirm('¿Eliminar el documento «' + this.dataset.nombre + '»? Se borrará el archivo del servidor.')">
