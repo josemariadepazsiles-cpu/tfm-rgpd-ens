@@ -172,6 +172,7 @@ erDiagram
 | Solo cookies técnicas, sin banner de consentimiento | La sesión (`sid`) y una preferencia de la interfaz en almacenamiento local están exentas (art. 22.2 LSSI-CE). El token CSRF se guarda en la sesión, no en otra cookie. |
 | Sesiones en PostgreSQL (connect-pg-simple, tabla `session`) con caducidad de 8 h sin actividad | Que la sesión no se pierda al reiniciarse el servidor (despliegues y reposo de la instancia gratuita de Render). |
 | Copias de seguridad en JSON con Prisma | Sin necesidad de `pg_dump` (`prisma/copia-seguridad.js`). |
+| Despliegue en Render (Web Service de Node, plan gratuito, región Frankfurt) con la base de datos en Neon: https://tfm-rgpd-ens.onrender.com | Despliegue automático en cada push a `main`. Las variables de entorno (`DATABASE_URL`, `SESSION_SECRET`, `NODE_ENV`) solo están en el panel de Render; la región europea queda cerca de la base de datos (Londres). |
 | Renderizado en el servidor (EJS) con Alpine.js para la interactividad | [COMPLETAR: motivo de elegir SSR en lugar de una SPA] |
 | PostgreSQL en Neon | [COMPLETAR: motivo de elegir Neon] |
 

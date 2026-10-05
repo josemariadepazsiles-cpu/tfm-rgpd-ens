@@ -77,6 +77,13 @@ como análisis normativo o diseño]
 - [x] Revisión de cookies: solo técnicas, sin banner de consentimiento.
 - [x] Documentación actualizada con las páginas legales.
 
+## Fase 9 · Despliegue (03-04/10/2026) — hecho
+
+- [x] Preparación para Render: script `build` (cliente de Prisma, CSS y migraciones) y `.node-version` (2957cf7).
+- [x] Despliegue en Render (plan gratuito, región Frankfurt) con la base de datos de Neon: **https://tfm-rgpd-ens.onrender.com**. Variables de entorno configuradas solo en el panel de Render.
+- [x] Sesiones en PostgreSQL para que no se cierren al reiniciarse la instancia (ee8389f).
+- [x] URL de la demostración en el README.
+
 ## Pendiente
 
 ### Fallos y mejoras detectados en el código
@@ -109,5 +116,4 @@ Están marcados en el código con «FALLO DETECTADO».
 
 - [ ] `db:pdfs-politicas`: regenerar también los PDF que falten en disco (p. ej. al trabajar desde otro equipo, ya que `uploads/` no se versiona).
 - [ ] Al desplegar: revisar en `config/legal.js` y en las páginas legales los encargados reales (alojamiento del servidor) y sustituir los datos ficticios si la web dejara de ser una demostración.
-- [ ] Despliegue en producción: [COMPLETAR: plataforma, dominio y base de datos de producción].
 - [ ] [COMPLETAR: otras tareas previstas por el autor]

@@ -3,6 +3,14 @@
 Cambios agrupados por fecha a partir del historial de git (los más recientes primero). Entre
 paréntesis, el commit.
 
+## 04/10/2026
+
+- **Despliegue en Render** (https://tfm-rgpd-ens.onrender.com, región Frankfurt, base de datos en Neon):
+  - preparación con el script `build` y `.node-version` (2957cf7);
+  - URL de la demostración en el README (9bfe209, 5576fcf).
+- **Sesiones en PostgreSQL** con connect-pg-simple: la sesión no se cierra al reiniciarse el servidor y caduca tras 8 horas sin actividad (ee8389f).
+- **Documentación:** el plan, la arquitectura y este historial recogen el despliegue.
+
 ## 03/10/2026
 
 - **Documentación actualizada con las páginas legales** (README, CLAUDE.md, AGENTS.md, PRD, arquitectura, plan y este historial).
