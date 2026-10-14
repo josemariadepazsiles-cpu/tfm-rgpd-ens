@@ -10,6 +10,7 @@ const FECHA_ACTUALIZACION = '2026-10-04';
 const PROYECTO = {
   tipo: 'Trabajo Fin de Máster',
   autor: 'José María de Paz Siles',
+  anio: 2026,
   aviso: 'Datos ficticios — proyecto académico',
 };
 
