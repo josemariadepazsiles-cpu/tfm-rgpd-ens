@@ -29,7 +29,9 @@ Lo que la distingue:
 - **Declaración de Conformidad del ENS** generada a partir de una evaluación, versionada y con su
   documento PDF.
 
-Proyecto desarrollado como Trabajo Fin de Máster por **José María de Paz Siles** (© 2026). [COMPLETAR: máster, universidad y curso]
+Proyecto desarrollado por **José María de Paz Siles** (© 2026) como Trabajo Fin de Máster del
+**Máster en Desarrollo con I.A.** de Bigschool (BIGSEO MARKETING SLU), con certificación de la
+Universidad Isabel I.
 
 ## 2. Stack tecnológico utilizado
 
@@ -465,7 +467,7 @@ Todas las pantallas, incluido el login, tienen un pie con los enlaces a las tres
 
 El detalle funcional de cada módulo está en [docs/PRD.md](docs/PRD.md).
 
-## 8. Arquitectura y estructura del proyecto
+## 8. Arquitectura
 
 ```mermaid
 flowchart LR
