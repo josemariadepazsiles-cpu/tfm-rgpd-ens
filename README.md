@@ -19,7 +19,8 @@ Lo que la distingue:
   incidentes, solicitudes de derechos, evaluaciones ENS y procesos de continuidad se asocian a un
   sistema o quedan como transversales.
 - **Panel de control con las acciones pendientes ordenadas por urgencia**, para toda la
-  organización o para un sistema concreto.
+  organización o para un sistema concreto. Incluye las recomendaciones del asistente de
+  cumplimiento, que se generan con reglas explícitas a partir de los datos, sin modelos de IA.
 - **Avisos automáticos de plazos legales:**
   - 72 horas para notificar una brecha a la AEPD;
   - un mes para responder a los derechos;
@@ -28,7 +29,7 @@ Lo que la distingue:
 - **Declaración de Conformidad del ENS** generada a partir de una evaluación, versionada y con su
   documento PDF.
 
-Proyecto desarrollado como Trabajo Fin de Máster. [COMPLETAR: máster, universidad y curso]
+Proyecto desarrollado como Trabajo Fin de Máster por **José María de Paz Siles** (© 2026). [COMPLETAR: máster, universidad y curso]
 
 ## 2. Stack tecnológico utilizado
 
@@ -286,7 +287,7 @@ tfm-rgpd-ens/
 │   ├── legal/                aviso-legal.ejs, privacidad.ejs y cookies.ejs
 │   └── partials/             nav.ejs, head.ejs, pie.ejs, plazo-aepd.ejs … (30 en total)
 ├── src/styles/input.css      Fuente de Tailwind: tema, componentes (.btn, .card, .tabla…) y archivos que escanea
-├── public/img/logo.svg       Logotipo (el CSS se compila en public/css/ y no se versiona)
+├── public/img/               logo.svg (logotipo) y mapa-modulos.png (ilustración del login); el CSS se compila en public/css/ y no se versiona
 ├── prisma/
 │   ├── schema.prisma         Modelo de datos: 26 modelos y 26 enums
 │   ├── migrations/           22 migraciones SQL y migration_lock.toml
@@ -376,7 +377,7 @@ Los 26 modelos de `prisma/schema.prisma`:
 
 ### Inicio (panel de control)
 - Resume el estado en cuatro tarjetas: cumplimiento ENS, acciones pendientes, incidentes abiertos y próximo vencimiento.
-- Lista las acciones pendientes ordenadas por urgencia, indicando el sistema al que se refiere cada una.
+- Lista las acciones pendientes ordenadas por urgencia, indicando el sistema al que se refiere cada una. Junto a los avisos con plazo aparecen las recomendaciones del asistente de cumplimiento (reglas fijas con su artículo del RGPD o del ENS; no usa IA).
 - Filtra todo el panel por un sistema («Ver por sistema») y muestra la actividad reciente de los historiales.
 
 ### Sistemas de información

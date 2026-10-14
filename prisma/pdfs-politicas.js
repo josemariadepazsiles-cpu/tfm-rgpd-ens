@@ -8,11 +8,12 @@ const PDFDocument = require('pdfkit');
 const prisma = require('../lib/prisma');
 const { guardarArchivo, borrarArchivo } = require('../lib/subidas');
 const { TIPOS_POLITICA } = require('../lib/politicas');
+const { PROYECTO } = require('../config/legal');
 
 // Genera en memoria un PDF sencillo con los datos de la política
 const generarPdf = (politica, organizacion) =>
   new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ size: 'A4', margin: 60, info: { Title: politica.titulo, Author: organizacion || 'Compliance Hub' } });
+    const doc = new PDFDocument({ size: 'A4', margin: 60, info: { Title: politica.titulo, Author: organizacion || 'Compliance Hub', Creator: `Compliance Hub · © ${PROYECTO.anio} ${PROYECTO.autor}` } });
     const partes = [];
     doc.on('data', (p) => partes.push(p));
     doc.on('end', () => resolve(Buffer.concat(partes)));
