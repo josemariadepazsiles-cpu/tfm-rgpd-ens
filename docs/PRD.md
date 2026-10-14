@@ -1,4 +1,4 @@
-# PRD · Compliance AI (RGPD + ENS)
+# PRD · Compliance Hub (RGPD + ENS)
 
 Documento de requisitos del producto, redactado a partir del código actual. Lo que no se puede
 deducir del código está marcado como [COMPLETAR].

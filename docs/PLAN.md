@@ -1,4 +1,4 @@
-# Plan del proyecto · Compliance AI
+# Plan del proyecto · Compliance Hub
 
 Fases reconstruidas a partir del historial de git (58 commits, del 26/09/2026 al 03/10/2026) y
 del estado del código. Las fechas son las de los commits.

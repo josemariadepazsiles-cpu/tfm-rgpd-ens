@@ -5,7 +5,7 @@ habituales) está en [CLAUDE.md](CLAUDE.md); si ambas difieren, manda CLAUDE.md.
 
 ## Proyecto
 
-Compliance AI: aplicación web (TFM) de cumplimiento RGPD + ENS con el sistema de información como
+Compliance Hub: aplicación web (TFM) de cumplimiento RGPD + ENS con el sistema de información como
 eje. Node.js ≥ 20.19, Express 5, EJS, Tailwind 4, Alpine.js, Passport, Prisma 7 y PostgreSQL.
 
 ## Comandos

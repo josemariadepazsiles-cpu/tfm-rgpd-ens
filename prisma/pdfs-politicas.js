@@ -12,7 +12,7 @@ const { TIPOS_POLITICA } = require('../lib/politicas');
 // Genera en memoria un PDF sencillo con los datos de la política
 const generarPdf = (politica, organizacion) =>
   new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ size: 'A4', margin: 60, info: { Title: politica.titulo, Author: organizacion || 'Compliance AI' } });
+    const doc = new PDFDocument({ size: 'A4', margin: 60, info: { Title: politica.titulo, Author: organizacion || 'Compliance Hub' } });
     const partes = [];
     doc.on('data', (p) => partes.push(p));
     doc.on('end', () => resolve(Buffer.concat(partes)));

@@ -85,7 +85,7 @@ app.locals.areaNormativa = 'neutro';
 app.locals.versionCss = '0';
 const CSS_COMPILADO = path.join(__dirname, 'public', 'css', 'output.css');
 app.locals.areasNormativas = AREAS;
-app.locals.producto = { nombre: 'Compliance AI', lema: 'AI Compliance Platform' };
+app.locals.producto = { nombre: 'Compliance Hub', lema: 'Plataforma de cumplimiento RGPD · ENS' };
 // Datos de las páginas legales (pie de página de todas las pantallas)
 app.locals.legal = require('./config/legal');
 // Iniciales para el avatar: "José María de Paz" → "JM" (sin partículas como "de" o "la")

@@ -1,4 +1,4 @@
-# Arquitectura · Compliance AI
+# Arquitectura · Compliance Hub
 
 Descripción técnica redactada a partir del código. Las decisiones llevan el motivo que figura en
 los comentarios del propio código; donde el código no lo explica, está marcado como [COMPLETAR].

@@ -3,6 +3,13 @@
 Cambios agrupados por fecha a partir del historial de git (los más recientes primero). Entre
 paréntesis, el commit.
 
+## 14/10/2026
+
+- **Pantalla de acceso:**
+  - ilustración con el mapa de módulos RGPD y ENS (7931e7e);
+  - «Asistente de cumplimiento» en lugar de «Asistente IA», con el significado de RGPD y ENS (e2b5197).
+- **Nombre del producto:** «Compliance AI» pasa a ser «Compliance Hub», con el lema «Plataforma de cumplimiento RGPD · ENS», porque el asistente funciona con reglas, sin modelos de IA.
+
 ## 04/10/2026
 
 - **Despliegue en Render** (https://tfm-rgpd-ens.onrender.com, región Frankfurt, base de datos en Neon):

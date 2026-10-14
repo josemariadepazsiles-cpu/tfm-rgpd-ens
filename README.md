@@ -1,10 +1,10 @@
-# Compliance AI · RGPD + ENS
+# Compliance Hub · RGPD + ENS
 
 **Demostración en línea:** https://tfm-rgpd-ens.onrender.com (credenciales en el [apartado 6](#6-usuario-y-contraseña-de-prueba); la primera carga puede tardar hasta un minuto si la instancia gratuita estaba dormida).
 
 ## 1. Descripción general del proyecto
 
-Compliance AI es una plataforma web para gestionar el cumplimiento del Reglamento General de
+Compliance Hub es una plataforma web para gestionar el cumplimiento del Reglamento General de
 Protección de Datos (RGPD) y del Esquema Nacional de Seguridad (ENS) en una organización.
 
 En muchas organizaciones ese cumplimiento se lleva en hojas de cálculo y documentos dispersos,

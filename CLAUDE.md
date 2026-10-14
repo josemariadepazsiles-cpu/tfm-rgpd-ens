@@ -4,7 +4,7 @@ Guía para asistentes de programación que trabajen en este repositorio.
 
 ## Qué es
 
-Compliance AI: aplicación web (TFM) para gestionar el cumplimiento del RGPD y del ENS
+Compliance Hub: aplicación web (TFM) para gestionar el cumplimiento del RGPD y del ENS
 (RD 311/2022) de una organización. El **sistema de información** es el eje: RAT, riesgos,
 incidentes, derechos, evaluaciones ENS y procesos BIA se asocian a un sistema o son transversales.
 
