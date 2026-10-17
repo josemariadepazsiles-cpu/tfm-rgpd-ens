@@ -181,7 +181,7 @@ npm run db:ejemplo -- --confirmar
 
 | Usuario | Contraseña | Rol |
 |---|---|---|
-| `admin@test.com` | `admin1234` | Administrador |
+| `admin@test.com` | `Admin1234` | Administrador |
 | `elena.martin@labfarmareunidos.example`, `javier.ortega@…`, `marta.quintero@…` | `Ejemplo2026` | Administrador |
 | `carmen.vidal@labfarmareunidos.example`, `andres.pena@…`, `lucia.fernandez@…`, `pablo.rubio@…`, `sergio.navas@…` | `Ejemplo2026` | Usuario |
 
@@ -431,7 +431,7 @@ Acceso en **http://localhost:3000/login**. Los usuarios se crean al cargar los d
 
 | Rol | Email | Contraseña | Qué puede hacer y ver |
 |---|---|---|---|
-| Administrador | `admin@test.com` | `admin1234` | Todo: gestión de sistemas, evaluaciones, catálogo de controles, declaraciones, políticas, proveedores, BIA, datos de la empresa y usuarios; es el único rol que elimina registros. |
+| Administrador | `admin@test.com` | `Admin1234` | Todo: gestión de sistemas, evaluaciones, catálogo de controles, declaraciones, políticas, proveedores, BIA, datos de la empresa y usuarios; es el único rol que elimina registros. |
 | Administrador | `elena.martin@labfarmareunidos.example` | `Ejemplo2026` | Igual que el anterior. En los datos de ejemplo es la Directora General y Responsable de la Información; no tiene sistema asignado. |
 | Administrador | `javier.ortega@labfarmareunidos.example` | `Ejemplo2026` | Igual que el anterior. Es el Delegado de Protección de Datos; no tiene sistema asignado. |
 | Administrador | `marta.quintero@labfarmareunidos.example` | `Ejemplo2026` | Igual que el anterior. Es la Responsable de Seguridad, asignada al sistema «Área de informática». |

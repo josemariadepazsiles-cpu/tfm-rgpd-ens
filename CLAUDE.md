@@ -28,7 +28,7 @@ npm run db:copia                   # copia de seguridad en backups/
 npm test                           # pruebas funcionales (app en marcha + datos de ejemplo)
 ```
 
-Credenciales de demostración (solo tras `db:ejemplo`): `admin@test.com` / `admin1234`
+Credenciales de demostración (solo tras `db:ejemplo`): `admin@test.com` / `Admin1234`
 (Administrador) y `carmen.vidal@labfarmareunidos.example` / `Ejemplo2026` (Usuario).
 
 ## Estructura

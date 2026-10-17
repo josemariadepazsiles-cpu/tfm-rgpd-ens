@@ -187,7 +187,7 @@ async function main() {
 
   // 2) Usuarios: administrador de acceso garantizado + plantilla ficticia de la empresa
   // Cuenta de acceso garantizado de la demo; el script se niega a ejecutarse en producción
-  const hashAdmin = await bcrypt.hash('admin1234', 12);
+  const hashAdmin = await bcrypt.hash('Admin1234', 12);
   const admin = await prisma.usuario.upsert({
     where: { email: 'admin@test.com' },
     update: {},
@@ -599,7 +599,7 @@ main()
   .then(async ({ admin }) => {
     console.log('Datos de ejemplo cargados.');
     console.log(await contarTodo());
-    console.log(`Acceso: ${admin.email} / admin1234 · plantilla ficticia: <nombre.apellido>@${DOMINIO} / ${CLAVE_EJEMPLO}`);
+    console.log(`Acceso: ${admin.email} / Admin1234 · plantilla ficticia: <nombre.apellido>@${DOMINIO} / ${CLAVE_EJEMPLO}`);
     await prisma.$disconnect();
   })
   .catch(async (e) => {

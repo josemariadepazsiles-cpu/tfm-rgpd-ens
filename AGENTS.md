@@ -20,7 +20,7 @@ npm run db:ejemplo -- --confirmar  # BORRA y carga datos de ejemplo
 npm test                           # pruebas funcionales (app en marcha + datos de ejemplo)
 ```
 
-Demostración (tras `db:ejemplo`): `admin@test.com` / `admin1234` (Administrador) y
+Demostración (tras `db:ejemplo`): `admin@test.com` / `Admin1234` (Administrador) y
 `carmen.vidal@labfarmareunidos.example` / `Ejemplo2026` (Usuario).
 
 ## Reglas

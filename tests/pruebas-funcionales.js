@@ -67,7 +67,7 @@ const creados = { usuarios: [] };
 const pctEval = async (evId) => { const filas = await prisma.evaluacionControl.findMany({ where: { evaluacion_id: evId } }); const imp = filas.filter((f) => f.estado === 'IMPLEMENTADO').length; const apl = filas.length - filas.filter((f) => f.estado === 'NO_APLICA').length; return { imp, apl, pct: apl ? Math.round(imp / apl * 100) : 0 }; };
 
 (async () => {
-  const admin = cliente((await login('admin@test.com', 'admin1234')).cookie);
+  const admin = cliente((await login('admin@test.com', 'Admin1234')).cookie);
   const yo = await prisma.usuario.findUnique({ where: { email: 'admin@test.com' } });
   const carmenU = await prisma.usuario.findUnique({ where: { email: 'carmen.vidal@labfarmareunidos.example' } });
   const carmen = cliente((await login(carmenU.email, 'Ejemplo2026')).cookie);
@@ -77,7 +77,7 @@ const pctEval = async (evId) => { const filas = await prisma.evaluacionControl.f
   // ====================== a) ACCESO ======================
   {
     const M = 'Acceso';
-    let l = await login('admin@test.com', 'admin1234');
+    let l = await login('admin@test.com', 'Admin1234');
     R(M, 'Login correcto redirige al panel', l.status === 302 && l.loc === '/dashboard', `status ${l.status} → ${l.loc}`);
     const malPw = await login('admin@test.com', 'incorrecta');
     R(M, 'Contraseña incorrecta: rechazado sin sesión', malPw.status >= 400 && malPw.loc !== '/dashboard', `status ${malPw.status}`);
